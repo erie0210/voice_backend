@@ -320,12 +320,17 @@ Current difficulty: {difficulty_level}
             )
             
             response_content = response.choices[0].message.content.strip()
+            logger.info(f"OpenAI 응답 원본 (길이: {len(response_content)}): {response_content}")
             
             # JSON 응답 파싱
             try:
                 parsed_response = json.loads(response_content)
+                logger.info("JSON 파싱 성공")
                 chat_response = parsed_response.get("response", "")
                 learn_words_data = parsed_response.get("learnWords", [])
+                
+                logger.info(f"추출된 응답: {chat_response}")
+                logger.info(f"추출된 학습단어 개수: {len(learn_words_data)}")
                 
                 # LearnWord 객체로 변환
                 learn_words = []
@@ -339,6 +344,7 @@ Current difficulty: {difficulty_level}
                     learn_words.append(learn_word)
                 
                 learn_words = [w for w in learn_words if is_target_language_word(w.word, ai_language)]
+                logger.info(f"필터링 후 학습단어 개수: {len(learn_words)}")
                 
                 # 학습 단어가 비어있으면 기본 단어 추가
                 if not learn_words and chat_response:
@@ -354,12 +360,17 @@ Current difficulty: {difficulty_level}
                             )
                             learn_words.append(default_word)
                             break
+                    logger.info(f"기본 학습단어 추가 후 개수: {len(learn_words)}")
                 
                 return chat_response, learn_words
                 
-            except json.JSONDecodeError:
-                # JSON 파싱 실패 시 더 강력한 텍스트 추출
-                logger.warning(f"JSON 파싱 실패, 강화된 텍스트 추출 시도: {response_content[:200]}...")
+            except json.JSONDecodeError as e:
+                # JSON 파싱 실패 시 더 상세한 로깅
+                logger.error(f"JSON 파싱 실패 - 에러: {str(e)}")
+                logger.error(f"JSON 파싱 실패 - 전체 응답 내용:\n{response_content}")
+                logger.error(f"JSON 파싱 실패 - 응답 길이: {len(response_content)}")
+                logger.error(f"JSON 파싱 실패 - 첫 100자: {response_content[:100]}")
+                logger.error(f"JSON 파싱 실패 - 마지막 100자: {response_content[-100:]}")
                 
                 # 1. "response": "내용" 패턴 찾기 (개선된 정규식)
                 import re
@@ -370,18 +381,21 @@ Current difficulty: {difficulty_level}
                 ]
                 
                 extracted_response = None
-                for pattern in response_patterns:
+                for i, pattern in enumerate(response_patterns):
                     match = re.search(pattern, response_content, re.DOTALL)
                     if match:
                         extracted_response = match.group(1)
+                        logger.info(f"정규식 패턴 {i+1}번으로 응답 추출 성공: {extracted_response[:100]}...")
                         break
+                    else:
+                        logger.debug(f"정규식 패턴 {i+1}번 실패")
                 
                 # 2. 패턴 매칭 실패 시, JSON 시작 부분에서 response 값 추출 시도
                 if not extracted_response:
+                    logger.warning("모든 정규식 패턴 실패, 직접 파싱 시도")
                     # {"response":"내용 형태에서 내용 부분만 추출
                     if response_content.startswith('{"response":"'):
                         start_idx = len('{"response":"')
-                        # 다음 " 또는 ', 까지 찾기
                         content_part = response_content[start_idx:]
                         end_markers = ['"', "',", '",']
                         min_end = len(content_part)
@@ -392,9 +406,14 @@ Current difficulty: {difficulty_level}
                         
                         if min_end < len(content_part):
                             extracted_response = content_part[:min_end]
+                            logger.info(f"직접 파싱으로 응답 추출 성공: {extracted_response[:100]}...")
+                        else:
+                            logger.warning("직접 파싱도 실패 - 종료 마커를 찾을 수 없음")
+                    else:
+                        logger.warning(f"직접 파싱 실패 - 예상된 시작 패턴이 없음. 실제 시작: {response_content[:50]}")
                 
                 if extracted_response:
-                    logger.info(f"강화된 응답 텍스트 추출 성공: {extracted_response[:100]}...")
+                    logger.info(f"최종 추출된 응답: {extracted_response}")
                     
                     # 기본 학습 단어 생성
                     words = extracted_response.split()
@@ -412,10 +431,11 @@ Current difficulty: {difficulty_level}
                             if len(default_learn_words) >= 2:  # 최대 2개까지
                                 break
                     
+                    logger.info(f"기본 학습단어 생성 완료: {len(default_learn_words)}개")
                     return extracted_response, default_learn_words
                 else:
                     # 모든 추출 시도 실패
-                    logger.warning("모든 응답 추출 시도 실패, 기본 응답 생성")
+                    logger.error("모든 응답 추출 시도 실패 - 기본 응답으로 대체")
                     
                     clean_response = "죄송해요, 응답을 생성하는 중에 문제가 발생했어요. 다시 말씀해 주시겠어요? 😊"
                     
