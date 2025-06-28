@@ -196,10 +196,14 @@ Keep it simple, friendly, and under 20 words. Include an emoji."""
                     ]
                 }}
 
-                - Include 2-4 useful words/expressions from your response in the learnWords array
+                CRITICAL LEARNING WORDS REQUIREMENT:
+                - You MUST include at least 1 learning word/expression in EVERY response
+                - Include 1-3 useful words/expressions from your response in the learnWords array
+                - If your response has no clear learning words, choose the most useful word anyway
                 - Focus on words that are key to understanding or commonly used
                 - Provide clear {user_language} meanings
                 - Examples and pronunciation are optional but helpful
+                - NEVER return an empty learnWords array
 
                 Current difficulty: {difficulty_level}
                 User's last message: "{last_user_message}"
@@ -235,10 +239,40 @@ Keep it simple, friendly, and under 20 words. Include an emoji."""
                     )
                     learn_words.append(learn_word)
                 
+                # 학습 단어가 비어있으면 기본 단어 추가
+                if not learn_words and chat_response:
+                    # 응답에서 첫 번째 의미있는 단어를 학습 단어로 추가
+                    words = chat_response.split()
+                    for word in words:
+                        # 이모지나 특수문자 제외하고 알파벳 단어 찾기
+                        clean_word = ''.join(c for c in word if c.isalpha())
+                        if len(clean_word) > 2:  # 3글자 이상인 단어만
+                            default_word = LearnWord(
+                                word=clean_word,
+                                meaning=f"({user_language}로) 의미를 찾아보세요",
+                                example=None,
+                                pronunciation=None
+                            )
+                            learn_words.append(default_word)
+                            break
+                
                 return chat_response, learn_words
                 
             except json.JSONDecodeError:
-                # JSON 파싱 실패 시 텍스트 응답만 반환
+                # JSON 파싱 실패 시 텍스트 응답과 기본 학습 단어 반환
+                if response_content:
+                    words = response_content.split()
+                    for word in words:
+                        clean_word = ''.join(c for c in word if c.isalpha())
+                        if len(clean_word) > 2:
+                            default_word = LearnWord(
+                                word=clean_word,
+                                meaning=f"({user_language}로) 의미를 찾아보세요",
+                                example=None,
+                                pronunciation=None
+                            )
+                            return response_content, [default_word]
+                
                 return response_content, []
             
         except Exception as e:
