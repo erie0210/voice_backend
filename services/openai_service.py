@@ -246,6 +246,46 @@ JSON FORMAT:
                     "content": msg.content
                 })
             
+            # 레벨별 프롬프트 정의
+            level_prompts = {
+                "easy": f"""
+- Reply in {user_language}; act like a native {ai_language} speaker who speaks {user_language} fluently
+- UNDERSTAND by pronunciation, not exact meaning - if they try to say something, figure out what they meant
+- PRAISE A LOT even for tiny attempts - be super encouraging like talking to a baby
+- Use very simple words and encourage them to use easy expressions
+- Take what they said in {user_language} and show them "You can say this in {ai_language}: [expression]"
+- Give pronunciation tips and useful expressions
+- Example: "와! 정말 잘했어요! 👏 '좋아해요'는 영어로 'I like it'이라고 해요. 발음은 '아이 라이크 잇'이에요!"
+""",
+                "intermediate": f"""
+- Reply ONLY in {ai_language}; act like a very kind elementary school teacher (grades 1-3)
+- Use elementary level {ai_language} with good native expressions that kids can learn
+- Paraphrase the user's message into a more natural, native {ai_language} expression and show it
+- Correct their expressions to better, more natural native phrases
+- Explain simply and kindly, use easy words
+- Focus on teaching good expressions children should know
+""",
+                "advanced": f"""
+- Reply ONLY in {ai_language}; act like a native {ai_language} speaker at middle school level
+- Paraphrase the user's message into a more sophisticated, native {ai_language} expression and show it
+- Engage in deep discussions on various topics (culture, society, academics, etc.)
+- Correct pronunciation, word order, and expressions to high-level native usage
+- Use sophisticated expressions and help them use advanced vocabulary
+- Challenge them with complex topics and nuanced language (up to 40 words)
+"""
+            }
+            
+            # 현재 레벨에 맞는 프롬프트 선택
+            current_level_prompt = level_prompts.get(difficulty_level, level_prompts["easy"])
+            
+            # 레벨별 단어 수 제한
+            word_limits = {
+                "easy": "18-22 words",
+                "intermediate": "18-22 words", 
+                "advanced": "up to 40 words"
+            }
+            current_word_limit = word_limits.get(difficulty_level, "18-22 words")
+            
             # 간소화된 시스템 프롬프트 (토큰 절약)
             system_prompt = f"""
 You are MurMur, language coach for {ai_language}.
@@ -254,20 +294,18 @@ SPECIAL: If user says "Hello, Start to Talk!": Brief intro + topic question.
 
 STRUCTURE: 1) React to user 2) Teach 1 {ai_language} expression 3) Ask more
 
-LEVELS:
-- easy: Reply in {user_language}. Show {ai_language} expressions. Praise a lot like talking to baby.
-- intermediate: Reply in {ai_language}. Elementary level. Paraphrase user's message to natural {ai_language}.
-- advanced: Reply in {ai_language}. Middle school level. Paraphrase to sophisticated {ai_language}. Deep topics OK (up to 40 words).
+CURRENT LEVEL ({difficulty_level.upper()}):
+{current_level_prompt}
 
-LEARN WORDS: Always 2-3 items in {ai_language}.
+LEARN WORDS: Always 2-3 items in {ai_language}. The expression taught must appear in learnWords.
 
 JSON FORMAT:
 {{
-  "response": "18-22 words (40 for advanced)",
+  "response": "{current_word_limit}",
   "learnWords": [{{"word":"","meaning":"","example":"","pronunciation":""}}]
 }}
 
-User: "{last_user_message}" | Level: {difficulty_level}
+User: "{last_user_message}"
 """
             
             # 시스템 메시지 추가
