@@ -271,8 +271,10 @@ Return JSON format:
                 - Be concise but engaging and natural
                 - Prioritize key learning points over lengthy explanations
 
-                RESPONSE FORMAT:
-                You must respond in JSON format with the following structure:
+                CRITICAL JSON FORMAT REQUIREMENT:
+                You MUST respond in valid JSON format ONLY. Do not include any text outside the JSON.
+                
+                Required JSON structure:
                 {{
                     "response": "your conversational response here (18-20 words max)",
                     "learnWords": [
@@ -297,7 +299,7 @@ Return JSON format:
                 Current difficulty: {difficulty_level}
                 User's last message: "{last_user_message}"
 
-                Respond naturally and keep the conversation flowing."""
+                Respond ONLY with valid JSON. No additional text."""
             
             # 시스템 메시지 추가
             messages_for_api = [{"role": "system", "content": system_prompt}] + chat_history
@@ -306,7 +308,8 @@ Return JSON format:
                 model=self.default_model,
                 messages=messages_for_api,
                 max_tokens=150,
-                temperature=0.7
+                temperature=0.7,
+                response_format={"type": "json_object"}  # JSON 형태 강제
             )
             
             response_content = response.choices[0].message.content.strip()
@@ -348,9 +351,20 @@ Return JSON format:
                 return chat_response, learn_words
                 
             except json.JSONDecodeError:
-                # JSON 파싱 실패 시 텍스트 응답과 기본 학습 단어 반환
-                if response_content:
-                    words = response_content.split()
+                # JSON 파싱 실패 시 텍스트에서 response 부분 추출 시도
+                logger.warning(f"JSON 파싱 실패, 텍스트 추출 시도: {response_content[:100]}...")
+                
+                # "response": "내용" 패턴 찾기
+                import re
+                response_match = re.search(r'"response"\s*:\s*"([^"]+)"', response_content)
+                
+                if response_match:
+                    extracted_response = response_match.group(1)
+                    logger.info(f"응답 텍스트 추출 성공: {extracted_response}")
+                    
+                    # 기본 학습 단어 생성
+                    words = extracted_response.split()
+                    default_learn_words = []
                     for word in words:
                         clean_word = ''.join(c for c in word if c.isalpha())
                         if len(clean_word) > 2:
@@ -360,9 +374,25 @@ Return JSON format:
                                 example=None,
                                 pronunciation=None
                             )
-                            return response_content, [default_word]
-                
-                return response_content, []
+                            default_learn_words.append(default_word)
+                            break
+                    
+                    return extracted_response, default_learn_words
+                else:
+                    # 패턴 매칭 실패 시 전체 텍스트에서 JSON 부분 제거
+                    logger.warning("응답 패턴 매칭 실패, 기본 응답 생성")
+                    
+                    # JSON 형태의 텍스트를 제거하고 깔끔한 응답 생성
+                    clean_response = "죄송해요, 응답을 생성하는 중에 문제가 발생했어요. 다시 말씀해 주시겠어요? 😊"
+                    
+                    default_word = LearnWord(
+                        word="문제",
+                        meaning="어려운 상황이나 해결해야 할 일",
+                        example="이 문제를 해결해야 합니다.",
+                        pronunciation=None
+                    )
+                    
+                    return clean_response, [default_word]
             
         except Exception as e:
             raise Exception(f"채팅 응답 생성 중 오류가 발생했습니다: {str(e)}")
