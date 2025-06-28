@@ -4,11 +4,16 @@ import os
 import random
 import json
 import time
+import boto3
+import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from config.settings import settings
 from models.api_models import ChatMessage, LearnWord
 from services.r2_service import upload_file_to_r2
+
+# 로깅 설정
+logger = logging.getLogger(__name__)
 
 class OpenAIService:
     def __init__(self):
@@ -18,6 +23,22 @@ class OpenAIService:
         # 기본 모델 설정 (설정 파일에서 가져옴)
         self.default_model = settings.OPENAI_DEFAULT_MODEL
         
+        # AWS Polly 클라이언트 초기화 (폴백용)
+        try:
+            if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+                self.polly_client = boto3.client(
+                    'polly',
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=settings.AWS_REGION
+                )
+            else:
+                self.polly_client = None
+                logger.warning("AWS 자격증명이 설정되지 않았습니다. Polly 폴백을 사용할 수 없습니다.")
+        except Exception as e:
+            self.polly_client = None
+            logger.warning(f"AWS Polly 클라이언트 초기화 실패: {str(e)}")
+        
         # 비용 최적화를 위한 캐시
         self._translation_cache: Dict[str, str] = {}
         self._api_key_cache: Dict[str, Dict] = {}
@@ -26,7 +47,7 @@ class OpenAIService:
         # 캐시 만료 시간 (초)
         self.cache_expiry = 3600  # 1시간
         
-        # 언어별 음성 설정
+        # OpenAI TTS 언어별 음성 설정
         self.voice_mapping = {
             "English": "alloy",
             "Spanish": "nova", 
@@ -35,6 +56,17 @@ class OpenAIService:
             "Chinese": "fable",
             "French": "onyx",
             "German": "alloy"
+        }
+        
+        # AWS Polly 언어별 음성 설정 (폴백용)
+        self.polly_voice_mapping = {
+            "English": {"VoiceId": "Joanna", "LanguageCode": "en-US"},
+            "Spanish": {"VoiceId": "Lucia", "LanguageCode": "es-ES"},
+            "Japanese": {"VoiceId": "Mizuki", "LanguageCode": "ja-JP"},
+            "Korean": {"VoiceId": "Seoyeon", "LanguageCode": "ko-KR"},
+            "Chinese": {"VoiceId": "Zhiyu", "LanguageCode": "zh-CN"},
+            "French": {"VoiceId": "Celine", "LanguageCode": "fr-FR"},
+            "German": {"VoiceId": "Marlene", "LanguageCode": "de-DE"}
         }
         
         # 랜덤 주제 목록
@@ -335,11 +367,62 @@ Return JSON format:
         except Exception as e:
             raise Exception(f"채팅 응답 생성 중 오류가 발생했습니다: {str(e)}")
     
+    async def _text_to_speech_polly(self, text: str, language: str) -> tuple[str, float]:
+        """
+        AWS Polly를 사용하여 텍스트를 음성으로 변환합니다. (폴백용)
+        """
+        if not self.polly_client:
+            raise Exception("AWS Polly 클라이언트가 초기화되지 않았습니다.")
+        
+        try:
+            # 언어에 따른 음성 선택
+            voice_config = self.polly_voice_mapping.get(language, self.polly_voice_mapping["English"])
+            
+            response = self.polly_client.synthesize_speech(
+                Text=text,
+                OutputFormat='mp3',
+                VoiceId=voice_config["VoiceId"],
+                LanguageCode=voice_config["LanguageCode"]
+            )
+            
+            # 임시 파일로 저장
+            import tempfile
+            
+            timestamp = int(time.time())
+            filename = f"polly_tts_{timestamp}.mp3"
+            temp_path = os.path.join(tempfile.gettempdir(), filename)
+            
+            # 오디오 데이터를 파일로 저장
+            with open(temp_path, 'wb') as f:
+                f.write(response['AudioStream'].read())
+            
+            # 파일 크기로 대략적인 재생 시간 계산
+            file_size = os.path.getsize(temp_path)
+            estimated_duration = file_size / 16000  # 대략적인 추정
+            
+            # Cloudflare R2에 업로드
+            object_name = f"tts/{filename}"
+            audio_url = upload_file_to_r2(temp_path, object_name)
+            
+            # 임시 파일 삭제
+            os.remove(temp_path)
+            
+            logger.info(f"AWS Polly TTS 성공: {audio_url}")
+            return audio_url, estimated_duration
+            
+        except Exception as e:
+            logger.error(f"AWS Polly TTS 실패: {str(e)}")
+            raise Exception(f"AWS Polly 음성 합성 중 오류가 발생했습니다: {str(e)}")
+
     async def text_to_speech(self, text: str, language: str, voice: Optional[str] = None) -> tuple[str, float]:
         """
         텍스트를 음성으로 변환하고 Cloudflare R2에 업로드합니다.
+        OpenAI TTS 실패 시 AWS Polly를 폴백으로 사용합니다.
         """
+        # 먼저 OpenAI TTS 시도
         try:
+            logger.info(f"OpenAI TTS 시도: {text[:50]}...")
+            
             # 언어에 따른 음성 선택
             selected_voice = voice or self.voice_mapping.get(language, "alloy")
             
@@ -351,10 +434,9 @@ Return JSON format:
             
             # 임시 파일로 저장
             import tempfile
-            import time
             
             timestamp = int(time.time())
-            filename = f"tts_{timestamp}.mp3"
+            filename = f"openai_tts_{timestamp}.mp3"
             temp_path = os.path.join(tempfile.gettempdir(), filename)
             
             # 오디오 데이터를 파일로 저장
@@ -373,10 +455,23 @@ Return JSON format:
             # 임시 파일 삭제
             os.remove(temp_path)
             
+            logger.info(f"OpenAI TTS 성공: {audio_url}")
             return audio_url, estimated_duration
             
-        except Exception as e:
-            raise Exception(f"음성 합성 중 오류가 발생했습니다: {str(e)}")
+        except Exception as openai_error:
+            logger.warning(f"OpenAI TTS 실패: {str(openai_error)}")
+            
+            # AWS Polly 폴백 시도
+            if self.polly_client:
+                try:
+                    logger.info(f"AWS Polly 폴백 시도: {text[:50]}...")
+                    return await self._text_to_speech_polly(text, language)
+                except Exception as polly_error:
+                    logger.error(f"AWS Polly 폴백도 실패: {str(polly_error)}")
+                    raise Exception(f"모든 TTS 서비스 실패 - OpenAI: {str(openai_error)}, Polly: {str(polly_error)}")
+            else:
+                # Polly 클라이언트가 없으면 원래 OpenAI 오류 반환
+                raise Exception(f"OpenAI TTS 실패하고 Polly 폴백을 사용할 수 없습니다: {str(openai_error)}")
     
     async def test_api_key(self) -> bool:
         """

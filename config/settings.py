@@ -9,6 +9,11 @@ class Settings:
     # API 인증 설정
     API_SECRET_KEY: str = os.getenv("API_SECRET_KEY", "easyslang-api-secret-key-2024")
     
+    # AWS 설정 (TTS 폴백용)
+    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
+    
     # 서버 설정
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", 8000))
