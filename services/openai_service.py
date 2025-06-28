@@ -217,6 +217,28 @@ Return JSON format:
         """
         대화 응답을 생성하고 학습할 단어/표현을 함께 반환합니다.
         """
+        # --- ai_language 기반 필터링 함수는 try 바깥에 정의 ---
+        def is_target_language_word(word: str, ai_language: str) -> bool:
+            if ai_language.lower() == "english":
+                import re
+                return bool(re.match(r'^[A-Za-z\s\'\-]+$', word.strip()))
+            elif ai_language.lower() == "japanese":
+                return any('\u3040' <= c <= '\u30ff' or '\u4e00' <= c <= '\u9faf' for c in word)
+            elif ai_language.lower() == "korean":
+                return any('\uac00' <= c <= '\ud7af' for c in word)
+            elif ai_language.lower() == "chinese":
+                return any('\u4e00' <= c <= '\u9fff' for c in word)
+            elif ai_language.lower() == "french":
+                import re
+                return bool(re.match(r'^[A-Za-zÀ-ÿ\s\'\-]+$', word.strip()))
+            elif ai_language.lower() == "german":
+                import re
+                return bool(re.match(r'^[A-Za-zÄÖÜäöüß\s\'\-]+$', word.strip()))
+            elif ai_language.lower() == "spanish":
+                import re
+                return bool(re.match(r'^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s\'\-]+$', word.strip()))
+            return True
+
         try:
             # 대화 히스토리를 OpenAI 형식으로 변환
             chat_history = []
@@ -327,34 +349,6 @@ Return JSON format:
                     learn_words.append(learn_word)
                 
                 # --- ai_language 기반 필터링 ---
-                def is_target_language_word(word: str, ai_language: str) -> bool:
-                    if ai_language.lower() == "english":
-                        # 영어: 알파벳/공백/기호만 허용
-                        import re
-                        return bool(re.match(r'^[A-Za-z\s\'\-]+$', word.strip()))
-                    elif ai_language.lower() == "japanese":
-                        # 일본어: 히라가나/가타카나/한자
-                        return any('\u3040' <= c <= '\u30ff' or '\u4e00' <= c <= '\u9faf' for c in word)
-                    elif ai_language.lower() == "korean":
-                        # 한글
-                        return any('\uac00' <= c <= '\ud7af' for c in word)
-                    elif ai_language.lower() == "chinese":
-                        # 한자
-                        return any('\u4e00' <= c <= '\u9fff' for c in word)
-                    elif ai_language.lower() == "french":
-                        # 프랑스어: 알파벳+악센트
-                        import re
-                        return bool(re.match(r'^[A-Za-zÀ-ÿ\s\'\-]+$', word.strip()))
-                    elif ai_language.lower() == "german":
-                        # 독일어: 알파벳+움라우트
-                        import re
-                        return bool(re.match(r'^[A-Za-zÄÖÜäöüß\s\'\-]+$', word.strip()))
-                    elif ai_language.lower() == "spanish":
-                        # 스페인어: 알파벳+악센트
-                        import re
-                        return bool(re.match(r'^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s\'\-]+$', word.strip()))
-                    return True  # 기타 언어는 필터링하지 않음
-                
                 learn_words = [w for w in learn_words if is_target_language_word(w.word, ai_language)]
                 # --- END ai_language 기반 필터링 ---
                 
