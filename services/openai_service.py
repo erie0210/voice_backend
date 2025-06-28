@@ -159,27 +159,28 @@ class OpenAIService:
             else:
                 random_topic = random.choice(self.basic_topics)
             
-            # 단일 호출로 메인 메시지와 폴백 메시지 모두 생성
-            prompt = f"""Generate ONLY a topic-based, engaging first message for a language learning app.
+            # 시스템 지시 수정
+            system_content = """You are MurMur AI language coach. Follow EVERY rule inside 🚫 ABSOLUTE RULES first.
 
-- DO NOT greet, say hello, hi, hey, or similar.
-- DO NOT introduce yourself or mention your name or the user's name.
-- DO NOT say anything like "Let's chat together", "Let's chat", "I'm your teacher", "I'm MurMur", or similar.
-- Start IMMEDIATELY with a question, statement, or topic related to {random_topic}.
-- The message MUST be about {random_topic} and ask the user something about it.
+🚫 ABSOLUTE RULES (highest priority):
+- NO greetings (Hello/Hi/Hey), NO pleasantries, NO "Let's", NO introductions of yourself or the user.
+- Output MUST be valid JSON only. No extra characters before or after the JSON.
+- Start immediately with a topic-based statement or question related to the given topic.
+"""
+            
+            prompt = f"""🚫 ABSOLUTE RULES (highest priority):
+- NO greetings (Hello/Hi/Hey), NO pleasantries, NO "Let's", NO introductions of yourself or the user.
+- Output MUST be valid JSON only. No extra characters before or after the JSON.
+- Start immediately with a topic-based statement or question related to the given topic.
+
+CONTENT RULES:
+- Topic: {random_topic}
 - Make it fun, natural, and use an emoji.
 - Keep under 30 words.
-- Return ONLY the message, no extra text, no greetings, no introductions.
 
-Examples of correct style:
-- "Let's talk about hobbies! 🎨 What do you like to do in your free time?"
-- "Traveling is exciting! ✈️ Where would you love to visit?"
-
-Forbidden examples:
-- "Hello! Let's chat together!"
-- "Hi, I'm MurMur."
-- "Welcome!"
-- "Nice to meet you!"
+Examples of correct style (do NOT copy exactly):
+- "Hobbies time! 🎨 What do you love creating these days?"
+- "Travel thrills! ✈️ Dream destination right now?"
 
 Return JSON format:
 {{
@@ -191,11 +192,12 @@ Return JSON format:
             response = self.client.chat.completions.create(
                 model=self.default_model,
                 messages=[
-                    {"role": "system", "content": "You are MurMur, a cheerful AI language teacher. Generate welcome messages in JSON format."},
+                    {"role": "system", "content": system_content},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=120,  # 150에서 120으로 감소
-                temperature=0.7
+                max_tokens=120,
+                temperature=0.7,
+                response_format={"type": "json_object"}
             )
             
             response_content = response.choices[0].message.content.strip()
@@ -263,45 +265,26 @@ Return JSON format:
 You are a language coach helping a user learn {ai_language}.
 
 GENERAL RULES:
-- ALWAYS start by introducing a topic or asking a question about a topic.
-- Your basic response structure: 1) React to the user's answer, 2) Summarize or highlight one useful expression/word, 3) Continue the conversation with a follow-up question or new topic.
-- ALWAYS include at least 2-3 useful expressions/words in learnWords, all in {ai_language}.
+- TEMPLATE (always follow this order):
+  1️⃣ Very short reaction to the user's last message.
+  2️⃣ Teach 1 useful expression/word/idiom/slang in {ai_language} with a brief {user_language} meaning.
+  3️⃣ Continue the conversation by asking a follow-up question or proposing the next topic.
+  Example (easy): "사진 찍는 걸 좋아하는군요! 사진 찍는 것은 taking photos라고 해요. 어떤 사진을 좋아해요? 📸"
+- ALWAYS start with or explicitly mention a conversational topic (nutrition, travel, hobbies, etc.).
+- DO NOT greet (Hello/Hi/Hey), ask how are you, introduce yourself, or mention names. Absolutely NO greetings or pleasantries.
+- ALWAYS include at least 2–3 learnWords (all in {ai_language}).
 
 LEVEL RULES:
-- easy:
-    - Respond in {user_language}.
-    - Whenever a useful word, expression, idiom, or slang appears, show it in {ai_language} with a simple explanation in {user_language}.
-    - Assume the user is a beginner and explain like to a child.
-    - Example: "사진 찍는 걸 좋아하는거군요! 사진 찍는 것은 taking photos라고 해요. 어떤 사진을 좋아해요?"
-- intermediate:
-    - ALWAYS respond in {ai_language}.
-    - Use an elementary school level of {ai_language}.
-    - Use many idioms, slangs, and phrases, but keep sentences short and simple.
-    - Repeat and rephrase for clarity.
-- advanced:
-    - ALWAYS respond in {ai_language}.
-    - You may use up to 40 words in your response.
-    - Respond at a native level.
-    - Discuss complex topics like culture, politics, or economics in depth.
-    - Use idioms, slangs, phrases, and technical terms actively.
-    - Enable deep, thoughtful discussion and debate.
+- easy: respond in {user_language}, teach expression in {ai_language}. Very simple, child-friendly.
+- intermediate: respond ONLY in {ai_language}, elementary level. Use idioms/slang/phrases.
+- advanced: respond ONLY in {ai_language}, up to 40 words, deep discussion (culture, politics, economics).
 
-STRICTLY FORBIDDEN:
-- DO NOT greet, ask how are you, introduce yourself, or mention any names. Absolutely NO greetings or pleasantries.
-
-RESPONSE FORMAT:
-Respond ONLY in valid JSON:
-{{
-    "response": "your conversational response here (easy/intermediate: 18-20 words max, advanced: up to 40 words)",
-    "learnWords": [
-        {{
-            "word": "...",
-            "meaning": "...",
-            "example": "...",
-            "pronunciation": "..."
-        }}
-    ]
-}}
+STRICT FORMAT:
+Return ONLY valid JSON:
+{
+  "response": "<18-20 words for easy/intermediate, 40 for advanced>",
+  "learnWords": [ … ]
+}
 """
             
             # 시스템 메시지 추가
@@ -399,6 +382,7 @@ Respond ONLY in valid JSON:
                     
                     return clean_response, [default_word]
             
+            # --- 추가 후처리: 응답이 greeting으로 시작하면 제거 ---
         except Exception as e:
             raise Exception(f"채팅 응답 생성 중 오류가 발생했습니다: {str(e)}")
     
