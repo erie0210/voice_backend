@@ -259,7 +259,9 @@ Return JSON format:
                 5. Keep conversations engaging with follow-up questions
 
                 CONVERSATION LEADERSHIP RULES:
-                - YOU must always lead the conversation by introducing topics first
+                - DO NOT greet, introduce yourself, or mention the user's name
+                - DO NOT use any greetings like 'Hello', 'Hi', or 'Hey'
+                - Start IMMEDIATELY with a topic, question, or interesting statement
                 - After responding to user, ALWAYS suggest a new topic or ask an engaging question
                 - Don't wait for users to bring up topics - be proactive
                 - Mix topics between: daily life, interests, experiences, opinions, culture
@@ -271,6 +273,13 @@ Return JSON format:
                 - Be concise but engaging and natural
                 - Prioritize key learning points over lengthy explanations
 
+                CRITICAL LEARNING WORDS REQUIREMENT:
+                - You MUST extract all learnWords ONLY from the target language ({ai_language}).
+                - Do NOT include any words/expressions from the user's native language.
+                - If you introduce a new phrase or idiom in {ai_language}, always include it in learnWords.
+                - NEVER include greetings, introductions, or the user's name in your response or learnWords.
+                - NEVER return an empty learnWords array
+
                 CRITICAL JSON FORMAT REQUIREMENT:
                 You MUST respond in valid JSON format ONLY. Do not include any text outside the JSON.
                 
@@ -279,22 +288,13 @@ Return JSON format:
                     "response": "your conversational response here (18-20 words max)",
                     "learnWords": [
                         {{
-                            "word": "학습할 단어나 표현",
+                            "word": "학습할 단어나 표현 (MUST be in {ai_language})",
                             "meaning": "{user_language}로 된 의미 설명",
                             "example": "예문 (선택사항)",
                             "pronunciation": "발음 (선택사항)"
                         }}
                     ]
                 }}
-
-                CRITICAL LEARNING WORDS REQUIREMENT:
-                - You MUST include at least 1 learning word/expression in EVERY response
-                - Include 1-3 useful words/expressions from your response in the learnWords array
-                - If your response has no clear learning words, choose the most useful word anyway
-                - Focus on words that are key to understanding or commonly used
-                - Provide clear {user_language} meanings
-                - Examples and pronunciation are optional but helpful
-                - NEVER return an empty learnWords array
 
                 Current difficulty: {difficulty_level}
                 User's last message: "{last_user_message}"
@@ -331,14 +331,44 @@ Return JSON format:
                     )
                     learn_words.append(learn_word)
                 
+                # --- ai_language 기반 필터링 ---
+                def is_target_language_word(word: str, ai_language: str) -> bool:
+                    if ai_language.lower() == "english":
+                        # 영어: 알파벳/공백/기호만 허용
+                        import re
+                        return bool(re.match(r'^[A-Za-z\s\'\-]+$', word.strip()))
+                    elif ai_language.lower() == "japanese":
+                        # 일본어: 히라가나/가타카나/한자
+                        return any('\u3040' <= c <= '\u30ff' or '\u4e00' <= c <= '\u9faf' for c in word)
+                    elif ai_language.lower() == "korean":
+                        # 한글
+                        return any('\uac00' <= c <= '\ud7af' for c in word)
+                    elif ai_language.lower() == "chinese":
+                        # 한자
+                        return any('\u4e00' <= c <= '\u9fff' for c in word)
+                    elif ai_language.lower() == "french":
+                        # 프랑스어: 알파벳+악센트
+                        import re
+                        return bool(re.match(r'^[A-Za-zÀ-ÿ\s\'\-]+$', word.strip()))
+                    elif ai_language.lower() == "german":
+                        # 독일어: 알파벳+움라우트
+                        import re
+                        return bool(re.match(r'^[A-Za-zÄÖÜäöüß\s\'\-]+$', word.strip()))
+                    elif ai_language.lower() == "spanish":
+                        # 스페인어: 알파벳+악센트
+                        import re
+                        return bool(re.match(r'^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s\'\-]+$', word.strip()))
+                    return True  # 기타 언어는 필터링하지 않음
+                
+                learn_words = [w for w in learn_words if is_target_language_word(w.word, ai_language)]
+                # --- END ai_language 기반 필터링 ---
+                
                 # 학습 단어가 비어있으면 기본 단어 추가
                 if not learn_words and chat_response:
-                    # 응답에서 첫 번째 의미있는 단어를 학습 단어로 추가
                     words = chat_response.split()
                     for word in words:
-                        # 이모지나 특수문자 제외하고 알파벳 단어 찾기
                         clean_word = ''.join(c for c in word if c.isalpha())
-                        if len(clean_word) > 2:  # 3글자 이상인 단어만
+                        if len(clean_word) > 2 and is_target_language_word(clean_word, ai_language):
                             default_word = LearnWord(
                                 word=clean_word,
                                 meaning=f"({user_language}로) 의미를 찾아보세요",
@@ -367,7 +397,7 @@ Return JSON format:
                     default_learn_words = []
                     for word in words:
                         clean_word = ''.join(c for c in word if c.isalpha())
-                        if len(clean_word) > 2:
+                        if len(clean_word) > 2 and is_target_language_word(clean_word, ai_language):
                             default_word = LearnWord(
                                 word=clean_word,
                                 meaning=f"({user_language}로) 의미를 찾아보세요",
