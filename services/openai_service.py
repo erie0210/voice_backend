@@ -6,6 +6,7 @@ from typing import Optional, List
 from datetime import datetime
 from config.settings import settings
 from models.api_models import ChatMessage
+from services.r2_service import upload_file_to_r2
 
 class OpenAIService:
     def __init__(self):
@@ -198,7 +199,7 @@ Respond naturally and keep the conversation flowing."""
     
     async def text_to_speech(self, text: str, language: str, voice: Optional[str] = None) -> tuple[str, float]:
         """
-        텍스트를 음성으로 변환합니다.
+        텍스트를 음성으로 변환하고 Cloudflare R2에 업로드합니다.
         """
         try:
             # 언어에 따른 음성 선택
@@ -227,9 +228,12 @@ Respond naturally and keep the conversation flowing."""
             file_size = os.path.getsize(temp_path)
             estimated_duration = file_size / 16000  # 대략적인 추정
             
-            # 실제 구현에서는 오디오 파일을 클라우드 스토리지에 업로드하고 URL 반환
-            # 여기서는 로컬 파일 경로를 반환
-            audio_url = f"/audio/{filename}"  # 실제로는 CDN URL이어야 함
+            # Cloudflare R2에 업로드
+            object_name = f"tts/{filename}"
+            audio_url = upload_file_to_r2(temp_path, object_name)
+            
+            # 임시 파일 삭제
+            os.remove(temp_path)
             
             return audio_url, estimated_duration
             
