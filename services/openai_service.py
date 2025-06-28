@@ -128,7 +128,7 @@ class OpenAIService:
                 random_topic = random.choice(self.basic_topics)
             
             # 단일 호출로 메인 메시지와 폴백 메시지 모두 생성
-            prompt = f"""Generate a welcome message for a language learning app in JSON format:
+            prompt = f"""Generate a cheerful, engaging first message for a language learning app.
 
 User's native language: {user_language}
 Target learning language: {ai_language}
@@ -136,18 +136,14 @@ User name: {user_name}
 Difficulty level: {difficulty_level}
 Starting topic: {random_topic}
 
-Difficulty Rules:
-- easy: Respond primarily in {user_language}. Use simple {ai_language} words with {user_language} explanations
-- intermediate: Respond primarily in {ai_language} but use SIMPLE vocabulary only
-- advanced: Speak naturally in {ai_language} only, use native expressions
-
 Requirements:
-1. Be welcoming and enthusiastic
-2. Introduce yourself as MurMur AI teacher  
-3. Use appropriate emoji
-4. Keep under 30 words
-5. Start with the given topic and ask a question
-6. Make conversation feel natural and fun
+- Be welcoming and enthusiastic
+- DO NOT introduce yourself or say 'I'm MurMur' or similar
+- DO NOT use generic greetings like 'Hello' or 'Hi'
+- Use appropriate emoji
+- Keep under 30 words
+- Start IMMEDIATELY with the given topic and ask a question
+- Make conversation feel natural, fun, and engaging from the very first sentence
 
 Return JSON format:
 {{
