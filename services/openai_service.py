@@ -2,10 +2,11 @@ import openai
 import base64
 import os
 import random
-from typing import Optional, List
+import json
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from config.settings import settings
-from models.api_models import ChatMessage
+from models.api_models import ChatMessage, LearnWord
 from services.r2_service import upload_file_to_r2
 
 class OpenAIService:
@@ -136,9 +137,9 @@ Keep it simple, friendly, and under 20 words. Include an emoji."""
             raise Exception(f"환영 메시지 생성 중 오류가 발생했습니다: {str(e)}")
     
     async def generate_chat_response(self, messages: List[ChatMessage], user_language: str, 
-                                   ai_language: str, difficulty_level: str, last_user_message: str) -> str:
+                                   ai_language: str, difficulty_level: str, last_user_message: str) -> tuple[str, List[LearnWord]]:
         """
-        대화 응답을 생성합니다.
+        대화 응답을 생성하고 학습할 단어/표현을 함께 반환합니다.
         """
         try:
             # 대화 히스토리를 OpenAI 형식으로 변환
@@ -149,37 +150,56 @@ Keep it simple, friendly, and under 20 words. Include an emoji."""
                     "content": msg.content
                 })
             
-            # 대화 응답 생성 프롬프트
+            # 대화 응답 생성 프롬프트 (JSON 형태로 응답 요청)
             system_prompt = f"""You are a language coach helping a user learn {ai_language}.
 
-CRITICAL LANGUAGE USAGE RULES:
-- User's native language: {user_language}
-- Target learning language: {ai_language}  
-- Current difficulty: {difficulty_level}
+                CRITICAL LANGUAGE USAGE RULES:
+                - User's native language: {user_language}
+                - Target learning language: {ai_language}  
+                - Current difficulty: {difficulty_level}
 
-DIFFICULTY-BASED LANGUAGE SELECTION:
-- easy: ALWAYS respond primarily in the user's native language. Only introduce simple target language words/phrases with native language explanations.
-- intermediate: ALWAYS respond primarily in the target language but use SIMPLE vocabulary only. Add native language hints when needed.
-- advanced: ALWAYS respond ONLY in the target language using natural, native expressions.
+                DIFFICULTY-BASED LANGUAGE SELECTION:
+                - easy: ALWAYS respond primarily in the user's native language. Only introduce simple target language words/phrases with native language explanations.
+                - intermediate: ALWAYS respond primarily in the target language but use SIMPLE vocabulary only. Add native language hints when needed.
+                - advanced: ALWAYS respond ONLY in the target language using natural, native expressions.
 
-Personality rules:
-- Always be cheerful, playful, and positive
-- Use fun emojis often (😊, 🎉, 🌟, 🤔, 🍕, etc.)
-- Make light jokes, puns, or give fun language facts
-- Encourage mistakes as part of learning
-- React naturally with surprise, humor, or empathy
+                Personality rules:
+                - Always be cheerful, playful, and positive
+                - Use fun emojis often (😊, 🎉, 🌟, 🤔, 🍕, etc.)
+                - Make light jokes, puns, or give fun language facts
+                - Encourage mistakes as part of learning
+                - React naturally with surprise, humor, or empathy
 
-Learning Rules:
-1. ALWAYS recognize attempts to speak the target language
-2. Praise effort first, then provide gentle correction if needed
-3. When correcting, give clear tip and ask to repeat (only ONCE per phrase)
-4. Don't repeat the same correction more than once
-5. Keep conversations engaging with follow-up questions
+                Learning Rules:
+                1. ALWAYS recognize attempts to speak the target language
+                2. Praise effort first, then provide gentle correction if needed
+                3. When correcting, give clear tip and ask to repeat (only ONCE per phrase)
+                4. Don't repeat the same correction more than once
+                5. Keep conversations engaging with follow-up questions
 
-Current difficulty: {difficulty_level}
-User's last message: "{last_user_message}"
+                RESPONSE FORMAT:
+                You must respond in JSON format with the following structure:
+                {{
+                    "response": "your conversational response here",
+                    "learnWords": [
+                        {{
+                            "word": "학습할 단어나 표현",
+                            "meaning": "{user_language}로 된 의미 설명",
+                            "example": "예문 (선택사항)",
+                            "pronunciation": "발음 (선택사항)"
+                        }}
+                    ]
+                }}
 
-Respond naturally and keep the conversation flowing."""
+                - Include 2-4 useful words/expressions from your response in the learnWords array
+                - Focus on words that are key to understanding or commonly used
+                - Provide clear {user_language} meanings
+                - Examples and pronunciation are optional but helpful
+
+                Current difficulty: {difficulty_level}
+                User's last message: "{last_user_message}"
+
+                Respond naturally and keep the conversation flowing."""
             
             # 시스템 메시지 추가
             messages_for_api = [{"role": "system", "content": system_prompt}] + chat_history
@@ -188,11 +208,33 @@ Respond naturally and keep the conversation flowing."""
                 model="gpt-4o-mini",
                 messages=messages_for_api,
                 max_tokens=200,
-                temperature=0.8
+                temperature=0.7
             )
             
-            chat_response = response.choices[0].message.content.strip()
-            return chat_response
+            response_content = response.choices[0].message.content.strip()
+            
+            # JSON 응답 파싱
+            try:
+                parsed_response = json.loads(response_content)
+                chat_response = parsed_response.get("response", "")
+                learn_words_data = parsed_response.get("learnWords", [])
+                
+                # LearnWord 객체로 변환
+                learn_words = []
+                for word_data in learn_words_data:
+                    learn_word = LearnWord(
+                        word=word_data.get("word", ""),
+                        meaning=word_data.get("meaning", ""),
+                        example=word_data.get("example"),
+                        pronunciation=word_data.get("pronunciation")
+                    )
+                    learn_words.append(learn_word)
+                
+                return chat_response, learn_words
+                
+            except json.JSONDecodeError:
+                # JSON 파싱 실패 시 텍스트 응답만 반환
+                return response_content, []
             
         except Exception as e:
             raise Exception(f"채팅 응답 생성 중 오류가 발생했습니다: {str(e)}")

@@ -53,6 +53,13 @@ class ChatMessage(BaseModel):
     isUser: bool
     timestamp: datetime
 
+# 학습 단어/표현 모델
+class LearnWord(BaseModel):
+    word: str  # 학습할 단어 또는 표현
+    meaning: str  # 사용자 언어로 된 의미
+    example: Optional[str] = None  # 예문 (선택사항)
+    pronunciation: Optional[str] = None  # 발음 (선택사항)
+
 # 채팅 응답 API 모델들
 class ChatResponseRequest(BaseModel):
     messages: List[ChatMessage]
@@ -64,6 +71,7 @@ class ChatResponseRequest(BaseModel):
 class ChatResponseData(BaseModel):
     response: str
     practiceExpression: Optional[str] = None
+    learnWords: List[LearnWord] = []  # 학습할 단어/표현 목록
 
 class ChatResponseResponse(BaseModel):
     success: bool
