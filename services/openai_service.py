@@ -162,25 +162,29 @@ class OpenAIService:
             # 단일 호출로 메인 메시지와 폴백 메시지 모두 생성
             prompt = f"""Generate ONLY a topic-based, engaging first message for a language learning app.
 
-- DO NOT greet, ask how are you, introduce yourself, or mention any names. Absolutely NO greetings or pleasantries.
-- You MUST include at least 2-3 useful expressions/words in the target language ({ai_language}) in learnWords. Never send only one.
-- Your response MUST be about the topic: {random_topic}. Ask a question or make a statement about this topic, and keep the conversation going about it.
+- DO NOT greet, say hello, hi, hey, or similar.
+- DO NOT introduce yourself or mention your name or the user's name.
+- DO NOT say anything like "Let's chat together", "Let's chat", "I'm your teacher", "I'm MurMur", or similar.
+- Start IMMEDIATELY with a question, statement, or topic related to {random_topic}.
+- The message MUST be about {random_topic} and ask the user something about it.
 - Make it fun, natural, and use an emoji.
 - Keep under 30 words.
 - Return ONLY the message, no extra text, no greetings, no introductions.
 
+Examples of correct style:
+- "Let's talk about hobbies! 🎨 What do you like to do in your free time?"
+- "Traveling is exciting! ✈️ Where would you love to visit?"
+
+Forbidden examples:
+- "Hello! Let's chat together!"
+- "Hi, I'm MurMur."
+- "Welcome!"
+- "Nice to meet you!"
+
 Return JSON format:
 {{
     "message": "main welcome message here",
-    "fallback": "simple English fallback message here (under 20 words, no greetings, no introductions)",
-    "learnWords": [
-        {{
-            "word": "...",
-            "meaning": "...",
-            "example": "...",
-            "pronunciation": "..."
-        }}
-    ]
+    "fallback": "simple English fallback message here (under 20 words, no greetings, no introductions)"
 }}
 """
             
@@ -270,13 +274,17 @@ LEVEL RULES:
     - Assume the user is a beginner and explain like to a child.
     - Example: "사진 찍는 걸 좋아하는거군요! 사진 찍는 것은 taking photos라고 해요. 어떤 사진을 좋아해요?"
 - intermediate:
-    - Respond in {ai_language} at an elementary school level.
+    - ALWAYS respond in {ai_language}.
+    - Use an elementary school level of {ai_language}.
     - Use many idioms, slangs, and phrases, but keep sentences short and simple.
     - Repeat and rephrase for clarity.
 - advanced:
-    - Respond in {ai_language} at a native level.
-    - Discuss complex topics like culture, politics, or economics.
+    - ALWAYS respond in {ai_language}.
+    - You may use up to 40 words in your response.
+    - Respond at a native level.
+    - Discuss complex topics like culture, politics, or economics in depth.
     - Use idioms, slangs, phrases, and technical terms actively.
+    - Enable deep, thoughtful discussion and debate.
 
 STRICTLY FORBIDDEN:
 - DO NOT greet, ask how are you, introduce yourself, or mention any names. Absolutely NO greetings or pleasantries.
@@ -284,7 +292,7 @@ STRICTLY FORBIDDEN:
 RESPONSE FORMAT:
 Respond ONLY in valid JSON:
 {{
-    "response": "your conversational response here (18-20 words max)",
+    "response": "your conversational response here (easy/intermediate: 18-20 words max, advanced: up to 40 words)",
     "learnWords": [
         {{
             "word": "...",
