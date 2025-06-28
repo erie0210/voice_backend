@@ -160,28 +160,23 @@ class OpenAIService:
                 random_topic = random.choice(self.basic_topics)
             
             # 단일 호출로 메인 메시지와 폴백 메시지 모두 생성
-            prompt = f"""Generate a cheerful, engaging first message for a language learning app.
+            prompt = f"""Generate ONLY a topic-based, engaging first message for a language learning app.
 
-User's native language: {user_language}
-Target learning language: {ai_language}
-User name: {user_name}
-Difficulty level: {difficulty_level}
-Starting topic: {random_topic}
-
-Requirements:
-- Be welcoming and enthusiastic
-- DO NOT introduce yourself or say 'I'm MurMur' or similar
-- DO NOT use generic greetings like 'Hello' or 'Hi'
-- Use appropriate emoji
-- Keep under 30 words
-- Start IMMEDIATELY with the given topic and ask a question
-- Make conversation feel natural, fun, and engaging from the very first sentence
+- DO NOT greet, say hello, hi, hey, or similar.
+- DO NOT introduce yourself or mention your name or the user's name.
+- DO NOT say anything like "Let's chat together" or "I'm your teacher".
+- Start IMMEDIATELY with a question, statement, or topic related to {random_topic}.
+- The message MUST be about {random_topic} and ask the user something about it.
+- Make it fun, natural, and use an emoji.
+- Keep under 30 words.
+- Return ONLY the message, no extra text, no greetings, no introductions.
 
 Return JSON format:
 {{
     "message": "main welcome message here",
-    "fallback": "simple English fallback message here (under 20 words)"
-}}"""
+    "fallback": "simple English fallback message here (under 20 words, no greetings, no introductions)"
+}}
+"""
             
             response = self.client.chat.completions.create(
                 model=self.default_model,
