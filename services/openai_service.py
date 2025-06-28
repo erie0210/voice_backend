@@ -274,12 +274,14 @@ STYLE BY LEVEL
 - intermediate: 
   • Reply ONLY in {ai_language}; act like a very kind elementary school teacher (grades 1-3)
   • Use elementary level {ai_language} with good native expressions that kids can learn
+  • Paraphrase the user's message into a more natural, native {ai_language} expression and show it
   • Correct their expressions to better, more natural native phrases
   • Explain simply and kindly, use easy words
   • Focus on teaching good expressions children should know
 
 - advanced: 
   • Reply ONLY in {ai_language}; act like a native {ai_language} speaker at middle school level
+  • Paraphrase the user's message into a more sophisticated, native {ai_language} expression and show it
   • Engage in deep discussions on various topics (culture, society, academics, etc.)
   • Correct pronunciation, word order, and expressions to high-level native usage
   • Use sophisticated expressions and help them use advanced vocabulary
@@ -312,7 +314,7 @@ Current difficulty: {difficulty_level}
             response = self.client.chat.completions.create(
                 model=self.default_model,
                 messages=messages_for_api,
-                max_tokens=150,
+                max_tokens=200,  # 150에서 200으로 증가 - JSON이 잘리지 않도록
                 temperature=0.7,
                 response_format={"type": "json_object"}  # JSON 형태 강제
             )
@@ -336,9 +338,7 @@ Current difficulty: {difficulty_level}
                     )
                     learn_words.append(learn_word)
                 
-                # --- ai_language 기반 필터링 ---
                 learn_words = [w for w in learn_words if is_target_language_word(w.word, ai_language)]
-                # --- END ai_language 기반 필터링 ---
                 
                 # 학습 단어가 비어있으면 기본 단어 추가
                 if not learn_words and chat_response:
@@ -358,16 +358,43 @@ Current difficulty: {difficulty_level}
                 return chat_response, learn_words
                 
             except json.JSONDecodeError:
-                # JSON 파싱 실패 시 텍스트에서 response 부분 추출 시도
-                logger.warning(f"JSON 파싱 실패, 텍스트 추출 시도: {response_content[:100]}...")
+                # JSON 파싱 실패 시 더 강력한 텍스트 추출
+                logger.warning(f"JSON 파싱 실패, 강화된 텍스트 추출 시도: {response_content[:200]}...")
                 
-                # "response": "내용" 패턴 찾기
+                # 1. "response": "내용" 패턴 찾기 (개선된 정규식)
                 import re
-                response_match = re.search(r'"response"\s*:\s*"([^"]+)"', response_content)
+                response_patterns = [
+                    r'"response"\s*:\s*"([^"]+(?:\\.[^"]*)*)"',  # 기본 패턴
+                    r'"response"\s*:\s*"([^"]*[^\\])"',  # 이스케이프 문자 고려
+                    r'response["\']?\s*:\s*["\']([^"\']+)["\']'  # 따옴표 변형 고려
+                ]
                 
-                if response_match:
-                    extracted_response = response_match.group(1)
-                    logger.info(f"응답 텍스트 추출 성공: {extracted_response}")
+                extracted_response = None
+                for pattern in response_patterns:
+                    match = re.search(pattern, response_content, re.DOTALL)
+                    if match:
+                        extracted_response = match.group(1)
+                        break
+                
+                # 2. 패턴 매칭 실패 시, JSON 시작 부분에서 response 값 추출 시도
+                if not extracted_response:
+                    # {"response":"내용 형태에서 내용 부분만 추출
+                    if response_content.startswith('{"response":"'):
+                        start_idx = len('{"response":"')
+                        # 다음 " 또는 ', 까지 찾기
+                        content_part = response_content[start_idx:]
+                        end_markers = ['"', "',", '",']
+                        min_end = len(content_part)
+                        for marker in end_markers:
+                            end_idx = content_part.find(marker)
+                            if end_idx != -1 and end_idx < min_end:
+                                min_end = end_idx
+                        
+                        if min_end < len(content_part):
+                            extracted_response = content_part[:min_end]
+                
+                if extracted_response:
+                    logger.info(f"강화된 응답 텍스트 추출 성공: {extracted_response[:100]}...")
                     
                     # 기본 학습 단어 생성
                     words = extracted_response.split()
@@ -382,14 +409,14 @@ Current difficulty: {difficulty_level}
                                 pronunciation=None
                             )
                             default_learn_words.append(default_word)
-                            break
+                            if len(default_learn_words) >= 2:  # 최대 2개까지
+                                break
                     
                     return extracted_response, default_learn_words
                 else:
-                    # 패턴 매칭 실패 시 전체 텍스트에서 JSON 부분 제거
-                    logger.warning("응답 패턴 매칭 실패, 기본 응답 생성")
+                    # 모든 추출 시도 실패
+                    logger.warning("모든 응답 추출 시도 실패, 기본 응답 생성")
                     
-                    # JSON 형태의 텍스트를 제거하고 깔끔한 응답 생성
                     clean_response = "죄송해요, 응답을 생성하는 중에 문제가 발생했어요. 다시 말씀해 주시겠어요? 😊"
                     
                     default_word = LearnWord(
