@@ -185,7 +185,7 @@ Respond naturally and keep the conversation flowing."""
             messages_for_api = [{"role": "system", "content": system_prompt}] + chat_history
             
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=messages_for_api,
                 max_tokens=200,
                 temperature=0.8
