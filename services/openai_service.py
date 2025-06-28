@@ -311,15 +311,68 @@ Current difficulty: {difficulty_level}
             # 시스템 메시지 추가
             messages_for_api = [{"role": "system", "content": system_prompt}] + chat_history
             
-            response = self.client.chat.completions.create(
-                model=self.default_model,
-                messages=messages_for_api,
-                max_tokens=200,  # 150에서 200으로 증가 - JSON이 잘리지 않도록
-                temperature=0.7,
-                response_format={"type": "json_object"}  # JSON 형태 강제
-            )
+            # 요청 파라미터 로깅
+            logger.info(f"=== OpenAI API 요청 시작 ===")
+            logger.info(f"모델: {self.default_model}")
+            logger.info(f"메시지 개수: {len(messages_for_api)}")
+            logger.info(f"시스템 프롬프트 길이: {len(system_prompt)}")
+            logger.info(f"사용자 마지막 메시지: {last_user_message}")
+            logger.info(f"난이도: {difficulty_level}, 언어: {user_language} -> {ai_language}")
             
-            response_content = response.choices[0].message.content.strip()
+            # 프롬프트 내용 상세 로깅
+            for i, msg in enumerate(messages_for_api):
+                logger.info(f"메시지 {i+1} ({msg['role']}): {msg['content'][:200]}...")
+            
+            try:
+                logger.info("OpenAI API 호출 시작...")
+                response = self.client.chat.completions.create(
+                    model=self.default_model,
+                    messages=messages_for_api,
+                    max_tokens=200,  # 150에서 200으로 증가 - JSON이 잘리지 않도록
+                    temperature=0.7,
+                    response_format={"type": "json_object"}  # JSON 형태 강제
+                )
+                logger.info("OpenAI API 호출 완료")
+                
+                # 응답 상세 정보 로깅
+                logger.info(f"=== OpenAI API 응답 분석 ===")
+                logger.info(f"응답 객체 타입: {type(response)}")
+                
+                if hasattr(response, 'choices') and response.choices:
+                    logger.info(f"choices 개수: {len(response.choices)}")
+                    choice = response.choices[0]
+                    logger.info(f"첫 번째 choice finish_reason: {getattr(choice, 'finish_reason', 'N/A')}")
+                    
+                    if hasattr(choice, 'message'):
+                        message = choice.message
+                        logger.info(f"메시지 객체 타입: {type(message)}")
+                        logger.info(f"메시지 role: {getattr(message, 'role', 'N/A')}")
+                        content = getattr(message, 'content', None)
+                        logger.info(f"메시지 content 타입: {type(content)}")
+                        logger.info(f"메시지 content 값: {repr(content)}")
+                    else:
+                        logger.error("choice에 message 속성이 없음")
+                else:
+                    logger.error("응답에 choices가 없거나 비어있음")
+                
+                # 사용량 정보 로깅
+                if hasattr(response, 'usage'):
+                    usage = response.usage
+                    logger.info(f"토큰 사용량 - prompt: {getattr(usage, 'prompt_tokens', 'N/A')}, completion: {getattr(usage, 'completion_tokens', 'N/A')}, total: {getattr(usage, 'total_tokens', 'N/A')}")
+                
+            except Exception as api_error:
+                logger.error(f"OpenAI API 호출 중 예외 발생: {type(api_error).__name__}: {str(api_error)}")
+                raise api_error
+            
+            response_content = response.choices[0].message.content
+            
+            # 응답 내용 안전성 검사
+            if response_content is None:
+                logger.error("OpenAI 응답 content가 None입니다")
+                response_content = ""
+            else:
+                response_content = response_content.strip()
+            
             logger.info(f"OpenAI 응답 원본 (길이: {len(response_content)}): {response_content}")
             
             # JSON 응답 파싱
