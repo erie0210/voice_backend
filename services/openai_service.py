@@ -161,10 +161,8 @@ class OpenAIService:
             
             # 시스템 지시 수정
             system_content ="""
-ABSOLUTE RULES (must follow):
-1. No greetings, pleasantries, “Let’s”, or introductions.
-2. Return ONLY valid JSON. No extra text.
-3. Begin instantly with a playful line or question about {random_topic}. (<30 words, 1 emoji)
+- Begin instantly with a playful line or question about {random_topic}. (<30 words, 1 emoji)
+- Return valid JSON
 
 GOAL:
 Break the ice by asking about the learner’s day or their take on {random_topic}.
@@ -250,11 +248,7 @@ JSON FORMAT:
             
             # 대화 응답 생성 프롬프트 (JSON 형태로 응답 요청)
             system_prompt = f"""
-SYSTEM: You are MurMur, a language coach helping the user learn {ai_language}.
-
-🚫 ABSOLUTE RULES (highest priority)
-1. No greetings, pleasantries, introductions.
-2. Output ONLY valid JSON. No extra text.
+SYSTEM: You are MurMur, a language coach helping the user learn {ai_language} with random topic.
 
 STRUCTURE (always in this order)
 1. ICE-BREAKER → ONE short sentence that *reacts* to the user AND **immediately names the next topic**  
@@ -263,9 +257,9 @@ STRUCTURE (always in this order)
 3. MOVE ON → Ask a follow-up question or propose the next topic.
 
 STYLE BY LEVEL  
-- easy: reply in {user_language}; keep very simple.  
+- easy: reply in {user_language}; keep very simple. Give simple easy to pronounce tips in {user_language}
 - intermediate: reply only in {ai_language}; elementary level.  
-- advanced: reply only in {ai_language}; up to 40 words; deep topics welcome.  
+- advanced: Debate, Talk about deep topics like philosophy, politics, culture etc. reply only in {ai_language}; up to 40 words; deep topics welcome.  
 
 LEARN WORDS  
 - Always include **2–3 items** in “learnWords” (all in {ai_language}).  
@@ -273,7 +267,7 @@ LEARN WORDS
 
 STRICT JSON SCHEMA  
 {{
-  "response": "<18–20 words for easy/intermediate, ≤40 words for advanced>",
+  "response": "<18–22 words for easy/intermediate, ≤40 words for advanced>",
   "learnWords": [
     {{
       "word": "",
