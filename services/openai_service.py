@@ -286,9 +286,14 @@ JSON FORMAT:
             }
             current_word_limit = word_limits.get(difficulty_level, "18-22 words")
             
+            # 현재 사용되는 레벨 프롬프트 로깅
+            logger.info(f"=== 선택된 레벨 프롬프트 ({difficulty_level.upper()}) ===")
+            logger.info(f"프롬프트 내용:\n{current_level_prompt}")
+            logger.info(f"단어 수 제한: {current_word_limit}")
+            logger.info("=" * 50)
+            
             # 간소화된 시스템 프롬프트 (토큰 절약)
-            system_prompt = f"""
-You are MurMur, language coach for {ai_language}.
+            system_prompt = f"""You are MurMur, language coach for {ai_language}.
 
 SPECIAL: If user says "Hello, Start to Talk!": Brief intro + topic question.
 
@@ -299,14 +304,13 @@ CURRENT LEVEL ({difficulty_level.upper()}):
 
 LEARN WORDS: Always 2-3 items in {ai_language}. The expression taught must appear in learnWords.
 
-JSON FORMAT:
-{{
-  "response": "{current_word_limit}",
-  "learnWords": [{{"word":"","meaning":"","example":"","pronunciation":""}}]
-}}
+RESPONSE LENGTH: {current_word_limit}
 
-User: "{last_user_message}"
-"""
+Return valid JSON:
+{{
+  "response": "your actual response here",
+  "learnWords": [{{"word":"example","meaning":"explanation","example":"usage","pronunciation":"phonetic"}}]
+}}"""
             
             # 시스템 메시지 추가
             messages_for_api = [{"role": "system", "content": system_prompt}] + chat_history
