@@ -3,8 +3,9 @@ import base64
 import os
 import random
 import json
+import time
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from config.settings import settings
 from models.api_models import ChatMessage, LearnWord
 from services.r2_service import upload_file_to_r2
@@ -13,6 +14,17 @@ class OpenAIService:
     def __init__(self):
         openai.api_key = settings.OPENAI_API_KEY
         self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        
+        # 기본 모델 설정 (설정 파일에서 가져옴)
+        self.default_model = settings.OPENAI_DEFAULT_MODEL
+        
+        # 비용 최적화를 위한 캐시
+        self._translation_cache: Dict[str, str] = {}
+        self._api_key_cache: Dict[str, Dict] = {}
+        self._welcome_message_cache: Dict[str, tuple] = {}
+        
+        # 캐시 만료 시간 (초)
+        self.cache_expiry = 3600  # 1시간
         
         # 언어별 음성 설정
         self.voice_mapping = {
@@ -36,30 +48,68 @@ class OpenAIService:
             "science", "politics", "economics", "history", "psychology"
         ]
     
+    def _get_cache_key(self, *args) -> str:
+        """캐시 키 생성"""
+        return "_".join(str(arg) for arg in args)
+    
+    def _is_cache_valid(self, timestamp: float) -> bool:
+        """캐시 유효성 검사"""
+        return time.time() - timestamp < self.cache_expiry
+    
+    def _clear_expired_cache(self):
+        """만료된 캐시 정리"""
+        current_time = time.time()
+        
+        # 번역 캐시 정리
+        expired_keys = [key for key, value in self._translation_cache.items() 
+                       if isinstance(value, dict) and not self._is_cache_valid(value.get('timestamp', 0))]
+        for key in expired_keys:
+            del self._translation_cache[key]
+        
+        # API 키 캐시 정리
+        expired_keys = [key for key, value in self._api_key_cache.items() 
+                       if not self._is_cache_valid(value.get('timestamp', 0))]
+        for key in expired_keys:
+            del self._api_key_cache[key]
+    
     async def translate_text(self, text: str, from_language: str, to_language: str) -> str:
         """
-        OpenAI를 사용하여 텍스트를 번역합니다.
+        OpenAI를 사용하여 텍스트를 번역합니다. (캐싱 적용)
         """
         try:
-            # 번역 프롬프트 템플릿 (API 명세서 기준)
-            prompt = f"""You are a professional translator.
-Translate the given {from_language} text to natural {to_language}.
-Only provide the {to_language} translation without any additional explanation or comments.
-
-Text to translate: "{text}"
-"""
+            # 캐시 키 생성
+            cache_key = self._get_cache_key(text, from_language, to_language)
+            
+            # 캐시된 번역이 있는지 확인
+            if cache_key in self._translation_cache:
+                cached_data = self._translation_cache[cache_key]
+                if isinstance(cached_data, dict) and self._is_cache_valid(cached_data.get('timestamp', 0)):
+                    return cached_data['translation']
+            
+            # 만료된 캐시 정리
+            self._clear_expired_cache()
+            
+            # 번역 프롬프트 템플릿 (API 명세서 기준) - 간결화
+            prompt = f"Translate from {from_language} to {to_language}: {text}"
             
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=self.default_model,
                 messages=[
-                    {"role": "system", "content": "You are a professional translator. Provide accurate, natural translations without any additional explanations."},
+                    {"role": "system", "content": f"You are a translator. Translate {from_language} to {to_language} accurately and concisely."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=1000,
-                temperature=0.3  # 번역의 일관성을 위해 낮은 temperature 사용
+                max_tokens=300,  # 1000에서 300으로 대폭 감소
+                temperature=0.1  # 0.3에서 0.1로 감소하여 일관성 향상 및 토큰 절약
             )
             
             translated_text = response.choices[0].message.content.strip()
+            
+            # 결과를 캐시에 저장
+            self._translation_cache[cache_key] = {
+                'translation': translated_text,
+                'timestamp': time.time()
+            }
+            
             return translated_text
             
         except Exception as e:
@@ -77,7 +127,8 @@ Text to translate: "{text}"
             else:
                 random_topic = random.choice(self.basic_topics)
             
-            prompt = f"""Generate a cheerful, encouraging first greeting for a language learning app.
+            # 단일 호출로 메인 메시지와 폴백 메시지 모두 생성
+            prompt = f"""Generate a welcome message for a language learning app in JSON format:
 
 User's native language: {user_language}
 Target learning language: {ai_language}
@@ -98,38 +149,40 @@ Requirements:
 5. Start with the given topic and ask a question
 6. Make conversation feel natural and fun
 
-Provide ONLY the welcome message without any additional explanation."""
+Return JSON format:
+{{
+    "message": "main welcome message here",
+    "fallback": "simple English fallback message here (under 20 words)"
+}}"""
             
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=self.default_model,
                 messages=[
-                    {"role": "system", "content": "You are MurMur, a cheerful AI language teacher. Generate welcome messages according to difficulty levels."},
+                    {"role": "system", "content": "You are MurMur, a cheerful AI language teacher. Generate welcome messages in JSON format."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=150,
+                max_tokens=120,  # 150에서 120으로 감소
                 temperature=0.7
             )
             
-            welcome_message = response.choices[0].message.content.strip()
+            response_content = response.choices[0].message.content.strip()
             
-            # 폴백 메시지 생성 (영어)
-            fallback_prompt = f"""Generate a simple English welcome message for a language learning app.
-User name: {user_name}
-Topic: {random_topic}
-
-Keep it simple, friendly, and under 20 words. Include an emoji."""
-            
-            fallback_response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Generate simple, friendly English welcome messages."},
-                    {"role": "user", "content": fallback_prompt}
-                ],
-                max_tokens=100,
-                temperature=0.7
-            )
-            
-            fallback_message = fallback_response.choices[0].message.content.strip()
+            # JSON 파싱 시도
+            try:
+                parsed_response = json.loads(response_content)
+                welcome_message = parsed_response.get("message", "")
+                fallback_message = parsed_response.get("fallback", "")
+                
+                # 기본값 설정 (JSON 파싱 성공했지만 내용이 비어있는 경우)
+                if not welcome_message:
+                    welcome_message = f"Hi {user_name}! 😊 I'm MurMur, your AI teacher. Let's talk about {random_topic}!"
+                if not fallback_message:
+                    fallback_message = f"Hi {user_name}! 😊 Let's practice together!"
+                    
+            except json.JSONDecodeError:
+                # JSON 파싱 실패 시 기본 메시지 사용
+                welcome_message = f"Hi {user_name}! 😊 I'm MurMur, your AI teacher. Let's talk about {random_topic}!"
+                fallback_message = f"Hi {user_name}! 😊 Let's practice together!"
             
             return welcome_message, fallback_message
             
@@ -222,7 +275,7 @@ Keep it simple, friendly, and under 20 words. Include an emoji."""
             messages_for_api = [{"role": "system", "content": system_prompt}] + chat_history
             
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=self.default_model,
                 messages=messages_for_api,
                 max_tokens=150,
                 temperature=0.7
@@ -335,9 +388,9 @@ Keep it simple, friendly, and under 20 words. Include an emoji."""
         """
         try:
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=5
+                model=self.default_model,
+                messages=[{"role": "user", "content": "Hi"}],
+                max_tokens=1  # 5에서 1로 감소 - 최소한의 토큰만 사용
             )
             return True
         except Exception:

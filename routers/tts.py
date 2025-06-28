@@ -102,9 +102,9 @@ async def validate_openai_key(request: ValidateKeyRequest):
             test_client = openai.OpenAI(api_key=request.apiKey)
             
             response = test_client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=5
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": "Hi"}],
+                max_tokens=1
             )
             
             is_valid = True
