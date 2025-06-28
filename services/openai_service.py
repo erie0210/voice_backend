@@ -238,74 +238,36 @@ JSON FORMAT:
             return True
 
         try:
-            # 대화 히스토리를 OpenAI 형식으로 변환
+            # 대화 히스토리를 OpenAI 형식으로 변환 (토큰 절약을 위해 5개로 줄임)
             chat_history = []
-            for msg in messages[-10:]:  # 최근 10개 메시지만 사용
+            for msg in messages[-5:]:  # 최근 5개 메시지만 사용 (10개에서 줄임)
                 chat_history.append({
                     "role": msg.role,
                     "content": msg.content
                 })
             
-            # 대화 응답 생성 프롬프트 (JSON 형태로 응답 요청)
+            # 간소화된 시스템 프롬프트 (토큰 절약)
             system_prompt = f"""
-SYSTEM: You are MurMur, a language coach helping the user learn {ai_language}.
+You are MurMur, language coach for {ai_language}.
 
-SPECIAL CASE: If user's message is "Hello, Start to Talk!" or similar greeting to start:
-- Give a very brief self-introduction (just "I'm MurMur, your language coach! 😊")
-- Immediately follow with ice-breaking topic question
-- Example: "I'm MurMur, your language coach! 😊 Let's talk about hobbies! What do you love doing?"
+SPECIAL: If user says "Hello, Start to Talk!": Brief intro + topic question.
 
-NORMAL CONVERSATION STRUCTURE (always in this order):
-1. ICE-BREAKER → ONE short sentence that *reacts* to the user AND **immediately names the next topic**  
-   • Example: "Travel time! ✈️ 어떤 나라에 가보고 싶어요?"  
-2. TEACH → Show 1 useful {ai_language} expression with a brief {user_language} meaning.  
-3. Ask more about the user answer.
+STRUCTURE: 1) React to user 2) Teach 1 {ai_language} expression 3) Ask more
 
-STYLE BY LEVEL  
-- easy: 
-  • Reply in {user_language}; act like a native {ai_language} speaker who speaks {user_language} fluently
-  • UNDERSTAND by pronunciation, not exact meaning - if they try to say something, figure out what they meant
-  • PRAISE A LOT even for tiny attempts - be super encouraging like talking to a baby
-  • Use very simple words and encourage them to use easy expressions
-  • Take what they said in {user_language} and show them "You can say this in {ai_language}: [expression]"
-  • Give pronunciation tips and useful expressions
-  • Example reaction: "와! 정말 잘했어요! 👏 '좋아해요'는 영어로 'I like it'이라고 해요. 발음은 '아이 라이크 잇'이에요!"
+LEVELS:
+- easy: Reply in {user_language}. Show {ai_language} expressions. Praise a lot like talking to baby.
+- intermediate: Reply in {ai_language}. Elementary level. Paraphrase user's message to natural {ai_language}.
+- advanced: Reply in {ai_language}. Middle school level. Paraphrase to sophisticated {ai_language}. Deep topics OK (up to 40 words).
 
-- intermediate: 
-  • Reply ONLY in {ai_language}; act like a very kind elementary school teacher (grades 1-3)
-  • Use elementary level {ai_language} with good native expressions that kids can learn
-  • Paraphrase the user's message into a more natural, native {ai_language} expression and show it
-  • Correct their expressions to better, more natural native phrases
-  • Explain simply and kindly, use easy words
-  • Focus on teaching good expressions children should know
+LEARN WORDS: Always 2-3 items in {ai_language}.
 
-- advanced: 
-  • Reply ONLY in {ai_language}; act like a native {ai_language} speaker at middle school level
-  • Paraphrase the user's message into a more sophisticated, native {ai_language} expression and show it
-  • Engage in deep discussions on various topics (culture, society, academics, etc.)
-  • Correct pronunciation, word order, and expressions to high-level native usage
-  • Use sophisticated expressions and help them use advanced vocabulary
-  • Challenge them with complex topics and nuanced language
-
-LEARN WORDS  
-- Always include **2–3 items** in "learnWords" (all in {ai_language}).  
-- The expression taught must appear in "learnWords".
-
-STRICT JSON SCHEMA  
+JSON FORMAT:
 {{
-  "response": "<18–22 words for easy/intermediate, ≤40 words for advanced>",
-  "learnWords": [
-    {{
-      "word": "",
-      "meaning": "",
-      "example": "",
-      "pronunciation": ""
-    }}
-  ]
+  "response": "18-22 words (40 for advanced)",
+  "learnWords": [{{"word":"","meaning":"","example":"","pronunciation":""}}]
 }}
 
-Current user message: "{last_user_message}"
-Current difficulty: {difficulty_level}
+User: "{last_user_message}" | Level: {difficulty_level}
 """
             
             # 시스템 메시지 추가
@@ -328,7 +290,7 @@ Current difficulty: {difficulty_level}
                 response = self.client.chat.completions.create(
                     model=self.default_model,
                     messages=messages_for_api,
-                    max_tokens=200,  # 150에서 200으로 증가 - JSON이 잘리지 않도록
+                    max_tokens=300,  # 200에서 300으로 증가
                     temperature=0.7,
                     response_format={"type": "json_object"}  # JSON 형태 강제
                 )
@@ -341,7 +303,12 @@ Current difficulty: {difficulty_level}
                 if hasattr(response, 'choices') and response.choices:
                     logger.info(f"choices 개수: {len(response.choices)}")
                     choice = response.choices[0]
-                    logger.info(f"첫 번째 choice finish_reason: {getattr(choice, 'finish_reason', 'N/A')}")
+                    finish_reason = getattr(choice, 'finish_reason', 'N/A')
+                    logger.info(f"첫 번째 choice finish_reason: {finish_reason}")
+                    
+                    # finish_reason이 length인 경우 특별 경고
+                    if finish_reason == "length":
+                        logger.warning("⚠️ 토큰 한계 도달! 응답이 잘렸을 수 있습니다. max_tokens 증가 필요.")
                     
                     if hasattr(choice, 'message'):
                         message = choice.message
@@ -349,7 +316,7 @@ Current difficulty: {difficulty_level}
                         logger.info(f"메시지 role: {getattr(message, 'role', 'N/A')}")
                         content = getattr(message, 'content', None)
                         logger.info(f"메시지 content 타입: {type(content)}")
-                        logger.info(f"메시지 content 값: {repr(content)}")
+                        logger.info(f"메시지 content 값 (처음 200자): {repr(content[:200]) if content else 'None'}")
                     else:
                         logger.error("choice에 message 속성이 없음")
                 else:
@@ -358,7 +325,14 @@ Current difficulty: {difficulty_level}
                 # 사용량 정보 로깅
                 if hasattr(response, 'usage'):
                     usage = response.usage
-                    logger.info(f"토큰 사용량 - prompt: {getattr(usage, 'prompt_tokens', 'N/A')}, completion: {getattr(usage, 'completion_tokens', 'N/A')}, total: {getattr(usage, 'total_tokens', 'N/A')}")
+                    prompt_tokens = getattr(usage, 'prompt_tokens', 'N/A')
+                    completion_tokens = getattr(usage, 'completion_tokens', 'N/A')
+                    total_tokens = getattr(usage, 'total_tokens', 'N/A')
+                    logger.info(f"토큰 사용량 - prompt: {prompt_tokens}, completion: {completion_tokens}, total: {total_tokens}")
+                    
+                    # 프롬프트 토큰이 너무 많으면 경고
+                    if isinstance(prompt_tokens, int) and prompt_tokens > 600:
+                        logger.warning(f"⚠️ 프롬프트 토큰이 너무 많습니다 ({prompt_tokens}). 시스템 프롬프트나 대화 히스토리 단축 필요.")
                 
             except Exception as api_error:
                 logger.error(f"OpenAI API 호출 중 예외 발생: {type(api_error).__name__}: {str(api_error)}")
@@ -372,6 +346,10 @@ Current difficulty: {difficulty_level}
                 response_content = ""
             else:
                 response_content = response_content.strip()
+                
+                # 공백만 있는 응답 감지
+                if not response_content:
+                    logger.warning("OpenAI 응답이 공백/줄바꿈만 포함하고 있습니다 (토큰 부족 의심)")
             
             logger.info(f"OpenAI 응답 원본 (길이: {len(response_content)}): {response_content}")
             
