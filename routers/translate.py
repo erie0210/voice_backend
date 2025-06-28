@@ -80,30 +80,4 @@ async def translate_text(
             )
         )
 
-@router.post("/validate-key")
-async def validate_openai_key():
-    """
-    OpenAI API 키의 유효성을 확인합니다.
-    """
-    try:
-        is_valid = await openai_service.test_api_key()
-        
-        return {
-            "success": True,
-            "data": {
-                "isValid": is_valid,
-                "usage": {
-                    "totalTokens": 0,  # 실제 사용량 추적이 필요하면 구현
-                    "remainingTokens": 10000  # 예시 값
-                }
-            }
-        }
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "error": {
-                "code": "VALIDATION_ERROR",
-                "message": f"API 키 검증 중 오류가 발생했습니다: {str(e)}"
-            }
-        } 
+ 

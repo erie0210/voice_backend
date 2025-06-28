@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 
-from routers import translate
+from routers import translate, chat, tts
 from config.settings import settings
 
 # 환경 변수 로드
@@ -26,6 +26,8 @@ app.add_middleware(
 
 # 라우터 등록
 app.include_router(translate.router, prefix="/v1/ai", tags=["AI Translation"])
+app.include_router(chat.router, prefix="/v1/ai", tags=["AI Chat"])
+app.include_router(tts.router, prefix="/v1/ai", tags=["AI TTS"])
 
 @app.get("/")
 async def root():
