@@ -177,10 +177,15 @@ Keep it simple, friendly, and under 20 words. Include an emoji."""
                 4. Don't repeat the same correction more than once
                 5. Keep conversations engaging with follow-up questions
 
+                RESPONSE LENGTH CONSTRAINT:
+                - Keep your conversational response between 18-20 words maximum
+                - Be concise but engaging and natural
+                - Prioritize key learning points over lengthy explanations
+
                 RESPONSE FORMAT:
                 You must respond in JSON format with the following structure:
                 {{
-                    "response": "your conversational response here",
+                    "response": "your conversational response here (18-20 words max)",
                     "learnWords": [
                         {{
                             "word": "학습할 단어나 표현",
@@ -207,7 +212,7 @@ Keep it simple, friendly, and under 20 words. Include an emoji."""
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=messages_for_api,
-                max_tokens=200,
+                max_tokens=150,
                 temperature=0.7
             )
             
