@@ -6,6 +6,7 @@ import json
 import time
 import boto3
 import logging
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from config.settings import settings
@@ -79,6 +80,77 @@ class OpenAIService:
             "culture", "technology", "environment", "philosophy", "art", 
             "science", "politics", "economics", "history", "psychology"
         ]
+        
+        # Assets 경로 설정
+        self.assets_path = Path(__file__).parent.parent / "assets" / "conversation_starters"
+    
+    def _load_greetings_from_assets(self) -> Dict[str, List[str]]:
+        """
+        Assets 파일에서 인사말을 로드합니다.
+        """
+        try:
+            greetings_file = self.assets_path / "greetings.json"
+            if greetings_file.exists():
+                with open(greetings_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            else:
+                logger.warning(f"Greetings 파일을 찾을 수 없습니다: {greetings_file}")
+                return self._get_fallback_greetings()
+        except Exception as e:
+            logger.error(f"Greetings 파일 로드 오류: {str(e)}")
+            return self._get_fallback_greetings()
+    
+    def _load_topic_starters_from_assets(self, topic: TopicEnum) -> Dict[str, List[str]]:
+        """
+        Assets 파일에서 주제별 대화 시작 문장을 로드합니다.
+        """
+        try:
+            topic_files = {
+                TopicEnum.FAVORITES: "favorites.json",
+                TopicEnum.FEELINGS: "feelings.json", 
+                TopicEnum.OOTD: "ootd.json"
+            }
+            
+            filename = topic_files.get(topic, "favorites.json")
+            topic_file = self.assets_path / "topics" / filename
+            
+            if topic_file.exists():
+                with open(topic_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            else:
+                logger.warning(f"Topic 파일을 찾을 수 없습니다: {topic_file}")
+                return self._get_fallback_topic_starters(topic)
+        except Exception as e:
+            logger.error(f"Topic 파일 로드 오류: {str(e)}")
+            return self._get_fallback_topic_starters(topic)
+    
+    def _get_fallback_greetings(self) -> Dict[str, List[str]]:
+        """
+        폴백용 기본 인사말
+        """
+        return {
+            "English": ["Hello! 반가워! 😊 오늘도 English 공부해볼까?"],
+            "Spanish": ["¡Hola! 반가워! 😊 오늘도 español 배워볼까?"],
+            "Japanese": ["こんにちは! 반가워! 😊 오늘도 日本語 배워볼까?"],
+            "Korean": ["안녕하세요! Hello! 😊 오늘도 한국어 배워볼까요?"],
+            "Chinese": ["你好! 반가워! 😊 오늘도 中文 배워볼까?"],
+            "French": ["Bonjour! 반가워! 😊 오늘도 français 배워볼까?"],
+            "German": ["Hallo! 반가워! 😊 오늘도 Deutsch 배워볼까?"]
+        }
+    
+    def _get_fallback_topic_starters(self, topic: TopicEnum) -> Dict[str, List[str]]:
+        """
+        폴백용 기본 주제 시작 문장
+        """
+        return {
+            "English": [f"Let's talk about {topic.value}! 😊"],
+            "Spanish": [f"¡Hablemos sobre {topic.value}! 😊"],
+            "Japanese": [f"{topic.value}について話しましょう！😊"],
+            "Korean": [f"{topic.value}에 대해 얘기해봐요! 😊"],
+            "Chinese": [f"我们来聊聊{topic.value}吧！😊"],
+            "French": [f"Parlons de {topic.value}! 😊"],
+            "German": [f"Lass uns über {topic.value} sprechen! 😊"]
+        }
     
     def _get_cache_key(self, *args) -> str:
         """캐시 키 생성"""
@@ -258,189 +330,39 @@ JSON FORMAT:
         주제와 언어에 맞는 대화 시작 문장을 20개 생성하고 그 중 하나를 랜덤 선택합니다.
         인사말과 함께 반환하며, 학습할 단어들도 추출하여 함께 제공합니다.
         """
-        # 언어별 인사말 정의 (try 블록 밖에서 정의)
-        greetings = {
-            "English": [
-                "Hello! Nice to see you again! 😊",
-                "Hi there! Hope you're having a great day! ✨",
-                "Hey! Ready for some fun conversation? 🎉",
-                "Good to see you! Let's chat! 💬",
-                "Hi! Excited to practice with you today! 🌟"
-            ],
-            "Spanish": [
-                "¡Hola! ¡Qué gusto verte de nuevo! 😊",
-                "¡Hola! ¡Espero que tengas un gran día! ✨",
-                "¡Oye! ¿Listo para una conversación divertida? 🎉",
-                "¡Qué bueno verte! ¡Vamos a charlar! 💬",
-                "¡Hola! ¡Emocionado de practicar contigo hoy! 🌟"
-            ],
-            "Japanese": [
-                "こんにちは！また会えて嬉しいです！😊",
-                "こんにちは！素敵な一日をお過ごしください！✨",
-                "やあ！楽しい会話の準備はできましたか？🎉",
-                "お会いできて良かったです！お話ししましょう！💬",
-                "こんにちは！今日一緒に練習できて嬉しいです！🌟"
-            ],
-            "Korean": [
-                "안녕하세요! 다시 만나서 반가워요! 😊",
-                "안녕하세요! 좋은 하루 보내세요! ✨",
-                "안녕! 재미있는 대화 준비됐나요? 🎉",
-                "만나서 좋아요! 대화해봐요! 💬",
-                "안녕하세요! 오늘 함께 연습할 수 있어서 기뻐요! 🌟"
-            ],
-            "Chinese": [
-                "你好！很高兴再次见到你！😊",
-                "你好！希望你今天过得愉快！✨",
-                "嘿！准备好有趣的对话了吗？🎉",
-                "很高兴见到你！我们聊聊吧！💬",
-                "你好！今天能和你一起练习很兴奋！🌟"
-            ],
-            "French": [
-                "Bonjour ! Ravi de te revoir ! 😊",
-                "Salut ! J'espère que tu passes une excellente journée ! ✨",
-                "Hey ! Prêt pour une conversation amusante ? 🎉",
-                "Content de te voir ! Discutons ! 💬",
-                "Bonjour ! Excité de pratiquer avec toi aujourd'hui ! 🌟"
-            ],
-            "German": [
-                "Hallo! Schön, dich wiederzusehen! 😊",
-                "Hi! Ich hoffe, du hast einen tollen Tag! ✨",
-                "Hey! Bereit für ein lustiges Gespräch? 🎉",
-                "Schön, dich zu sehen! Lass uns reden! 💬",
-                "Hallo! Freue mich, heute mit dir zu üben! 🌟"
-            ]
-        }
+        # Assets에서 인사말 로드
+        greetings = self._load_greetings_from_assets()
         
         try:
-            # 주제별 프롬프트 정의
-            topic_prompts = {
-                TopicEnum.FAVORITES: {
-                    "en": "talking about favorite things (hobbies, food, movies, music, etc.)",
-                    "description": "Express preferences and talk about things you like"
-                },
-                TopicEnum.FEELINGS: {
-                    "en": "expressing feelings and emotions",
-                    "description": "Share how you feel and describe emotional states"
-                },
-                TopicEnum.OOTD: {
-                    "en": "describing outfit of the day and fashion",
-                    "description": "Talk about clothes, style, and what you're wearing"
-                }
-            }
+            # Assets에서 주제별 대화 시작 문장 로드
+            topic_starters = self._load_topic_starters_from_assets(topic)
             
-            topic_info = topic_prompts.get(topic, topic_prompts[TopicEnum.FAVORITES])
-            topic_english = topic_info["en"]
-            topic_description = topic_info["description"]
+            # 언어에 맞는 문장들 가져오기
+            starters = topic_starters.get(ai_language, topic_starters.get("English", []))
             
-            # 난이도별 지시사항
-            difficulty_instructions = {
-                "easy": f"""
-- Generate conversation starters in {user_language} (user's native language)
-- Include simple {ai_language} words with pronunciation in parentheses
-- Be encouraging and use very simple vocabulary
-- Example format: "안녕! 오늘 뭘 좋아해? (Hello! What do you like today?)"
-""",
-                "intermediate": f"""
-- Generate conversation starters in {ai_language} using elementary level vocabulary
-- Use simple, clear sentences that beginners can understand
-- Include common expressions that are useful for daily conversation
-""",
-                "advanced": f"""
-- Generate conversation starters in {ai_language} using natural, native expressions
-- Use sophisticated vocabulary and complex sentence structures
-- Include cultural references and nuanced language appropriate for advanced learners
-"""
-            }
+            if not starters:
+                logger.warning(f"언어 {ai_language}에 대한 시작 문장을 찾을 수 없음. 기본 문장 사용.")
+                starters = [f"Let's talk about {topic.value}! 😊"]
             
-            current_difficulty = difficulty_instructions.get(difficulty_level, difficulty_instructions["easy"])
+            # 랜덤하게 하나 선택
+            selected_starter = random.choice(starters)
+            logger.info(f"선택된 대화 시작 문장: {selected_starter}")
             
-            # 시스템 프롬프트
-            system_prompt = f"""You are MurMur, a language learning AI teacher.
-
-Generate exactly 20 different conversation starters about "{topic_english}" for {ai_language} language learning.
-
-Topic Focus: {topic_description}
-Target Language: {ai_language}
-User's Native Language: {user_language}
-Difficulty: {difficulty_level}
-
-{current_difficulty}
-
-Requirements:
-1. Create 20 diverse, engaging conversation starters
-2. Each should be 10-25 words
-3. Make them natural and culturally appropriate
-4. Focus specifically on the topic: {topic.value}
-5. Vary the question types (open-ended, specific, creative)
-6. Include emoji where appropriate
-7. Make them conversation-friendly and engaging
-
-Return as JSON array:
-{{
-  "starters": [
-    "conversation starter 1",
-    "conversation starter 2",
-    ...
-    "conversation starter 20"
-  ]
-}}"""
-
-            response = self.client.chat.completions.create(
-                model=self.default_model,
-                messages=[
-                    {"role": "system", "content": system_prompt}
-                ],
-                max_tokens=800,
-                temperature=0.8,  # 더 창의적인 응답을 위해 높은 temperature
-                response_format={"type": "json_object"}
-            )
+            # 인사말 선택 및 조합
+            greeting = random.choice(greetings.get(ai_language, greetings.get("English", ["Hello! 😊"])))
+            full_conversation = f"{greeting} {selected_starter}"
             
-            response_content = response.choices[0].message.content.strip()
-            logger.info(f"대화 시작 문장 생성 완료: {len(response_content)} 문자")
+            # 학습 단어 추출
+            learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
             
-            # JSON 파싱
-            try:
-                parsed_response = json.loads(response_content)
-                starters = parsed_response.get("starters", [])
-                
-                if not starters:
-                    # 기본 시작 문장들 제공
-                    starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
-                
-                # 20개가 안 되면 기본 문장으로 채움
-                while len(starters) < 20:
-                    default_starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
-                    starters.extend(default_starters[:20-len(starters)])
-                
-                # 랜덤하게 하나 선택
-                selected_starter = random.choice(starters[:20])
-                logger.info(f"선택된 대화 시작 문장: {selected_starter}")
-                
-                # 인사말 선택 및 조합
-                greeting = random.choice(greetings.get(ai_language, greetings["English"]))
-                full_conversation = f"{greeting} {selected_starter}"
-                
-                # 학습 단어 추출
-                learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
-                
-                return full_conversation, learn_words
-                
-            except json.JSONDecodeError:
-                logger.error(f"JSON 파싱 실패, 기본 문장 사용: {response_content[:200]}")
-                default_starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
-                selected_starter = random.choice(default_starters)
-                greeting = random.choice(greetings.get(ai_language, greetings["English"]))
-                full_conversation = f"{greeting} {selected_starter}"
-                learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
-                return full_conversation, learn_words
+            return full_conversation, learn_words
             
         except Exception as e:
             logger.error(f"대화 시작 문장 생성 오류: {str(e)}")
             # 폴백: 기본 문장 사용
-            default_starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
-            selected_starter = random.choice(default_starters)
-            greeting = random.choice(greetings.get(ai_language, greetings["English"]))
-            full_conversation = f"{greeting} {selected_starter}"
+            greeting = "Hello! 😊"
+            starter = f"Let's talk about {topic.value}!"
+            full_conversation = f"{greeting} {starter}"
             learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
             return full_conversation, learn_words
     
@@ -565,173 +487,7 @@ Return as JSON array:
                 LearnWord(word="Good", meaning="좋은", example=None, pronunciation="굿")
             ]
     
-    def _get_default_starters(self, topic: TopicEnum, ai_language: str, user_language: str, difficulty_level: str) -> List[str]:
-        """
-        기본 대화 시작 문장들을 반환합니다.
-        """
-        default_starters = {
-            TopicEnum.FAVORITES: {
-                "English": [
-                    "What's your favorite hobby? 😊",
-                    "Tell me about something you really enjoy!",
-                    "What kind of music do you like?",
-                    "Do you have a favorite food?",
-                    "What's your favorite way to spend weekends?"
-                ],
-                "Korean": [
-                    "좋아하는 취미가 뭐예요? 😊",
-                    "정말 좋아하는 것에 대해 말해주세요!",
-                    "어떤 음악을 좋아해요?",
-                    "좋아하는 음식이 있어요?",
-                    "주말에 뭘 하는 걸 좋아해요?"
-                ],
-                                 "Japanese": [
-                     "好きな趣味は何ですか？😊",
-                     "本当に好きなことについて教えてください！",
-                     "どんな音楽が好きですか？",
-                     "好きな食べ物はありますか？",
-                     "週末は何をするのが好きですか？"
-                 ],
-                 "Spanish": [
-                     "¿Cuál es tu pasatiempo favorito? 😊",
-                     "¡Cuéntame sobre algo que realmente disfrutas!",
-                     "¿Qué tipo de música te gusta?",
-                     "¿Tienes una comida favorita?",
-                     "¿Cuál es tu forma favorita de pasar los fines de semana?"
-                 ],
-                 "Chinese": [
-                     "你最喜欢的爱好是什么？😊",
-                     "告诉我你真正喜欢的东西！",
-                     "你喜欢什么类型的音乐？",
-                     "你有最喜欢的食物吗？",
-                     "你最喜欢怎么过周末？"
-                 ],
-                 "French": [
-                     "Quel est ton passe-temps préféré ? 😊",
-                     "Parle-moi de quelque chose que tu aimes vraiment !",
-                     "Quel genre de musique aimes-tu ?",
-                     "As-tu un plat préféré ?",
-                     "Quelle est ta façon préférée de passer les week-ends ?"
-                 ],
-                 "German": [
-                     "Was ist dein Lieblingshobby? 😊",
-                     "Erzähl mir von etwas, was du wirklich gerne machst!",
-                     "Welche Art von Musik magst du?",
-                     "Hast du ein Lieblingsessen?",
-                     "Wie verbringst du am liebsten deine Wochenenden?"
-                                  ]
-             },
-             TopicEnum.FEELINGS: {
-                "English": [
-                    "How are you feeling today? 😊",
-                    "What makes you happy?",
-                    "Tell me about your mood right now!",
-                    "How do you feel when it's sunny?",
-                    "What cheers you up when you're sad?"
-                ],
-                "Korean": [
-                    "오늘 기분이 어때요? 😊",
-                    "뭐가 행복하게 만들어요?",
-                    "지금 기분에 대해 말해주세요!",
-                    "날씨가 좋으면 기분이 어때요?",
-                    "슬플 때 뭐가 기운을 나게 해요?"
-                ],
-                                 "Japanese": [
-                     "今日の気分はどうですか？😊",
-                     "何が幸せにしてくれますか？",
-                     "今の気持ちについて教えてください！",
-                     "晴れの日はどんな気分ですか？",
-                     "悲しい時、何が元気にしてくれますか？"
-                 ],
-                 "Spanish": [
-                     "¿Cómo te sientes hoy? 😊",
-                     "¿Qué te hace feliz?",
-                     "¡Cuéntame sobre tu estado de ánimo ahora!",
-                     "¿Cómo te sientes cuando hace sol?",
-                     "¿Qué te anima cuando estás triste?"
-                 ],
-                 "Chinese": [
-                     "你今天感觉怎么样？😊",
-                     "什么让你开心？",
-                     "告诉我你现在的心情！",
-                     "晴天的时候你感觉如何？",
-                     "伤心时什么能让你振作起来？"
-                 ],
-                 "French": [
-                     "Comment te sens-tu aujourd'hui ? 😊",
-                     "Qu'est-ce qui te rend heureux ?",
-                     "Parle-moi de ton humeur maintenant !",
-                     "Comment te sens-tu quand il fait beau ?",
-                     "Qu'est-ce qui te remonte le moral quand tu es triste ?"
-                 ],
-                 "German": [
-                     "Wie fühlst du dich heute? 😊",
-                     "Was macht dich glücklich?",
-                     "Erzähl mir von deiner Stimmung gerade!",
-                     "Wie fühlst du dich, wenn die Sonne scheint?",
-                     "Was muntert dich auf, wenn du traurig bist?"
-                                  ]
-             },
-             TopicEnum.OOTD: {
-                "English": [
-                    "What are you wearing today? 👗",
-                    "Tell me about your style!",
-                    "What's your favorite outfit?",
-                    "Do you like fashion?",
-                    "What colors do you like to wear?"
-                ],
-                "Korean": [
-                    "오늘 뭐 입었어요? 👗",
-                    "스타일에 대해 말해주세요!",
-                    "가장 좋아하는 옷차림이 뭐예요?",
-                    "패션을 좋아해요?",
-                    "어떤 색깔 옷을 좋아해요?"
-                ],
-                                 "Japanese": [
-                     "今日は何を着ていますか？👗",
-                     "スタイルについて教えてください！",
-                     "一番好きなコーディネートは何ですか？",
-                     "ファッションは好きですか？",
-                     "何色の服が好きですか？"
-                 ],
-                 "Spanish": [
-                     "¿Qué llevas puesto hoy? 👗",
-                     "¡Cuéntame sobre tu estilo!",
-                     "¿Cuál es tu outfit favorito?",
-                     "¿Te gusta la moda?",
-                     "¿Qué colores te gusta usar?"
-                 ],
-                 "Chinese": [
-                     "你今天穿什么？👗",
-                     "告诉我你的风格！",
-                     "你最喜欢的搭配是什么？",
-                     "你喜欢时尚吗？",
-                     "你喜欢穿什么颜色的衣服？"
-                 ],
-                 "French": [
-                     "Qu'est-ce que tu portes aujourd'hui ? 👗",
-                     "Parle-moi de ton style !",
-                     "Quelle est ta tenue préférée ?",
-                     "Tu aimes la mode ?",
-                     "Quelles couleurs aimes-tu porter ?"
-                 ],
-                 "German": [
-                     "Was trägst du heute? 👗",
-                     "Erzähl mir von deinem Stil!",
-                     "Was ist dein Lieblings-Outfit?",
-                     "Magst du Mode?",
-                     "Welche Farben trägst du gerne?"
-                 ]
-            }
-        }
-        
-        # 주제와 언어에 맞는 기본 문장들 가져오기
-        topic_starters = default_starters.get(topic, default_starters[TopicEnum.FAVORITES])
-        language_starters = topic_starters.get(ai_language, topic_starters.get("English", []))
-        
-        # 20개까지 확장
-        extended_starters = language_starters * 4  # 기본 5개 * 4 = 20개
-        return extended_starters[:20]
+    # _get_default_starters 메서드 제거됨 - assets 파일을 사용하도록 변경
     
     async def generate_chat_response(self, messages: List[ChatMessage], user_language: str, 
                                    ai_language: str, difficulty_level: str, last_user_message: str) -> tuple[str, List[LearnWord]]:
