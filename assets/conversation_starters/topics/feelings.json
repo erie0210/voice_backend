@@ -1,86 +1,174 @@
 {
-  "English": [
-    "오늘 feeling은 어때? 😊 How are you today?",
-    "Your mood는 어떤 거 같아? Tell me about your feelings!",
-    "Happy한 일이 있었어? What makes you smile?",
-    "When you're sad, 뭐가 기분을 better하게 만들어?",
-    "Excited될 때는 언제야? What gets you pumped up?",
-    "Worried하거나 nervous할 때 있어? How do you feel then?",
-    "Weather가 기분에 영향을 줘? Does sun make you happy?",
-    "Angry할 때는 어떻게 해? How do you calm down?",
-    "Grateful한 마음이 들 때는 언제야? What are you thankful for?",
-    "Sleepy하거나 tired할 때의 기분은? How do you feel when exhausted?"
-  ],
-  "Spanish": [
-    "오늘 sentimiento는 어때? 😊 ¿Cómo te sientes hoy?",
-    "Tu estado de ánimo는 어떤 거 같아? ¡Cuéntame sobre tus sentimientos!",
-    "Feliz한 일이 있었어? ¿Qué te hace sonreír?",
-    "When you're triste, 뭐가 기분을 mejor하게 만들어?",
-    "Emocionado될 때는 언제야? ¿Qué te pone contento?",
-    "Preocupado하거나 nervioso할 때 있어? ¿Cómo te sientes entonces?",
-    "Tiempo가 기분에 영향을 줘? ¿El sol te hace feliz?",
-    "Enojado할 때는 어떻게 해? ¿Cómo te calmas?",
-    "Agradecido한 마음이 들 때는 언제야? ¿Por qué estás agradecido?",
-    "Con sueño하거나 cansado할 때의 기분은? ¿Cómo te sientes cuando estás agotado?"
-  ],
-  "Japanese": [
-    "오늘 気持ちは 어때? 😊 今日はどんな気分?",
-    "君の気分は 어떤 거 같아? 気持ちについて教えて!",
-    "嬉しいな 일이 ありましたか? 何が笑顔にしてくれる?",
-    "When you're 悲しい, 뭐が 気分を 良くしてくれる?",
-    "興奮されるときは いつですか? 何がワクワクさせる?",
-    "心配しているときや 緊張しているときは どんな気持ち?",
-    "天気が 気分に 影響を与えますか? 太陽が嬉しくする?",
-    "怒っているときは どうしますか? どうやって落ち着く?",
-    "感謝しているときは いつですか? 何に感謝してる?",
-    "眠いであるときや 疲れているときの 気分は?"
-  ],
-  "Korean": [
-    "오늘 feeling은 어떠세요? 😊 How are you today?",
-    "기분이 mood는 어떤가요? Tell me about your feelings!",
-    "기쁜 happy한 일이 있었어요? What makes you smile?",
-    "슬플 때 sad, 뭐가 기분을 better하게 만들어요?",
-    "신날 때 excited는 언제예요? What gets you pumped up?",
-    "걱정되거나 worried할 때 있어요? How do you feel then?",
-    "날씨 weather가 기분에 영향을 줘요? Does sun make you happy?",
-    "화날 때 angry는 어떻게 해요? How do you calm down?",
-    "고마운 grateful 마음이 들 때는 언제예요? What are you thankful for?",
-    "졸리거나 sleepy할 때의 기분은? How do you feel when tired?"
-  ],
-  "Chinese": [
-    "오늘 心情은 어때? 😊 你今天感觉怎么样?",
-    "你的情绪는 어떤 거 같아? 告诉我你的感受!",
-    "开心한 일이 있었어? 什么让你微笑?",
-    "When you're 难过, 뭐가 기분을 更好하게 만들어?",
-    "兴奋될 때는 언제야? 什么让你激动?",
-    "担心하거나 紧张할 때 있어? 那时你感觉如何?",
-    "天气가 기분에 영향을 줘? 阳光让你开心吗?",
-    "生气할 때는 어떻게 해? 你怎么冷静下来?",
-    "感谢한 마음이 들 때는 언제야? 你感谢什么?",
-    "困倦하거나 累할 때의 기분은? 疲惫时感觉如何?"
-  ],
-  "French": [
-    "오늘 sentiment는 어때? 😊 Comment tu te sens aujourd'hui?",
-    "Ton humeur는 어떤 거 같아? Parle-moi de tes sentiments!",
-    "Heureux한 일이 있었어? Qu'est-ce qui te fait sourire?",
-    "When you're triste, 뭐가 기분을 mieux하게 만들어?",
-    "Excité될 때는 언제야? Qu'est-ce qui t'enthousiasme?",
-    "Inquiet하거나 nerveux할 때 있어? Comment tu te sens alors?",
-    "Temps가 기분에 영향을 줘? Le soleil te rend heureux?",
-    "En colère할 때는 어떻게 해? Comment tu te calmes?",
-    "Reconnaissant한 마음이 들 때는 언제야? Pour quoi es-tu reconnaissant?",
-    "Fatigué하거나 somnolent할 때의 기분은? Comment tu te sens quand épuisé?"
-  ],
-  "German": [
-    "오늘 Gefühl은 어때? 😊 Wie fühlst du dich heute?",
-    "Deine Stimmung는 어떤 거 같아? Erzähl mir von deinen Gefühlen!",
-    "Glücklich한 일이 있었어? Was bringt dich zum Lächeln?",
-    "When you're traurig, 뭐가 기분을 besser하게 만들어?",
-    "Aufgeregt될 때는 언제야? Was macht dich begeistert?",
-    "Besorgt하거나 nervös할 때 있어? Wie fühlst du dich dann?",
-    "Wetter가 기분에 영향을 줘? Macht Sonne dich glücklich?",
-    "Wütend할 때는 어떻게 해? Wie beruhigst du dich?",
-    "Dankbar한 마음이 들 때는 언제야? Wofür bist du dankbar?",
-    "Müde하거나 schläfrig할 때의 기분은? Wie fühlst du dich wenn erschöpft?"
-  ]
+  "from_Korean": {
+    "English": [
+      "오늘 feeling은 어때? 😊 How are you feeling today?",
+      "기분 얘기해보자! What's your mood 지금?",
+      "Happy한 적이 언제야? When do you feel 행복해?",
+      "Sad할 때는 뭘 해? What makes you feel better?",
+      "Excited될 때가 언제야? What makes you 신나해?",
+      "Tired할 때는 어떻게 해? How do you rest?",
+      "Angry할 때는 뭘 해? How do you handle 화날 때?",
+      "Nervous할 때 있어? When do you feel 긴장돼?",
+      "Proud of yourself할 때가 언제야?",
+      "Weather가 기분에 영향을 줘? Does weather affect your mood?"
+    ],
+    "Spanish": [
+      "오늘 sentimiento은 어때? 😊 ¿Cómo te sientes hoy?",
+      "기분 얘기해보자! ¿Cuál es tu estado de ánimo 지금?",
+      "Feliz한 적이 언제야? ¿Cuándo te sientes 행복해?",
+      "Triste할 때는 뭘 해? ¿Qué te hace sentir mejor?",
+      "Emocionado될 때가 언제야? ¿Qué te hace 신나해?",
+      "Cansado할 때는 어떻게 해? ¿Cómo descansas?",
+      "Enojado할 때는 뭘 해? ¿Cómo manejas 화날 때?",
+      "Nervioso할 때 있어? ¿Cuándo te sientes 긴장돼?",
+      "Orgulloso de ti mismo할 때가 언제야?",
+      "Clima가 기분에 영향을 줘? ¿El clima afecta tu humor?"
+    ],
+    "Japanese": [
+      "오늘 気持ち은 어때? 😊 今日の気分はどう?",
+      "기분 얘기해보자! 今の気持ちは どう?",
+      "嬉しい한 적이 언제야? いつ 행복해 feel하는?",
+      "悲しい할 때는 뭘 해? 何が気分を良くする?",
+      "興奮する될 때가 언제야? 何が 신나게 する?",
+      "疲れた할 때는 어떻게 해? どうやって休む?",
+      "怒った할 때は ベ どうしますか? ベ どうやって落ち着く?",
+      "緊張する할 때 있어? いつ 긴장돼 feel하는?",
+      "誇らしい of yourself할 때가 언제야?",
+      "天気가 기분に 影響を与えますか? 天気は 気分に affectする?"
+    ],
+    "Korean": [
+      "오늘 기분은 어때요? 😊 어떤 feeling이에요?",
+      "기분 얘기해봐요! 지금 어떤 상태세요?",
+      "행복할 때가 언제예요? 언제 기분이 좋아요?",
+      "슬플 때는 뭘 해요? 뭐가 기분을 좋게 해줘요?",
+      "신날 때가 언제예요? 뭐가 흥미진진하게 해요?",
+      "피곤할 때는 어떻게 해요? 어떻게 쉬어요?",
+      "화날 때는 뭘 해요? 어떻게 화를 다스려요?",
+      "긴장될 때 있어요? 언제 떨려요?",
+      "자랑스러울 때가 언제예요?",
+      "날씨가 기분에 영향을 줘요? 날씨와 기분이 관련있나요?"
+    ],
+    "Chinese": [
+      "오늘 心情은 어때? 😊 你今天感觉怎么样?",
+      "기분 얘기해보자! 你现在的心情는 怎样?",
+      "开心한 적이 언제야? 什么时候你感觉 행복해?",
+      "难过할 때는 뭘 해? 什么让你感觉好些?",
+      "兴奋될 때가 언제야? 什么让你 신나해?",
+      "累할 때는 어떻게 해? 你怎么休息?",
+      "生气할 때는 뭘 해? 你怎么处理 화날 때?",
+      "紧张할 때 있어? 什么时候你感觉 긴장돼?",
+      "为自己骄傲할 때가 언제야?",
+      "天气가 기분에 영향을 줘? 天气影响你的心情吗?"
+    ],
+    "French": [
+      "오늘 sentiment은 어때? �� Comment tu te sens?",
+      "기분 얘기해보자! Quelle est ton humeur now?",
+      "Heureux한 적이 언제야? Quand est-ce que tu te sens 행복해?",
+      "Triste할 때는 뭘 해? Qu'est-ce qui te fait sentir mieux?",
+      "Excité될 때가 언제야? Qu'est-ce qui te rend 신나해?",
+      "Fatigué할 때는 어떻게 해? Comment tu te reposes?",
+      "En colère할 때는 뭘 해? Comment tu gères 화날 때?",
+      "Nerveux할 때 있어? Quand est-ce que tu te sens 긴장돼?",
+      "Fier de toi할 때가 언제야?",
+      "Météo가 기분에 영향을 줘? Est-ce que la météo affecte ton humeur?"
+    ],
+    "German": [
+      "오늘 Gefühl은 어때? �� Wie fühlst du dich?",
+      "기분 얘기해보자! Wie ist deine Stimmung now?",
+      "Glücklich한 적이 언제야? Wann fühlst du dich 행복해?",
+      "Traurig할 때는 뭘 해? Was macht dich besser fühlen?",
+      "Aufgeregt될 때가 언제야? Was macht dich 신나해?",
+      "Müde할 때는 어떻게 해? Wie ruhst du dich aus?",
+      "Wütend할 때는 뭘 해? Wie gehst du mit 화날 때 um?",
+      "Nervös할 때 있어? Wann fühlst du dich 긴장돼?",
+      "Stolz auf dich할 때가 언제야?",
+      "Wetter가 기분에 영향을 줘? Beeinflusst das Wetter deine Stimmung?"
+    ]
+  },
+  "from_English": {
+    "Korean": [
+      "Today how is your 기분? 😊 어떤 feeling이에요?",
+      "Let's talk about feelings! What's your 마음상태 now?",
+      "When do you feel 행복한? What makes you happy?",
+      "When you're 슬플 때 what do you do? How do you feel better?",
+      "When do you get 신날 때? What excites you?",
+      "When you're 피곤할 때 how do you handle it? Rest methods?",
+      "When you're 화날 때 what do you do? Anger management?",
+      "Do you ever feel 긴장돼? When do you get nervous?",
+      "When are you proud of yourself? 자랑스러울 때는?",
+      "Does 날씨 affect your mood? Weather and feelings?"
+    ],
+    "Spanish": [
+      "Today how is your sentimiento? 😊 ¿Cómo te sientes?",
+      "Let's talk about feelings! What's your estado de ánimo now?",
+      "When do you feel feliz? What makes you happy?",
+      "When you're triste what do you do? How do you feel better?",
+      "When do you get emocionado? What excites you?",
+      "When you're cansado how do you handle it? Rest methods?",
+      "When you're enojado what do you do? Anger management?",
+      "Do you ever feel nervioso? When do you get nervous?",
+      "When are you proud of yourself? ¿Cuándo te sientes orgulloso?",
+      "Does clima affect your mood? Weather and feelings?"
+    ],
+    "Japanese": [
+      "Today how is your 気持ち? 😊 今日の気分はどう?",
+      "Let's talk about feelings! What's your 気持ち now?",
+      "When do you feel 嬉しい? What makes you happy?",
+      "When you're 悲しい what do you do? How do you feel better?",
+      "When do you get 興奮する? What excites you?",
+      "When you're 疲れた how do you handle it? Rest methods?",
+      "When you're 怒った what do you do? Anger management?",
+      "Do you ever feel 緊張する? When do you get nervous?",
+      "When are you proud of yourself? いつ誇らしく思う?",
+      "Does 天気 affect your mood? Weather and feelings?"
+    ],
+    "Chinese": [
+      "Today how is your 心情? 😊 你今天感觉怎样?",
+      "Let's talk about feelings! What's your 心情 now?",
+      "When do you feel 开心? What makes you happy?",
+      "When you're 难过 what do you do? How do you feel better?",
+      "When do you get 兴奋? What excites you?",
+      "When you're 累 how do you handle it? Rest methods?",
+      "When you're 生气 what do you do? Anger management?",
+      "Do you ever feel 紧张? When do you get nervous?",
+      "When are you proud of yourself? 什么时候为自己骄傲?",
+      "Does 天气 affect your mood? Weather and feelings?"
+    ],
+    "French": [
+      "Today how is your sentiment? 😊 Comment tu te sens?",
+      "Let's talk about feelings! What's your humeur now?",
+      "When do you feel heureux? What makes you happy?",
+      "When you're triste what do you do? How do you feel better?",
+      "When do you get excité? What excites you?",
+      "When you're fatigué how do you handle it? Rest methods?",
+      "When you're en colère what do you do? Anger management?",
+      "Do you ever feel nerveux? When do you get nervous?",
+      "When are you proud of yourself? Quand es-tu fier?",
+      "Does météo affect your mood? Weather and feelings?"
+    ],
+    "German": [
+      "Today how is your Gefühl? 😊 Wie fühlst du dich?",
+      "Let's talk about feelings! What's your Stimmung now?",
+      "When do you feel glücklich? What makes you happy?",
+      "When you're traurig what do you do? How do you feel better?",
+      "When do you get aufgeregt? What excites you?",
+      "When you're müde how do you handle it? Rest methods?",
+      "When you're wütend what do you do? Anger management?",
+      "Do you ever feel nervös? When do you get nervous?",
+      "When are you proud of yourself? Wann bist du stolz?",
+      "Does Wetter affect your mood? Weather and feelings?"
+    ],
+    "English": [
+      "Today how are you feeling? 😊 What's your mood like?",
+      "Let's talk about feelings! What's your emotional state now?",
+      "When do you feel happy? What brings you joy?",
+      "When you're sad what do you do? How do you cope?",
+      "When do you get excited? What thrills you?",
+      "When you're tired how do you handle it? Rest strategies?",
+      "When you're angry what do you do? How do you manage anger?",
+      "Do you ever feel nervous? When do anxiety strikes?",
+      "When are you proud of yourself? Achievement moments?",
+      "Does weather affect your mood? Seasonal feelings?"
+    ]
+  }
 } 

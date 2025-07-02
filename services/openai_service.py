@@ -84,25 +84,33 @@ class OpenAIService:
         # Assets 경로 설정
         self.assets_path = Path(__file__).parent.parent / "assets" / "conversation_starters"
     
-    def _load_greetings_from_assets(self) -> Dict[str, List[str]]:
+    def _load_greetings_from_assets_by_language(self, user_language: str, ai_language: str) -> List[str]:
         """
-        Assets 파일에서 인사말을 로드합니다.
+        Assets 파일에서 특정 언어 조합의 인사말을 로드합니다.
         """
         try:
             greetings_file = self.assets_path / "greetings.json"
             if greetings_file.exists():
                 with open(greetings_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    all_greetings = json.load(f)
+                    
+                # from_{user_language} -> {ai_language} 경로로 찾기
+                user_key = f"from_{user_language}"
+                if user_key in all_greetings and ai_language in all_greetings[user_key]:
+                    return all_greetings[user_key][ai_language]
+                else:
+                    logger.warning(f"언어 조합을 찾을 수 없음: {user_language} -> {ai_language}")
+                    return self._get_fallback_greetings_for_languages(user_language, ai_language)
             else:
                 logger.warning(f"Greetings 파일을 찾을 수 없습니다: {greetings_file}")
-                return self._get_fallback_greetings()
+                return self._get_fallback_greetings_for_languages(user_language, ai_language)
         except Exception as e:
             logger.error(f"Greetings 파일 로드 오류: {str(e)}")
-            return self._get_fallback_greetings()
+            return self._get_fallback_greetings_for_languages(user_language, ai_language)
     
-    def _load_topic_starters_from_assets(self, topic: TopicEnum) -> Dict[str, List[str]]:
+    def _load_topic_starters_from_assets_by_language(self, topic: TopicEnum, user_language: str, ai_language: str) -> List[str]:
         """
-        Assets 파일에서 주제별 대화 시작 문장을 로드합니다.
+        Assets 파일에서 특정 언어 조합의 주제별 대화 시작 문장을 로드합니다.
         """
         try:
             topic_files = {
@@ -116,41 +124,66 @@ class OpenAIService:
             
             if topic_file.exists():
                 with open(topic_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    all_starters = json.load(f)
+                    
+                # from_{user_language} -> {ai_language} 경로로 찾기
+                user_key = f"from_{user_language}"
+                if user_key in all_starters and ai_language in all_starters[user_key]:
+                    return all_starters[user_key][ai_language]
+                else:
+                    logger.warning(f"언어 조합을 찾을 수 없음: {user_language} -> {ai_language} for topic {topic.value}")
+                    return self._get_fallback_topic_starters_for_languages(topic, user_language, ai_language)
             else:
                 logger.warning(f"Topic 파일을 찾을 수 없습니다: {topic_file}")
-                return self._get_fallback_topic_starters(topic)
+                return self._get_fallback_topic_starters_for_languages(topic, user_language, ai_language)
         except Exception as e:
             logger.error(f"Topic 파일 로드 오류: {str(e)}")
-            return self._get_fallback_topic_starters(topic)
+            return self._get_fallback_topic_starters_for_languages(topic, user_language, ai_language)
     
-    def _get_fallback_greetings(self) -> Dict[str, List[str]]:
+    def _get_fallback_greetings_for_languages(self, user_language: str, ai_language: str) -> List[str]:
         """
-        폴백용 기본 인사말
+        폴백용 기본 인사말 (언어 조합별)
         """
-        return {
-            "English": ["Hello! 반가워! 😊 오늘도 English 공부해볼까?"],
-            "Spanish": ["¡Hola! 반가워! 😊 오늘도 español 배워볼까?"],
-            "Japanese": ["こんにちは! 반가워! 😊 오늘도 日本語 배워볼까?"],
-            "Korean": ["안녕하세요! Hello! 😊 오늘도 한국어 배워볼까요?"],
-            "Chinese": ["你好! 반가워! 😊 오늘도 中文 배워볼까?"],
-            "French": ["Bonjour! 반가워! 😊 오늘도 français 배워볼까?"],
-            "German": ["Hallo! 반가워! 😊 오늘도 Deutsch 배워볼까?"]
-        }
+        if user_language == "Korean":
+            if ai_language == "English":
+                return ["Hello! 반가워! 😊 오늘도 English 공부해볼까?"]
+            elif ai_language == "Spanish":
+                return ["¡Hola! 반가워! 😊 오늘도 español 배워볼까?"]
+            elif ai_language == "Japanese":
+                return ["こんにちは! 반가워! 😊 오늘도 日本語 배워볼까?"]
+            elif ai_language == "Chinese":
+                return ["你好! 반가워! 😊 오늘도 中文 배워볼까?"]
+            elif ai_language == "French":
+                return ["Bonjour! 반가워! 😊 오늘도 français 배워볼까?"]
+            elif ai_language == "German":
+                return ["Hallo! 반가워! 😊 오늘도 Deutsch 배워볼까?"]
+            else:
+                return ["안녕하세요! 반가워요! 😊 오늘도 한국어 공부해볼까요?"]
+        else:
+            # 다른 언어에서 시작하는 경우 기본 형태
+            return [f"Hello! Let's learn {ai_language} today! 😊"]
     
-    def _get_fallback_topic_starters(self, topic: TopicEnum) -> Dict[str, List[str]]:
+    def _get_fallback_topic_starters_for_languages(self, topic: TopicEnum, user_language: str, ai_language: str) -> List[str]:
         """
-        폴백용 기본 주제 시작 문장
+        폴백용 기본 주제 시작 문장 (언어 조합별)
         """
-        return {
-            "English": [f"Let's talk about {topic.value}! 😊"],
-            "Spanish": [f"¡Hablemos sobre {topic.value}! 😊"],
-            "Japanese": [f"{topic.value}について話しましょう！😊"],
-            "Korean": [f"{topic.value}에 대해 얘기해봐요! 😊"],
-            "Chinese": [f"我们来聊聊{topic.value}吧！😊"],
-            "French": [f"Parlons de {topic.value}! 😊"],
-            "German": [f"Lass uns über {topic.value} sprechen! 😊"]
-        }
+        if user_language == "Korean":
+            if ai_language == "English":
+                return [f"Let's talk about {topic.value}! 😊"]
+            elif ai_language == "Spanish":
+                return [f"¡Hablemos sobre {topic.value}! 😊"]
+            elif ai_language == "Japanese":
+                return [f"{topic.value}について話しましょう！😊"]
+            elif ai_language == "Chinese":
+                return [f"我们来聊聊{topic.value}吧！😊"]
+            elif ai_language == "French":
+                return [f"Parlons de {topic.value}! 😊"]
+            elif ai_language == "German":
+                return [f"Lass uns über {topic.value} sprechen! 😊"]
+            else:
+                return [f"{topic.value}에 대해 얘기해봐요! 😊"]
+        else:
+            return [f"Let's talk about {topic.value}! 😊"]
     
     def _get_cache_key(self, *args) -> str:
         """캐시 키 생성"""
@@ -330,18 +363,15 @@ JSON FORMAT:
         주제와 언어에 맞는 대화 시작 문장을 20개 생성하고 그 중 하나를 랜덤 선택합니다.
         인사말과 함께 반환하며, 학습할 단어들도 추출하여 함께 제공합니다.
         """
-        # Assets에서 인사말 로드
-        greetings = self._load_greetings_from_assets()
+        # Assets에서 언어 조합별 인사말 로드
+        greetings = self._load_greetings_from_assets_by_language(user_language, ai_language)
         
         try:
-            # Assets에서 주제별 대화 시작 문장 로드
-            topic_starters = self._load_topic_starters_from_assets(topic)
-            
-            # 언어에 맞는 문장들 가져오기
-            starters = topic_starters.get(ai_language, topic_starters.get("English", []))
+            # Assets에서 언어 조합별 주제별 대화 시작 문장 로드
+            starters = self._load_topic_starters_from_assets_by_language(topic, user_language, ai_language)
             
             if not starters:
-                logger.warning(f"언어 {ai_language}에 대한 시작 문장을 찾을 수 없음. 기본 문장 사용.")
+                logger.warning(f"언어 조합 {user_language} -> {ai_language}에 대한 시작 문장을 찾을 수 없음. 기본 문장 사용.")
                 starters = [f"Let's talk about {topic.value}! 😊"]
             
             # 랜덤하게 하나 선택
@@ -349,7 +379,7 @@ JSON FORMAT:
             logger.info(f"선택된 대화 시작 문장: {selected_starter}")
             
             # 인사말 선택 및 조합
-            greeting = random.choice(greetings.get(ai_language, greetings.get("English", ["Hello! 😊"])))
+            greeting = random.choice(greetings)
             full_conversation = f"{greeting} {selected_starter}"
             
             # 학습 단어 추출

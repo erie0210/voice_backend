@@ -1,51 +1,359 @@
 {
-  "English": [
-    "Hello! 반가워! 😊 오늘도 English 공부해볼까?",
-    "Hi there! 안녕! ✨ 오늘은 어떤 conversation을 해볼까?",
-    "Hey! 또 만났네! 🎉 Ready for some fun English time?",
-    "Good to see you! 만나서 좋아! 💬 Let's chat together!",
-    "Hi! 안녕하세요! 🌟 오늘도 English practice 해보자!"
-  ],
-  "Spanish": [
-    "¡Hola! 반가워! 😊 오늘도 español 배워볼까?",
-    "¡Hola! 안녕! ✨ 오늘은 어떤 conversación을 해볼까?",
-    "¡Oye! 또 만났네! 🎉 ¿Listo para español divertido?",
-    "¡Qué bueno verte! 만나서 좋아! 💬 ¡Vamos a charlar!",
-    "¡Hola! 안녕하세요! 🌟 오늘도 español practice 해보자!"
-  ],
-  "Japanese": [
-    "こんにちは! 반가워! 😊 오늘도 日本語 배워볼까?",
-    "こんにちは! 안녕! ✨ 오늘은 어떤 会話를 해볼까?",
-    "やあ! 또 만났네! 🎉 楽しい日本語 time이야!",
-    "お会いできて良かった! 만나서 좋아! 💬 お話ししましょう!",
-    "こんにちは! 안녕하세요! 🌟 오늘도 日本語 practice 해보자!"
-  ],
-  "Korean": [
-    "안녕하세요! Hello! 😊 오늘도 한국어 배워볼까요?",
-    "안녕하세요! Hi there! ✨ 오늘은 어떤 대화를 해볼까요?",
-    "안녕! Hey! 🎉 재미있는 Korean time이에요!",
-    "만나서 좋아요! Good to see you! 💬 대화해봐요!",
-    "안녕하세요! Hi! 🌟 오늘도 Korean practice 해보자!"
-  ],
-  "Chinese": [
-    "你好! 반가워! 😊 오늘도 中文 배워볼까?",
-    "你好! 안녕! ✨ 오늘은 어떤 对话를 해볼까?",
-    "嘿! 또 만났네! 🎉 有趣的中文 time이야!",
-    "很高兴见到你! 만나서 좋아! 💬 我们聊聊吧!",
-    "你好! 안녕하세요! 🌟 오늘도 中文 practice 해보자!"
-  ],
-  "French": [
-    "Bonjour! 반가워! 😊 오늘도 français 배워볼까?",
-    "Salut! 안녕! ✨ 오늘은 어떤 conversation을 해볼까?",
-    "Hey! 또 만났네! 🎉 Prêt pour français amusant?",
-    "Content de te voir! 만나서 좋아! 💬 Discutons!",
-    "Bonjour! 안녕하세요! 🌟 오늘도 français practice 해보자!"
-  ],
-  "German": [
-    "Hallo! 반가워! 😊 오늘도 Deutsch 배워볼까?",
-    "Hi! 안녕! ✨ 오늘은 어떤 Gespräch를 해볼까?",
-    "Hey! 또 만났네! 🎉 Bereit für lustiges Deutsch?",
-    "Schön, dich zu sehen! 만나서 좋아! 💬 Lass uns reden!",
-    "Hallo! 안녕하세요! 🌟 오늘도 Deutsch practice 해보자!"
-  ]
+  "from_Korean": {
+    "English": [
+      "Hello! 반가워! 😊 오늘도 English 공부해볼까?",
+      "Hi there! 안녕! ✨ 오늘은 어떤 conversation을 해볼까?",
+      "Hey! 또 만났네! 🎉 Ready for some fun English time?",
+      "Good to see you! 만나서 좋아! 💬 Let's chat together!",
+      "Hi! 안녕하세요! 🌟 오늘도 English practice 해보자!"
+    ],
+    "Spanish": [
+      "¡Hola! 반가워! 😊 오늘도 español 배워볼까?",
+      "¡Hola! 안녕! ✨ 오늘은 어떤 conversación을 해볼까?",
+      "¡Oye! 또 만났네! 🎉 ¿Listo para español divertido?",
+      "¡Qué bueno verte! 만나서 좋아! 💬 ¡Vamos a charlar!",
+      "¡Hola! 안녕하세요! 🌟 오늘도 español practice 해보자!"
+    ],
+    "Japanese": [
+      "こんにちは! 반가워! 😊 오늘도 日本語 배워볼까?",
+      "こんにちは! 안녕! ✨ 오늘은 어떤 会話를 해볼까?",
+      "やあ! 또 만났네! 🎉 楽しい日本語 time이야!",
+      "お会いできて良かった! 만나서 좋아! 💬 お話ししましょう!",
+      "こんにちは! 안녕하세요! 🌟 오늘도 日本語 practice 해보자!"
+    ],
+    "Korean": [
+      "안녕하세요! 반가워요! 😊 오늘도 한국어 공부해볼까요?",
+      "안녕하세요! 또 만났네요! ✨ 오늘은 어떤 대화를 해볼까요?",
+      "안녕! 또 왔구나! 🎉 재미있는 한국어 시간이에요!",
+      "만나서 좋아요! 💬 대화해봐요!",
+      "안녕하세요! 🌟 오늘도 한국어 연습해보자!"
+    ],
+    "Chinese": [
+      "你好! 반가워! 😊 오늘도 中文 배워볼까?",
+      "你好! 안녕! ✨ 오늘은 어떤 对话를 해볼까?",
+      "嘿! 또 만났네! 🎉 有趣的中文 time이야!",
+      "很高兴见到你! 만나서 좋아! 💬 我们聊聊吧!",
+      "你好! 안녕하세요! 🌟 오늘도 中文 practice 해보자!"
+    ],
+    "French": [
+      "Bonjour! 반가워! 😊 오늘도 français 배워볼까?",
+      "Salut! 안녕! ✨ 오늘은 어떤 conversation을 해볼까?",
+      "Hey! 또 만났네! 🎉 Prêt pour français amusant?",
+      "Content de te voir! 만나서 좋아! 💬 Discutons!",
+      "Bonjour! 안녕하세요! 🌟 오늘도 français practice 해보자!"
+    ],
+    "German": [
+      "Hallo! 반가워! 😊 오늘도 Deutsch 배워볼까?",
+      "Hi! 안녕! ✨ 오늘은 어떤 Gespräch를 해볼까?",
+      "Hey! 또 만났네! 🎉 Bereit für lustiges Deutsch?",
+      "Schön, dich zu sehen! 만나서 좋아! 💬 Lass uns reden!",
+      "Hallo! 안녕하세요! 🌟 오늘도 Deutsch practice 해보자!"
+    ]
+  },
+  "from_English": {
+    "Korean": [
+      "Hello! 안녕하세요! 😊 Today let's learn 한국어!",
+      "Hi there! 반갑습니다! ✨ Let's have a 대화 today!",
+      "Hey! Nice to see you again! 🎉 Ready for some Korean fun?",
+      "Good to see you! 만나서 좋아요! 💬 Let's chat in 한국어!",
+      "Hi! Great to meet you! 🌟 Today let's practice 한국어!"
+    ],
+    "Spanish": [
+      "Hello! ¡Hola! 😊 Today let's learn español!",
+      "Hi there! ¡Qué tal! ✨ Let's have a conversación today!",
+      "Hey! Nice to see you again! 🎉 Ready for some Spanish diversión?",
+      "Good to see you! ¡Qué bueno verte! 💬 Let's chat in español!",
+      "Hi! Great to meet you! 🌟 Today let's practice español!"
+    ],
+    "Japanese": [
+      "Hello! こんにちは! 😊 Today let's learn 日本語!",
+      "Hi there! はじめまして! ✨ Let's have a 会話 today!",
+      "Hey! Nice to see you again! 🎉 Ready for some Japanese 楽しみ?",
+      "Good to see you! お会いできて嬉しい! 💬 Let's chat in 日本語!",
+      "Hi! Great to meet you! 🌟 Today let's practice 日本語!"
+    ],
+    "Chinese": [
+      "Hello! 你好! 😊 Today let's learn 中文!",
+      "Hi there! 很高兴见到你! ✨ Let's have a 对话 today!",
+      "Hey! Nice to see you again! 🎉 Ready for some Chinese 乐趣?",
+      "Good to see you! 见到你很好! 💬 Let's chat in 中文!",
+      "Hi! Great to meet you! 🌟 Today let's practice 中文!"
+    ],
+    "French": [
+      "Hello! Bonjour! 😊 Today let's learn français!",
+      "Hi there! Salut! ✨ Let's have a conversation today!",
+      "Hey! Nice to see you again! 🎉 Ready for some French plaisir?",
+      "Good to see you! Content de te voir! 💬 Let's chat in français!",
+      "Hi! Great to meet you! 🌟 Today let's practice français!"
+    ],
+    "German": [
+      "Hello! Hallo! 😊 Today let's learn Deutsch!",
+      "Hi there! Guten Tag! ✨ Let's have a Gespräch today!",
+      "Hey! Nice to see you again! 🎉 Ready for some German Spaß?",
+      "Good to see you! Schön dich zu sehen! 💬 Let's chat in Deutsch!",
+      "Hi! Great to meet you! 🌟 Today let's practice Deutsch!"
+    ],
+    "English": [
+      "Hello! Nice to see you! 😊 Today let's practice English together!",
+      "Hi there! Great to meet you! ✨ Let's have a conversation today!",
+      "Hey! Welcome back! 🎉 Ready for some fun English time?",
+      "Good to see you! 💬 Let's chat and improve our English!",
+      "Hi! Glad you're here! 🌟 Today let's practice English!"
+    ]
+  },
+  "from_Spanish": {
+    "English": [
+      "¡Hola! Hello! 😊 Hoy vamos a aprender English!",
+      "¡Hola! Nice to meet you! ✨ Vamos a tener una conversation hoy!",
+      "¡Oye! Nice to see you again! 🎉 ¿Listo para English divertido?",
+      "¡Qué bueno verte! Good to see you! 💬 Vamos a chatear en English!",
+      "¡Hola! Great to meet you! 🌟 Hoy vamos a practicar English!"
+    ],
+    "Korean": [
+      "¡Hola! 안녕하세요! 😊 Hoy vamos a aprender 한국어!",
+      "¡Hola! 반갑습니다! ✨ Vamos a tener una 대화 hoy!",
+      "¡Oye! Nice to see you again! 🎉 ¿Listo para 한국어 divertido?",
+      "¡Qué bueno verte! 만나서 좋아요! 💬 Vamos a chatear en 한국어!",
+      "¡Hola! 만나서 반가워요! 🌟 Hoy vamos a practicar 한국어!"
+    ],
+    "Japanese": [
+      "¡Hola! こんにちは! 😊 Hoy vamos a aprender 日本語!",
+      "¡Hola! はじめまして! ✨ Vamos a tener una 会話 hoy!",
+      "¡Oye! また会えて嬉しい! 🎉 ¿Listo para 日本語 divertido?",
+      "¡Qué bueno verte! お会いできて嬉しい! 💬 Vamos a chatear en 日本語!",
+      "¡Hola! よろしくお願いします! 🌟 Hoy vamos a practicar 日本語!"
+    ],
+    "Chinese": [
+      "¡Hola! 你好! 😊 Hoy vamos a aprender 中文!",
+      "¡Hola! 很高兴见到你! ✨ Vamos a tener una 对话 hoy!",
+      "¡Oye! 又见面了! 🎉 ¿Listo para 中文 divertido?",
+      "¡Qué bueno verte! 见到你很好! 💬 Vamos a chatear en 中文!",
+      "¡Hola! 认识你很高兴! 🌟 Hoy vamos a practicar 中文!"
+    ],
+    "French": [
+      "¡Hola! Bonjour! 😊 Hoy vamos a aprender français!",
+      "¡Hola! Salut! ✨ Vamos a tener una conversation hoy!",
+      "¡Oye! Content de te revoir! 🎉 ¿Listo para français divertido?",
+      "¡Qué bueno verte! Content de te voir! 💬 Vamos a chatear en français!",
+      "¡Hola! Enchanté! 🌟 Hoy vamos a practicar français!"
+    ],
+    "German": [
+      "¡Hola! Hallo! 😊 Hoy vamos a aprender Deutsch!",
+      "¡Hola! Guten Tag! ✨ Vamos a tener una Gespräch hoy!",
+      "¡Oye! Schön dich wiederzusehen! 🎉 ¿Listo para Deutsch divertido?",
+      "¡Qué bueno verte! Schön dich zu sehen! 💬 Vamos a chatear en Deutsch!",
+      "¡Hola! Freut mich! 🌟 Hoy vamos a practicar Deutsch!"
+    ],
+    "Spanish": [
+      "¡Hola! ¡Qué tal! 😊 Hoy vamos a practicar español juntos!",
+      "¡Hola! ¡Encantado de conocerte! ✨ Vamos a conversar hoy!",
+      "¡Oye! ¡Qué bueno verte de nuevo! 🎉 ¿Listo para español divertido?",
+      "¡Qué bueno verte! 💬 Vamos a charlar en español!",
+      "¡Hola! ¡Me alegra que estés aquí! 🌟 Hoy vamos a practicar español!"
+    ]
+  },
+  "from_Japanese": {
+    "English": [
+      "こんにちは! Hello! 😊 今日は English を学びましょう!",
+      "こんにちは! Nice to meet you! ✨ 今日は conversation をしましょう!",
+      "やあ! Nice to see you again! 🎉 English の fun time の準備はできた?",
+      "お会いできて嬉しい! Good to see you! 💬 English で chat しましょう!",
+      "こんにちは! Great to meet you! 🌟 今日は English を practice しましょう!"
+    ],
+    "Korean": [
+      "こんにちは! 안녕하세요! 😊 今日は 한국어 を学びましょう!",
+      "こんにちは! 반갑습니다! ✨ 今日は 대화 をしましょう!",
+      "やあ! 또 만났네요! 🎉 한국어 の fun time の準備はできた?",
+      "お会いできて嬉しい! 만나서 좋아요! 💬 한국어 で chat しましょう!",
+      "こんにちは! 만나서 반가워요! 🌟 今日は 한국어 を practice しましょう!"
+    ],
+    "Spanish": [
+      "こんにちは! ¡Hola! 😊 今日は español を学びましょう!",
+      "こんにちは! ¡Encantado! ✨ 今日は conversación をしましょう!",
+      "やあ! ¡Qué bueno verte! 🎉 español の diversión time の準備はできた?",
+      "お会いできて嬉しい! ¡Qué bueno verte! 💬 español で chat しましょう!",
+      "こんにちは! ¡Mucho gusto! 🌟 今日は español を practice しましょう!"
+    ],
+    "Chinese": [
+      "こんにちは! 你好! 😊 今日は 中文 を学びましょう!",
+      "こんにちは! 很高兴见到你! ✨ 今日は 对话 をしましょう!",
+      "やあ! 又见面了! 🎉 中文 の 乐趣 time の準備はできた?",
+      "お会いできて嬉しい! 见到你很好! 💬 中文 で chat しましょう!",
+      "こんにちは! 认识你很高兴! 🌟 今日は 中文 を practice しましょう!"
+    ],
+    "French": [
+      "こんにちは! Bonjour! 😊 今日は français を学びましょう!",
+      "こんにちは! Enchanté! ✨ 今日は conversation をしましょう!",
+      "やあ! Content de te voir! 🎉 français の plaisir time の準備はできた?",
+      "お会いできて嬉しい! Content de te voir! 💬 français で chat しましょう!",
+      "こんにちは! Ravi de te rencontrer! 🌟 今日は français を practice しましょう!"
+    ],
+    "German": [
+      "こんにちは! Hallo! 😊 今日は Deutsch を学びましょう!",
+      "こんにちは! Freut mich! ✨ 今日は Gespräch をしましょう!",
+      "やあ! Schön dich zu sehen! 🎉 Deutsch の Spaß time の準備はできた?",
+      "お会いできて嬉しい! Schön dich zu sehen! 💬 Deutsch で chat しましょう!",
+      "こんにちは! Freut mich dich kennenzulernen! 🌟 今日は Deutsch を practice しましょう!"
+    ],
+    "Japanese": [
+      "こんにちは! お元気ですか! 😊 今日は日本語を一緒に練習しましょう!",
+      "こんにちは! はじめまして! ✨ 今日は会話をしましょう!",
+      "やあ! また会えて嬉しいです! 🎉 楽しい日本語の時間の準備はできましたか?",
+      "お会いできて嬉しいです! 💬 日本語でお話ししましょう!",
+      "こんにちは! お会いできて光栄です! 🌟 今日は日本語を練習しましょう!"
+    ]
+  },
+  "from_Chinese": {
+    "English": [
+      "你好! Hello! 😊 今天我们来学 English!",
+      "你好! Nice to meet you! ✨ 今天我们来 conversation!",
+      "嘿! Nice to see you again! 🎉 准备好 English 的 fun time 了吗?",
+      "很高兴见到你! Good to see you! 💬 我们用 English 来 chat!",
+      "你好! Great to meet you! 🌟 今天我们来 practice English!"
+    ],
+    "Korean": [
+      "你好! 안녕하세요! 😊 今天我们来学 한국어!",
+      "你好! 반갑습니다! ✨ 今天我们来 대화!",
+      "嘿! 또 만났네요! 🎉 准备好 한국어 的 fun time 了吗?",
+      "很高兴见到你! 만나서 좋아요! 💬 我们用 한국어 来 chat!",
+      "你好! 만나서 반가워요! 🌟 今天我们来 practice 한국어!"
+    ],
+    "Spanish": [
+      "你好! ¡Hola! 😊 今天我们来学 español!",
+      "你好! ¡Encantado! ✨ 今天我们来 conversación!",
+      "嘿! ¡Qué bueno verte! 🎉 准备好 español 的 diversión time 了吗?",
+      "很高兴见到你! ¡Qué bueno verte! 💬 我们用 español 来 chat!",
+      "你好! ¡Mucho gusto! 🌟 今天我们来 practice español!"
+    ],
+    "Japanese": [
+      "你好! こんにちは! 😊 今天我们来学 日本語!",
+      "你好! はじめまして! ✨ 今天我们来 会話!",
+      "嘿! また会えて嬉しい! 🎉 准备好 日本語 的 楽しみ time 了吗?",
+      "很高兴见到你! お会いできて嬉しい! 💬 我们用 日本語 来 chat!",
+      "你好! よろしくお願いします! 🌟 今天我们来 practice 日本語!"
+    ],
+    "French": [
+      "你好! Bonjour! 😊 今天我们来学 français!",
+      "你好! Enchanté! ✨ 今天我们来 conversation!",
+      "嘿! Content de te voir! 🎉 准备好 français 的 plaisir time 了吗?",
+      "很高兴见到你! Content de te voir! 💬 我们用 français 来 chat!",
+      "你好! Ravi de te rencontrer! 🌟 今天我们来 practice français!"
+    ],
+    "German": [
+      "你好! Hallo! 😊 今天我们来学 Deutsch!",
+      "你好! Freut mich! ✨ 今天我们来 Gespräch!",
+      "嘿! Schön dich zu sehen! 🎉 准备好 Deutsch 的 Spaß time 了吗?",
+      "很高兴见到你! Schön dich zu sehen! 💬 我们用 Deutsch 来 chat!",
+      "你好! Freut mich dich kennenzulernen! 🌟 今天我们来 practice Deutsch!"
+    ],
+    "Chinese": [
+      "你好! 很高兴见到你! 😊 今天我们一起练习中文!",
+      "你好! 初次见面! ✨ 今天我们来对话!",
+      "嘿! 又见面了! 🎉 准备好有趣的中文时间了吗?",
+      "很高兴见到你! 💬 我们用中文聊天吧!",
+      "你好! 很荣幸见到你! 🌟 今天我们来练习中文!"
+    ]
+  },
+  "from_French": {
+    "English": [
+      "Bonjour! Hello! 😊 Aujourd'hui nous allons apprendre English!",
+      "Bonjour! Nice to meet you! ✨ Aujourd'hui nous allons avoir une conversation!",
+      "Salut! Nice to see you again! 🎉 Prêt pour English fun time?",
+      "Content de te voir! Good to see you! 💬 Parlons en English!",
+      "Bonjour! Great to meet you! 🌟 Aujourd'hui nous allons practice English!"
+    ],
+    "Korean": [
+      "Bonjour! 안녕하세요! 😊 Aujourd'hui nous allons apprendre 한국어!",
+      "Bonjour! 반갑습니다! ✨ Aujourd'hui nous allons avoir une 대화!",
+      "Salut! 또 만났네요! 🎉 Prêt pour 한국어 fun time?",
+      "Content de te voir! 만나서 좋아요! 💬 Parlons en 한국어!",
+      "Bonjour! 만나서 반가워요! 🌟 Aujourd'hui nous allons practice 한국어!"
+    ],
+    "Spanish": [
+      "Bonjour! ¡Hola! 😊 Aujourd'hui nous allons apprendre español!",
+      "Bonjour! ¡Encantado! ✨ Aujourd'hui nous allons avoir une conversación!",
+      "Salut! ¡Qué bueno verte! 🎉 Prêt pour español diversión time?",
+      "Content de te voir! ¡Qué bueno verte! 💬 Parlons en español!",
+      "Bonjour! ¡Mucho gusto! 🌟 Aujourd'hui nous allons practice español!"
+    ],
+    "Japanese": [
+      "Bonjour! こんにちは! 😊 Aujourd'hui nous allons apprendre 日本語!",
+      "Bonjour! はじめまして! ✨ Aujourd'hui nous allons avoir une 会話!",
+      "Salut! また会えて嬉しい! 🎉 Prêt pour 日本語 楽しみ time?",
+      "Content de te voir! お会いできて嬉しい! 💬 Parlons en 日本語!",
+      "Bonjour! よろしくお願いします! 🌟 Aujourd'hui nous allons practice 日本語!"
+    ],
+    "Chinese": [
+      "Bonjour! 你好! 😊 Aujourd'hui nous allons apprendre 中文!",
+      "Bonjour! 很高兴见到你! ✨ Aujourd'hui nous allons avoir une 对话!",
+      "Salut! 又见面了! 🎉 Prêt pour 中文 乐趣 time?",
+      "Content de te voir! 见到你很好! 💬 Parlons en 中文!",
+      "Bonjour! 认识你很高兴! 🌟 Aujourd'hui nous allons practice 中文!"
+    ],
+    "German": [
+      "Bonjour! Hallo! 😊 Aujourd'hui nous allons apprendre Deutsch!",
+      "Bonjour! Freut mich! ✨ Aujourd'hui nous allons avoir une Gespräch!",
+      "Salut! Schön dich zu sehen! 🎉 Prêt pour Deutsch Spaß time?",
+      "Content de te voir! Schön dich zu sehen! 💬 Parlons en Deutsch!",
+      "Bonjour! Freut mich dich kennenzulernen! 🌟 Aujourd'hui nous allons practice Deutsch!"
+    ],
+    "French": [
+      "Bonjour! Comment allez-vous! 😊 Aujourd'hui nous allons pratiquer le français ensemble!",
+      "Bonjour! Enchanté de vous rencontrer! ✨ Aujourd'hui nous allons converser!",
+      "Salut! Content de vous revoir! 🎉 Prêt pour un moment français amusant?",
+      "Content de vous voir! 💬 Parlons en français!",
+      "Bonjour! Ravi de vous rencontrer! 🌟 Aujourd'hui nous allons pratiquer le français!"
+    ]
+  },
+  "from_German": {
+    "English": [
+      "Hallo! Hello! 😊 Heute lernen wir English!",
+      "Hallo! Nice to meet you! ✨ Heute haben wir eine conversation!",
+      "Hi! Nice to see you again! 🎉 Bereit für English fun time?",
+      "Schön dich zu sehen! Good to see you! 💬 Sprechen wir English!",
+      "Hallo! Great to meet you! 🌟 Heute werden wir English practice!"
+    ],
+    "Korean": [
+      "Hallo! 안녕하세요! 😊 Heute lernen wir 한국어!",
+      "Hallo! 반갑습니다! ✨ Heute haben wir eine 대화!",
+      "Hi! 또 만났네요! 🎉 Bereit für 한국어 fun time?",
+      "Schön dich zu sehen! 만나서 좋아요! 💬 Sprechen wir 한국어!",
+      "Hallo! 만나서 반가워요! 🌟 Heute werden wir 한국어 practice!"
+    ],
+    "Spanish": [
+      "Hallo! ¡Hola! 😊 Heute lernen wir español!",
+      "Hallo! ¡Encantado! ✨ Heute haben wir eine conversación!",
+      "Hi! ¡Qué bueno verte! 🎉 Bereit für español diversión time?",
+      "Schön dich zu sehen! ¡Qué bueno verte! 💬 Sprechen wir español!",
+      "Hallo! ¡Mucho gusto! 🌟 Heute werden wir español practice!"
+    ],
+    "Japanese": [
+      "Hallo! こんにちは! 😊 Heute lernen wir 日本語!",
+      "Hallo! はじめまして! ✨ Heute haben wir eine 会話!",
+      "Hi! また会えて嬉しい! 🎉 Bereit für 日本語 楽しみ time?",
+      "Schön dich zu sehen! お会いできて嬉しい! 💬 Sprechen wir 日本語!",
+      "Hallo! よろしくお願いします! 🌟 Heute werden wir 日本語 practice!"
+    ],
+    "Chinese": [
+      "Hallo! 你好! 😊 Heute lernen wir 中文!",
+      "Hallo! 很高兴见到你! ✨ Heute haben wir eine 对话!",
+      "Hi! 又见面了! 🎉 Bereit für 中文 乐趣 time?",
+      "Schön dich zu sehen! 见到你很好! 💬 Sprechen wir 中文!",
+      "Hallo! 认识你很高兴! 🌟 Heute werden wir 中文 practice!"
+    ],
+    "French": [
+      "Hallo! Bonjour! 😊 Heute lernen wir français!",
+      "Hallo! Enchanté! ✨ Heute haben wir eine conversation!",
+      "Hi! Content de te voir! 🎉 Bereit für français plaisir time?",
+      "Schön dich zu sehen! Content de te voir! 💬 Sprechen wir français!",
+      "Hallo! Ravi de te rencontrer! 🌟 Heute werden wir français practice!"
+    ],
+    "German": [
+      "Hallo! Wie geht es dir! 😊 Heute üben wir Deutsch zusammen!",
+      "Hallo! Freut mich dich kennenzulernen! ✨ Heute werden wir sprechen!",
+      "Hi! Schön dich wiederzusehen! 🎉 Bereit für lustige deutsche Zeit?",
+      "Schön dich zu sehen! 💬 Sprechen wir auf Deutsch!",
+      "Hallo! Freut mich dich zu treffen! 🌟 Heute werden wir Deutsch üben!"
+    ]
+  }
 } 

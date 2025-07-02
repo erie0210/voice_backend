@@ -1,86 +1,174 @@
 {
-  "English": [
-    "오늘은 어떤 outfit을 입었어? 😊 What are you wearing today?",
-    "Your style은 어떤 거 같아? Tell me about your fashion!",
-    "Favorite clothes는 뭐야? What do you like to wear?",
-    "Color combination이 예뻐! What colors do you love?",
-    "Shoes는 어떤 걸 신었어? What kind of footwear today?",
-    "Accessories 같은 거 좋아해? Do you like jewelry or bags?",
-    "Winter에는 뭘 입어? What do you wear when it's cold?",
-    "Summer fashion은 어떤 게 좋아? What's your hot weather style?",
-    "Shopping for clothes는 재밌어? Do you enjoy buying fashion?",
-    "Fashion trend는 어떤 거 따라해? What styles are you into?"
-  ],
-  "Spanish": [
-    "오늘은 어떤 ropa를 입었어? 😊 ¿Qué llevas puesto hoy?",
-    "Tu estilo은 어떤 거 같아? ¡Cuéntame sobre tu moda!",
-    "Ropa favorita는 뭐야? ¿Qué te gusta ponerte?",
-    "Combinación de colores이 예뻐! ¿Qué colores amas?",
-    "Zapatos는 어떤 걸 신었어? ¿Qué calzado llevas hoy?",
-    "Accesorios 같은 거 좋아해? ¿Te gustan las joyas o bolsos?",
-    "Invierno에는 뭘 입어? ¿Qué usas cuando hace frío?",
-    "Moda de verano은 어떤 게 좋아? ¿Cuál es tu estilo de calor?",
-    "Comprar ropa는 재밌어? ¿Disfrutas comprando moda?",
-    "Tendencia de moda는 어떤 거 따라해? ¿Qué estilos te gustan?"
-  ],
-  "Japanese": [
-    "오늘은 어떤 服を입었어? 😊 今日は何を着てる?",
-    "君のスタイル은 어떤 거 같아? ファッションについて教えて!",
-    "好きな洋服は 뭐야? 何を着るのが好き?",
-    "色の組み合わせ이 예뻐! どんな色が好き?",
-    "靴は 어떤 걸 신었어? 今日はどんな履物?",
-    "アクセサリー 같은 거 좋아해? ジュエリーやバッグは好き?",
-    "冬には 뭘 입어? 寒い時は何を着る?",
-    "夏のファッションは 어떤 게 좋아? 暑い時のスタイルは?",
-    "洋服を買い物する 거は 재밌어? ファッション買い物は楽しい?",
-    "ファッショントレンドは 어떤 거 따라해? どんなスタイルが好き?"
-  ],
-  "Korean": [
-    "오늘은 어떤 outfit을 입었어요? 😊 What are you wearing today?",
-    "당신의 style은 어떤가요? Tell me about your fashion!",
-    "좋아하는 clothes는 뭐예요? What do you like to wear?",
-    "색깔 combination이 예뻐요! What colors do you love?",
-    "신발 shoes는 어떤 걸 신었어요? What footwear today?",
-    "악세사리 accessories 좋아해요? Do you like jewelry or bags?",
-    "겨울 winter에는 뭘 입어요? What do you wear when cold?",
-    "여름 summer fashion은 어떤 게 좋아요? Hot weather style?",
-    "쇼핑 shopping for clothes는 재밌어요? Enjoy buying fashion?",
-    "패션 fashion trend는 어떤 거 따라해요? What styles are you into?"
-  ],
-  "Chinese": [
-    "오늘은 어떤 衣服을 입었어? 😊 你今天穿什么?",
-    "你的风格은 어떤 거 같아? 告诉我你的时尚!",
-    "喜欢的衣服는 뭐야? 你喜欢穿什么?",
-    "颜色搭配이 예뻐! 你喜欢什么颜色?",
-    "鞋子는 어떤 걸 신었어? 今天穿什么鞋?",
-    "配饰 같은 거 좋아해? 你喜欢珠宝或包包吗?",
-    "冬天에는 뭘 입어? 冷的时候穿什么?",
-    "夏天时尚은 어떤 게 좋아? 热天的风格是什么?",
-    "买衣服는 재밌어? 你喜欢买时尚用品吗?",
-    "时尚潮流는 어떤 거 따라해? 你喜欢什么风格?"
-  ],
-  "French": [
-    "오늘은 어떤 vêtements을 입었어? 😊 Qu'est-ce que tu portes aujourd'hui?",
-    "Ton style은 어떤 거 같아? Parle-moi de ta mode!",
-    "Vêtements préférés는 뭐야? Qu'est-ce que tu aimes porter?",
-    "Combinaison de couleurs이 예뻐! Quelles couleurs adores-tu?",
-    "Chaussures는 어떤 걸 신었어? Quelles chaussures aujourd'hui?",
-    "Accessoires 같은 거 좋아해? Tu aimes les bijoux ou sacs?",
-    "Hiver에는 뭘 입어? Que portes-tu quand il fait froid?",
-    "Mode d'été은 어떤 게 좋아? Quel est ton style par temps chaud?",
-    "Faire du shopping vêtements는 재밌어? Tu aimes acheter la mode?",
-    "Tendance mode는 어떤 거 따라해? Quels styles aimes-tu?"
-  ],
-  "German": [
-    "오늘은 어떤 Kleidung을 입었어? 😊 Was trägst du heute?",
-    "Dein Stil은 어떤 거 같아? Erzähl mir von deiner Mode!",
-    "Lieblings-Kleidung는 뭐야? Was trägst du gerne?",
-    "Farbkombination이 예뻐! Welche Farben liebst du?",
-    "Schuhe는 어떤 걸 신었어? Welche Schuhe heute?",
-    "Accessoires 같은 거 좋아해? Magst du Schmuck oder Taschen?",
-    "Winter에는 뭘 입어? Was trägst du wenn es kalt ist?",
-    "Sommer-Mode은 어떤 게 좋아? Was ist dein warmes Wetter Stil?",
-    "Kleidung einkaufen는 재밌어? Magst du Mode-Shopping?",
-    "Mode-Trend는 어떤 거 따라해? Welche Stile magst du?"
-  ]
+  "from_Korean": {
+    "English": [
+      "오늘 outfit은 어때? 😊 What are you wearing today?",
+      "OOTD 얘기해보자! Tell me about your style!",
+      "Favorite clothing은 뭐야? What do you like to wear?",
+      "어떤 color 옷을 좋아해? What colors do you prefer?",
+      "Shopping for clothes 좋아해? Do you enjoy fashion shopping?",
+      "Shoes 중에 뭘 자주 신어? What footwear do you wear often?",
+      "Winter에는 뭘 입어? What do you wear in cold weather?",
+      "Summer style은 어떤 거야? How do you dress when it's hot?",
+      "Accessories 좋아해? Do you like jewelry or bags?",
+      "Special occasion에는 뭘 입어? What do you wear for events?"
+    ],
+    "Spanish": [
+      "오늘 atuendo는 어때? 😊 ¿Qué outfit llevas?",
+      "Let's talk about OOTD! ¡Cuéntame sobre tu estilo!",
+      "Ropa favorita는 뭐야? ¿Qué te gusta ponerte?",
+      "어떤 color 옷을 좋아해? ¿Qué colores prefieres?",
+      "Comprar ropa 좋아해? ¿Te gusta ir de compras de moda?",
+      "Zapatos 중에 뭘 자주 신어? ¿Qué calzado usas frecuentemente?",
+      "Invierno에는 뭘 입어? ¿Qué te pones cuando hace frío?",
+      "Estilo de verano는 어떤 거야? ¿Cómo te vistes cuando hace calor?",
+      "Accesorios 좋아해? ¿Te gustan las joyas o bolsos?",
+      "Ocasión especial에는 뭘 입어? ¿Qué te pones para eventos?"
+    ],
+    "Japanese": [
+      "오늘 服装は 어때? 😊 今日は何を着てる?",
+      "OOTD 얘기해보자! スタイルについて教えて!",
+      "好きな洋服は 뭐야? 何を着るのが好き?",
+      "어떤 color 옷을 좋아해? どんな色が好み?",
+      "洋服の買い物 좋아해? ファッションショッピングは好き?",
+      "靴 중에 뭘 자주 신어? どんな靴をよく履く?",
+      "冬には 뭘 입어? 寒い時は何を着る?",
+      "夏のスタイルは 어떤 거야? 暑い時はどんな服装?",
+      "アクセサリー 좋아해? ジュエリーやバッグは好き?",
+      "特別な機会には 뭘 입어? イベント用は何を着る?"
+    ],
+    "Korean": [
+      "오늘 옷차림은 어때요? 😊 뭘 입고 있어요?",
+      "OOTD 얘기해봐요! 스타일에 대해 말해주세요!",
+      "좋아하는 옷은 뭐예요? 어떤 옷 입는 걸 좋아해요?",
+      "어떤 색깔 옷을 좋아해요? 선호하는 색상이 있나요?",
+      "옷 쇼핑 좋아해요? 패션 쇼핑 즐겨 하세요?",
+      "신발 중에 뭘 자주 신어요? 어떤 신발을 자주 신나요?",
+      "겨울에는 뭘 입어요? 추울 때는 어떻게 입어요?",
+      "여름 스타일은 어떤 거예요? 더울 때는 어떻게 입어요?",
+      "액세서리 좋아해요? 보석이나 가방 좋아하세요?",
+      "특별한 날에는 뭘 입어요? 행사용 옷은 어떤 거예요?"
+    ],
+    "Chinese": [
+      "오늘 穿搭는 어때? 😊 你今天穿什么?",
+      "OOTD 얘기해보자! 告诉我你的风格!",
+      "喜欢的衣服는 뭐야? 你喜欢穿什么?",
+      "어떤 color 옷을 좋아해? 你喜欢什么颜色?",
+      "买衣服 좋아해? 你喜欢时尚购物吗?",
+      "鞋子 중에 뭘 자주 신어? 你经常穿什么鞋?",
+      "冬天에는 뭘 입어? 天冷时你穿什么?",
+      "夏天风格는 어떤 거야? 天热时你怎么穿?",
+      "配饰 좋아해? 你喜欢珠宝或包包吗?",
+      "特殊场合에는 뭘 입어? 活动时你穿什么?"
+    ],
+    "French": [
+      "오늘 tenue는 어때? 😊 Quel outfit?",
+      "OOTD 얘기해보자! Parle-moi de ton style!",
+      "Vêtements préférés는 뭐야? Qu'est-ce que tu aimes porter?",
+      "어떤 color 옷을 좋아해? Quelles couleurs préfères-tu?",
+      "Shopping vêtements 좋아해? Tu aimes faire du shopping mode?",
+      "Chaussures 중에 뭘 자주 신어? Quelles chaussures portes-tu souvent?",
+      "Hiver에는 뭘 입어? Que portes-tu quand il fait froid?",
+      "Style été는 어떤 거야? Comment t'habilles-tu quand il fait chaud?",
+      "Accessoires 좋아해? Tu aimes les bijoux ou sacs?",
+      "Occasion spéciale에는 뭘 입어? Que portes-tu pour les événements?"
+    ],
+    "German": [
+      "오늘 Outfit는 어때? 😊 Welches outfit?",
+      "OOTD 얘기해보자! Erzähl mir von deinem Stil!",
+      "Lieblings-Kleidung는 뭐야? Was trägst du gerne?",
+      "어떤 color 옷을 좋아해? Welche Farben bevorzugst du?",
+      "Kleidung shoppen 좋아해? Magst du Mode-Shopping?",
+      "Schuhe 중에 뭘 자주 신어? Welche Schuhe trägst du oft?",
+      "Winter에는 뭘 입어? Was trägst du bei kaltem Wetter?",
+      "Sommer-Stil는 어떤 거야? Wie kleidest du dich wenn es heiß ist?",
+      "Accessoires 좋아해? Magst du Schmuck oder Taschen?",
+      "Besondere Anlässe에는 뭘 입어? Was trägst du zu Events?"
+    ]
+  },
+  "from_English": {
+    "Korean": [
+      "Today what's your 옷차림? 😊 어떤 outfit이에요?",
+      "Let's talk about OOTD! Tell me about your 스타일!",
+      "What's your favorite 옷? What do you like to wear?",
+      "What 색깔 clothes do you like? Color preferences?",
+      "Do you enjoy 쇼핑 for clothes? Fashion shopping?",
+      "What 신발 do you wear often? Favorite footwear?",
+      "What do you wear in 겨울? Cold weather clothes?",
+      "How's your 여름 style? Hot weather outfits?",
+      "Do you like 액세서리? Jewelry or bags?",
+      "What do you wear for special 행사? Event outfits?"
+    ],
+    "Spanish": [
+      "Today what's your atuendo? 😊 ¿Qué outfit llevas?",
+      "Let's talk about OOTD! Tell me about your estilo!",
+      "What's your favorite ropa? What do you like to wear?",
+      "What color clothes do you like? Color preferences?",
+      "Do you enjoy comprar for clothes? Fashion shopping?",
+      "What zapatos do you wear often? Favorite footwear?",
+      "What do you wear in invierno? Cold weather clothes?",
+      "How's your verano style? Hot weather outfits?",
+      "Do you like accesorios? Jewelry or bags?",
+      "What do you wear for special eventos? Event outfits?"
+    ],
+    "Japanese": [
+      "Today what's your 服装? 😊 どんな outfit?",
+      "Let's talk about OOTD! Tell me about your スタイル!",
+      "What's your favorite 洋服? What do you like to wear?",
+      "What 色 clothes do you like? Color preferences?",
+      "Do you enjoy 買い物 for clothes? Fashion shopping?",
+      "What 靴 do you wear often? Favorite footwear?",
+      "What do you wear in 冬? Cold weather clothes?",
+      "How's your 夏 style? Hot weather outfits?",
+      "Do you like アクセサリー? Jewelry or bags?",
+      "What do you wear for special イベント? Event outfits?"
+    ],
+    "Chinese": [
+      "Today what's your 穿搭? 😊 什么 outfit?",
+      "Let's talk about OOTD! Tell me about your 风格!",
+      "What's your favorite 衣服? What do you like to wear?",
+      "What 颜色 clothes do you like? Color preferences?",
+      "Do you enjoy 购物 for clothes? Fashion shopping?",
+      "What 鞋子 do you wear often? Favorite footwear?",
+      "What do you wear in 冬天? Cold weather clothes?",
+      "How's your 夏天 style? Hot weather outfits?",
+      "Do you like 配饰? Jewelry or bags?",
+      "What do you wear for special 活动? Event outfits?"
+    ],
+    "French": [
+      "Today what's your tenue? 😊 Quel outfit?",
+      "Let's talk about OOTD! Tell me about your style!",
+      "What's your favorite vêtements? What do you like to wear?",
+      "What couleur clothes do you like? Color preferences?",
+      "Do you enjoy shopping for clothes? Fashion shopping?",
+      "What chaussures do you wear often? Favorite footwear?",
+      "What do you wear in hiver? Cold weather clothes?",
+      "How's your été style? Hot weather outfits?",
+      "Do you like accessoires? Jewelry or bags?",
+      "What do you wear for special événements? Event outfits?"
+    ],
+    "German": [
+      "Today what's your Outfit? 😊 Welches outfit?",
+      "Let's talk about OOTD! Tell me about your Stil!",
+      "What's your favorite Kleidung? What do you like to wear?",
+      "What Farbe clothes do you like? Color preferences?",
+      "Do you enjoy shoppen for clothes? Fashion shopping?",
+      "What Schuhe do you wear often? Favorite footwear?",
+      "What do you wear in Winter? Cold weather clothes?",
+      "How's your Sommer style? Hot weather outfits?",
+      "Do you like Accessoires? Jewelry or bags?",
+      "What do you wear for special Veranstaltungen? Event outfits?"
+    ],
+    "English": [
+      "Today what's your outfit? 😊 What are you wearing?",
+      "Let's talk about OOTD! Tell me about your style!",
+      "What's your favorite clothing? What do you like to wear?",
+      "What color clothes do you like? Any color preferences?",
+      "Do you enjoy shopping for clothes? Fashion shopping fun?",
+      "What shoes do you wear often? Favorite footwear?",
+      "What do you wear in winter? Cold weather outfits?",
+      "How's your summer style? Hot weather fashion?",
+      "Do you like accessories? Jewelry or bags?",
+      "What do you wear for special events? Formal outfits?"
+    ]
+  }
 } 
