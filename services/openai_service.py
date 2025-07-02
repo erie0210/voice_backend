@@ -893,12 +893,13 @@ JSON 형식으로만 응답하세요:
                 topic_name = category.split("/")[-1] if "/" in category else category
                 metadata_section = self._audio_metadata.get("topics", {}).get(topic_name, {})
             
-            # from_lang -> to_lang 경로로 찾기
+            # from_lang -> 응답언어(사용자 언어) 경로로 찾기
             user_key = f"from_{from_lang}"
             if user_key not in metadata_section:
                 return None
                 
-            lang_section = metadata_section[user_key].get(to_lang, [])
+            # AI 응답은 사용자 언어로 나가야 함
+            lang_section = metadata_section[user_key].get(from_lang, [])
             
             # 텍스트 해시로 매칭 시도
             text_hash = self._get_text_hash(text)
