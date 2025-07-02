@@ -104,6 +104,48 @@ class OpenAIService:
         for key in expired_keys:
             del self._api_key_cache[key]
     
+    def _detect_final_message(self, messages: List[ChatMessage], last_user_message: str) -> bool:
+        """
+        마지막 답변인지 감지합니다.
+        시간 기반: 10분 이상 간격이 있으면 마지막 답변으로 처리
+        키워드 기반: goodbye, bye, end, finish 등의 키워드 감지
+        """
+        try:
+            # 키워드 기반 감지
+            farewell_keywords = [
+                'bye', 'goodbye', 'good bye', 'see you', 'end', 'finish', 'done', 'stop',
+                '안녕', '잘가', '끝', '그만', '종료', '마침', '끝내',
+                'さようなら', 'また明日', '終わり', '끦', 'adiós', 'au revoir', 'auf wiedersehen'
+            ]
+            
+            user_message_lower = last_user_message.lower().strip()
+            if any(keyword in user_message_lower for keyword in farewell_keywords):
+                logger.info(f"키워드 기반 마지막 답변 감지: {last_user_message}")
+                return True
+            
+            # 시간 기반 감지 (10분 = 600초)
+            if len(messages) >= 2:
+                current_time = datetime.now()
+                last_message_time = messages[-1].timestamp
+                time_gap = (current_time - last_message_time).total_seconds()
+                
+                if time_gap > 600:  # 10분 이상 간격
+                    logger.info(f"시간 기반 마지막 답변 감지: {time_gap}초 간격")
+                    return True
+            
+            # 대화 길이 기반 (20번 이상 대화 후 확률적으로 마지막 답변 처리)
+            if len(messages) >= 20:
+                import random
+                if random.random() < 0.3:  # 30% 확률
+                    logger.info(f"대화 길이 기반 마지막 답변 감지: {len(messages)}개 메시지")
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"마지막 답변 감지 중 오류: {str(e)}")
+            return False
+    
     async def translate_text(self, text: str, from_language: str, to_language: str) -> str:
         """
         OpenAI를 사용하여 텍스트를 번역합니다. (캐싱 적용)
@@ -238,9 +280,12 @@ JSON FORMAT:
             return True
 
         try:
-            # 대화 히스토리를 OpenAI 형식으로 변환 (토큰 절약을 위해 5개로 줄임)
+            # 마지막 답변 감지 로직
+            is_final_message = self._detect_final_message(messages, last_user_message)
+            
+            # 대화 히스토리를 OpenAI 형식으로 변환 (유저와 AI의 직전 답변 2개만 사용)
             chat_history = []
-            for msg in messages[-5:]:  # 최근 5개 메시지만 사용 (10개에서 줄임)
+            for msg in messages[-2:]:  # 최근 2개 메시지만 사용 (유저 1개 + AI 1개)
                 chat_history.append({
                     "role": msg.role,
                     "content": msg.content
@@ -292,6 +337,19 @@ JSON FORMAT:
             logger.info(f"단어 수 제한: {current_word_limit}")
             logger.info("=" * 50)
             
+            # 마지막 답변일 때의 특별한 지시사항
+            final_message_instruction = ""
+            if is_final_message:
+                final_message_instruction = f"""
+
+⭐ FINAL MESSAGE SPECIAL INSTRUCTION ⭐
+This seems like the end of our conversation. Please:
+1) Praise their learning effort today with warm encouragement
+2) Suggest reviewing what they learned (ask them to repeat key expressions)
+3) Motivate them to continue studying {ai_language}
+4) Give a cheerful farewell
+5) Keep it warm and supportive - celebrate their progress!"""
+
             # 간소화된 시스템 프롬프트 (토큰 절약)
             system_prompt = f"""You are MurMur, language coach for {ai_language}.
 
@@ -304,7 +362,7 @@ CURRENT LEVEL ({difficulty_level.upper()}):
 
 LEARN WORDS: Always 2-3 items in {ai_language}. The expression taught must appear in learnWords.
 
-RESPONSE LENGTH: {current_word_limit}
+RESPONSE LENGTH: {current_word_limit}{final_message_instruction}
 
 Return valid JSON:
 {{
