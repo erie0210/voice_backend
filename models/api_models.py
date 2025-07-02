@@ -9,6 +9,31 @@ class TopicEnum(str, Enum):
     FEELINGS = "FEELINGS"
     OOTD = "OOTD"
 
+class ReactionCategory(str, Enum):
+    """AI 반응 카테고리 - 미리 TTS를 생성할 반응 유형들"""
+    EMPATHY = "EMPATHY"                    # 🙋‍♀️ 공감
+    ACCEPTANCE = "ACCEPTANCE"              # 🫶 수용
+    SURPRISE = "SURPRISE"                  # 😮 놀람
+    COMFORT = "COMFORT"                    # 😢 위로
+    JOY_SHARING = "JOY_SHARING"           # 😊 기쁨 나눔
+    CONFIRMATION = "CONFIRMATION"          # 🤔 확인/공명
+    SLOW_QUESTIONING = "SLOW_QUESTIONING"  # 🐢 천천히 되물음
+
+class EmotionCategory(str, Enum):
+    """감정 카테고리 - 설명 및 확장용 템플릿"""
+    HAPPY = "HAPPY"                        # 😄 기쁨
+    SAD = "SAD"                            # 😢 슬픔
+    ANGRY = "ANGRY"                        # 😠 화남
+    SCARED = "SCARED"                      # 😨 무서움
+    SHY = "SHY"                            # 😳 부끄러움
+    SLEEPY = "SLEEPY"                      # 😴 졸림
+    UPSET = "UPSET"                        # 😔 속상함
+    CONFUSED = "CONFUSED"                  # 😵 혼란/당황
+    BORED = "BORED"                        # 🥱 지루함
+    LOVE = "LOVE"                          # 😍 좋아함
+    PROUD = "PROUD"                        # 😎 자랑스러움
+    NERVOUS = "NERVOUS"                    # 😬 긴장됨
+
 # 공통 에러 모델
 class ApiError(BaseModel):
     code: str
@@ -79,6 +104,7 @@ class ChatResponseData(BaseModel):
     response: str
     practiceExpression: Optional[str] = None
     learnWords: List[LearnWord] = []  # 학습할 단어/표현 목록
+    audioUrl: Optional[str] = None  # 음성 파일 URL (템플릿 기반 응답용)
 
 class ChatResponseResponse(BaseModel):
     success: bool

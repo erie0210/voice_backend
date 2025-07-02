@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from config.settings import settings
-from models.api_models import ChatMessage, LearnWord, TopicEnum
+from models.api_models import ChatMessage, LearnWord, TopicEnum, ReactionCategory, EmotionCategory
 from services.r2_service import upload_file_to_r2
 
 # 로깅 설정
@@ -83,10 +83,17 @@ class OpenAIService:
         
         # Assets 경로 설정
         self.assets_path = Path(__file__).parent.parent / "assets" / "conversation_starters"
+        self.chat_responses_path = Path(__file__).parent.parent / "assets" / "chat_responses"
         
         # 음성 파일 메타데이터 캐시
         self._audio_metadata = None
         self._metadata_loaded = False
+        
+        # 반응 카테고리 캐시
+        self._reaction_cache: Dict[str, List[str]] = {}
+        
+        # 감정 카테고리 캐시
+        self._emotion_cache: Dict[str, List[str]] = {}
     
     def _load_greetings_from_assets_by_language(self, user_language: str, ai_language: str) -> List[str]:
         """
@@ -214,6 +221,348 @@ class OpenAIService:
         }
         return korean_names.get(topic, topic.value)
     
+    def _load_reaction_from_assets(self, reaction_category: ReactionCategory, user_language: str, ai_language: str) -> List[str]:
+        """
+        Assets 파일에서 특정 반응 카테고리의 텍스트를 로드합니다.
+        """
+        cache_key = f"{reaction_category.value}_{user_language}_{ai_language}"
+        
+        # 캐시된 반응이 있는지 확인
+        if cache_key in self._reaction_cache:
+            return self._reaction_cache[cache_key]
+        
+        try:
+            # 반응 카테고리별 파일명 매핑
+            reaction_files = {
+                ReactionCategory.EMPATHY: "empathy.json",
+                ReactionCategory.ACCEPTANCE: "acceptance.json",
+                ReactionCategory.SURPRISE: "surprise.json",
+                ReactionCategory.COMFORT: "comfort.json",
+                ReactionCategory.JOY_SHARING: "joy_sharing.json",
+                ReactionCategory.CONFIRMATION: "confirmation.json",
+                ReactionCategory.SLOW_QUESTIONING: "slow_questioning.json"
+            }
+            
+            filename = reaction_files.get(reaction_category, "empathy.json")
+            reaction_file = self.chat_responses_path / "reactions" / filename
+            
+            if reaction_file.exists():
+                with open(reaction_file, 'r', encoding='utf-8') as f:
+                    reaction_data = json.load(f)
+                    
+                # from_{user_language} -> {ai_language} 경로로 찾기
+                user_key = f"from_{user_language}"
+                if user_key in reaction_data and ai_language in reaction_data[user_key]:
+                    reactions = reaction_data[user_key][ai_language]
+                    # 캐시에 저장
+                    self._reaction_cache[cache_key] = reactions
+                    return reactions
+                else:
+                    logger.warning(f"반응 조합을 찾을 수 없음: {user_language} -> {ai_language} for {reaction_category.value}")
+                    return self._get_fallback_reaction(reaction_category)
+            else:
+                logger.warning(f"반응 파일을 찾을 수 없습니다: {reaction_file}")
+                return self._get_fallback_reaction(reaction_category)
+                
+        except Exception as e:
+            logger.error(f"반응 파일 로드 오류: {str(e)}")
+            return self._get_fallback_reaction(reaction_category)
+    
+    def _get_fallback_reaction(self, reaction_category: ReactionCategory) -> List[str]:
+        """
+        폴백용 기본 반응
+        """
+        fallback_reactions = {
+            ReactionCategory.EMPATHY: ["그랬구나~", "정말 그렇게 느꼈구나."],
+            ReactionCategory.ACCEPTANCE: ["그래, 그런 기분 들 수 있어.", "누구나 그럴 수 있어."],
+            ReactionCategory.SURPRISE: ["어, 진짜?", "정말 그런 일이 있었어?"],
+            ReactionCategory.COMFORT: ["마음이 아팠겠다.", "속상했겠다~"],
+            ReactionCategory.JOY_SHARING: ["우와~ 신났겠다!", "기분 좋았겠다!"],
+            ReactionCategory.CONFIRMATION: ["그래서 그런 기분이었구나?", "그것 때문에 그랬구나?"],
+            ReactionCategory.SLOW_QUESTIONING: ["다시 말해줄 수 있어?", "좀 더 알려줄래?"]
+        }
+        return fallback_reactions.get(reaction_category, ["그랬구나~"])
+    
+    def _analyze_user_message_for_reaction(self, user_message: str) -> ReactionCategory:
+        """
+        사용자 메시지를 분석해서 적절한 반응 카테고리를 선택합니다.
+        """
+        message_lower = user_message.lower()
+        
+        # 감정 키워드 기반 분석
+        emotion_keywords = {
+            # 기쁨, 행복 관련
+            ReactionCategory.JOY_SHARING: [
+                '기뻐', '좋아', '행복', '신나', '즐거', '재밌', '웃었', '웃긴', '최고', '대박',
+                'happy', 'joy', 'good', 'great', 'awesome', 'amazing', 'wonderful', 'excited', 'fun', 'laugh'
+            ],
+            
+            # 슬픔, 실망 관련  
+            ReactionCategory.COMFORT: [
+                '슬퍼', '속상', '화나', '짜증', '우울', '힘들', '아파', '상처', '울었', '눈물',
+                'sad', 'hurt', 'angry', 'upset', 'disappointed', 'frustrated', 'depressed', 'cry', 'pain'
+            ],
+            
+            # 놀람 관련
+            ReactionCategory.SURPRISE: [
+                '놀라', '갑자기', '진짜', '정말', '헐', '대박', '와', '어?', '그런데',
+                'suddenly', 'really', 'wow', 'omg', 'amazing', 'incredible', 'unbelievable', 'shocking'
+            ],
+            
+            # 확신이 없거나 불분명한 경우
+            ReactionCategory.SLOW_QUESTIONING: [
+                '잘 모르', '애매', '확실하지', '어떻게', '뭔가', '좀', '아직',
+                "don't know", "not sure", "maybe", "kind of", "i think", "unclear", "confused"
+            ]
+        }
+        
+        # 키워드 매칭으로 카테고리 결정
+        for category, keywords in emotion_keywords.items():
+            if any(keyword in message_lower for keyword in keywords):
+                logger.info(f"반응 카테고리 선택: {category.value} (키워드 매칭)")
+                return category
+        
+        # 메시지 길이 기반 추가 판단
+        if len(user_message.strip()) < 10:
+            # 짧은 메시지는 천천히 되물음
+            logger.info(f"반응 카테고리 선택: {ReactionCategory.SLOW_QUESTIONING.value} (짧은 메시지)")
+            return ReactionCategory.SLOW_QUESTIONING
+        
+        # 기본적으로 공감 반응
+        logger.info(f"반응 카테고리 선택: {ReactionCategory.EMPATHY.value} (기본값)")
+        return ReactionCategory.EMPATHY
+    
+    def _load_emotion_from_assets(self, emotion_category: EmotionCategory, user_language: str, ai_language: str) -> List[str]:
+        """
+        Assets 파일에서 특정 감정 카테고리의 텍스트를 로드합니다.
+        """
+        cache_key = f"{emotion_category.value}_{user_language}_{ai_language}"
+        
+        # 캐시된 감정이 있는지 확인
+        if cache_key in self._emotion_cache:
+            return self._emotion_cache[cache_key]
+        
+        try:
+            # 감정 카테고리별 파일명 매핑
+            emotion_files = {
+                EmotionCategory.HAPPY: "happy.json",
+                EmotionCategory.SAD: "sad.json",
+                EmotionCategory.ANGRY: "angry.json",
+                EmotionCategory.SCARED: "scared.json",
+                EmotionCategory.SHY: "shy.json",
+                EmotionCategory.SLEEPY: "sleepy.json",
+                EmotionCategory.UPSET: "upset.json",
+                EmotionCategory.CONFUSED: "confused.json",
+                EmotionCategory.BORED: "bored.json",
+                EmotionCategory.LOVE: "love.json",
+                EmotionCategory.PROUD: "proud.json",
+                EmotionCategory.NERVOUS: "nervous.json"
+            }
+            
+            filename = emotion_files.get(emotion_category, "happy.json")
+            emotion_file = self.chat_responses_path / "emotions" / filename
+            
+            if emotion_file.exists():
+                with open(emotion_file, 'r', encoding='utf-8') as f:
+                    emotion_data = json.load(f)
+                    
+                # from_{user_language} -> {ai_language} 경로로 찾기
+                user_key = f"from_{user_language}"
+                if user_key in emotion_data and ai_language in emotion_data[user_key]:
+                    emotions = emotion_data[user_key][ai_language]
+                    # 캐시에 저장
+                    self._emotion_cache[cache_key] = emotions
+                    return emotions
+                else:
+                    logger.warning(f"감정 조합을 찾을 수 없음: {user_language} -> {ai_language} for {emotion_category.value}")
+                    return self._get_fallback_emotion(emotion_category)
+            else:
+                logger.warning(f"감정 파일을 찾을 수 없습니다: {emotion_file}")
+                return self._get_fallback_emotion(emotion_category)
+                
+        except Exception as e:
+            logger.error(f"감정 파일 로드 오류: {str(e)}")
+            return self._get_fallback_emotion(emotion_category)
+    
+    def _get_fallback_emotion(self, emotion_category: EmotionCategory) -> List[str]:
+        """
+        폴백용 기본 감정 설명
+        """
+        fallback_emotions = {
+            EmotionCategory.HAPPY: ["Happy는 기쁠 때 쓰는 말이야.", "좋은 일이 생기면 happy~"],
+            EmotionCategory.SAD: ["Sad는 마음이 아프거나 울고 싶을 때.", "슬플 때는 괜찮다고 말해줘도 돼."],
+            EmotionCategory.ANGRY: ["Angry는 속상하고 짜증날 때 써.", "누군가 뺏으면 angry할 수 있어."],
+            EmotionCategory.SCARED: ["Scared는 무서울 때, 깜짝 놀랐을 때 쓰는 말이야.", "어둠이 무서울 때 'I'm scared'라고 해."],
+            EmotionCategory.SHY: ["Shy는 사람들이 많아서 말 못 할 때나, 얼굴이 빨개질 때.", "부끄러울 때 'I'm shy'라고 말해."],
+            EmotionCategory.SLEEPY: ["Sleepy는 졸릴 때, 눈이 무거울 때 쓰는 말이야.", "잠이 올 때 'I'm sleepy'라고 해."],
+            EmotionCategory.UPSET: ["Upset은 뭔가 기대했는데 안 됐을 때 마음이 울적할 때야.", "실망했을 때 'I'm upset'이라고 해."],
+            EmotionCategory.CONFUSED: ["Confused는 잘 모르겠거나 헷갈릴 때 쓰는 말이야.", "복잡할 때 'I'm confused'라고 해."],
+            EmotionCategory.BORED: ["Bored는 심심하고 할 게 없을 때 쓰는 말이야.", "재미없을 때 'I'm bored'라고 해."],
+            EmotionCategory.LOVE: ["I love~는 너무너무 좋아할 때 쓰고, like는 그냥 좋아할 때!", "정말 좋아하는 걸 'I love it'이라고 해."],
+            EmotionCategory.PROUD: ["Proud는 내가 잘했을 때 뿌듯한 기분이야.", "자랑스러울 때 'I'm proud'라고 해."],
+            EmotionCategory.NERVOUS: ["Nervous는 발표 전처럼 두근거릴 때 쓰는 말이야.", "긴장될 때 'I'm nervous'라고 해."]
+        }
+        return fallback_emotions.get(emotion_category, ["그런 기분을 영어로 표현해보자."])
+    
+    def _analyze_user_message_for_emotion(self, user_message: str, reaction_category: ReactionCategory) -> EmotionCategory:
+        """
+        사용자 메시지와 반응 카테고리를 기반으로 적절한 감정 카테고리를 선택합니다.
+        """
+        message_lower = user_message.lower()
+        
+        # 반응 카테고리에 따른 감정 매핑
+        reaction_to_emotion = {
+            ReactionCategory.JOY_SHARING: [EmotionCategory.HAPPY, EmotionCategory.LOVE, EmotionCategory.PROUD],
+            ReactionCategory.COMFORT: [EmotionCategory.SAD, EmotionCategory.UPSET, EmotionCategory.SCARED],
+            ReactionCategory.SURPRISE: [EmotionCategory.CONFUSED, EmotionCategory.NERVOUS],
+            ReactionCategory.EMPATHY: [EmotionCategory.HAPPY, EmotionCategory.SAD],
+            ReactionCategory.ACCEPTANCE: [EmotionCategory.ANGRY, EmotionCategory.UPSET],
+            ReactionCategory.CONFIRMATION: [EmotionCategory.CONFUSED, EmotionCategory.UPSET],
+            ReactionCategory.SLOW_QUESTIONING: [EmotionCategory.SHY, EmotionCategory.CONFUSED]
+        }
+        
+        # 키워드 기반 감정 분석
+        emotion_keywords = {
+            EmotionCategory.HAPPY: ['기뻐', '좋아', '행복', '신나', '즐거', '재밌', '웃었', '최고', 'happy', 'joy', 'good', 'great', 'fun', 'love'],
+            EmotionCategory.SAD: ['슬퍼', '속상', '울었', '눈물', '외로', 'sad', 'cry', 'tear', 'lonely'],
+            EmotionCategory.ANGRY: ['화나', '짜증', '빡쳐', '열받', '약올라', 'angry', 'mad', 'frustrated', 'annoyed'],
+            EmotionCategory.SCARED: ['무서', '놀라', '깜짝', '겁나', '두려', 'scared', 'afraid', 'frightened', 'terrified'],
+            EmotionCategory.SHY: ['부끄러', '창피', '민망', '수줍', 'shy', 'embarrassed', 'awkward'],
+            EmotionCategory.SLEEPY: ['졸려', '피곤', '잠와', '꾸벅', '눈감', 'sleepy', 'tired', 'drowsy'],
+            EmotionCategory.UPSET: ['실망', '허탈', '기대했는데', '안됐', 'upset', 'disappointed', 'frustrated'],
+            EmotionCategory.CONFUSED: ['헷갈려', '모르겠', '복잡', '어려', '이해못', 'confused', 'puzzled', 'unclear'],
+            EmotionCategory.BORED: ['심심', '지겨', '재미없', '할거없', 'bored', 'boring', 'dull'],
+            EmotionCategory.LOVE: ['사랑', '정말좋아', '너무좋아', '최애', 'love', 'adore', 'favorite'],
+            EmotionCategory.PROUD: ['자랑스러', '뿌듯', '잘했', '성공', '대견', 'proud', 'accomplished', 'achieved'],
+            EmotionCategory.NERVOUS: ['긴장', '떨려', '두근', '불안', '걱정', 'nervous', 'anxious', 'worried']
+        }
+        
+        # 키워드 매칭으로 감정 결정
+        for emotion, keywords in emotion_keywords.items():
+            if any(keyword in message_lower for keyword in keywords):
+                logger.info(f"감정 카테고리 선택: {emotion.value} (키워드 매칭)")
+                return emotion
+        
+        # 키워드 매칭 실패 시 반응 카테고리 기반 선택
+        possible_emotions = reaction_to_emotion.get(reaction_category, [EmotionCategory.HAPPY])
+        selected_emotion = random.choice(possible_emotions)
+        
+        logger.info(f"감정 카테고리 선택: {selected_emotion.value} (반응 기반 매핑)")
+        return selected_emotion
+    
+    async def generate_templated_chat_response(self, messages: List[ChatMessage], user_language: str, 
+                                             ai_language: str, difficulty_level: str, last_user_message: str) -> tuple[str, List[LearnWord], Optional[str]]:
+        """
+        템플릿 기반으로 채팅 응답을 생성합니다.
+        1) 반응 및 수용 2) 설명 및 확장 3) 이야기 이어가기 구조로 구성됩니다.
+        
+        Returns:
+            tuple: (response, learn_words, audio_url)
+        """
+        try:
+            # 1) 반응 및 수용 - 사용자 메시지 분석하여 적절한 반응 선택
+            reaction_category = self._analyze_user_message_for_reaction(last_user_message)
+            reactions = self._load_reaction_from_assets(reaction_category, user_language, ai_language)
+            selected_reaction = random.choice(reactions)
+            
+            logger.info(f"선택된 반응: {selected_reaction} (카테고리: {reaction_category.value})")
+            
+            # 2) 설명 및 확장 - 감정 카테고리 기반 템플릿 사용
+            emotion_category = self._analyze_user_message_for_emotion(last_user_message, reaction_category)
+            emotions = self._load_emotion_from_assets(emotion_category, user_language, ai_language)
+            selected_expansion = random.choice(emotions)
+            
+            logger.info(f"선택된 감정 설명: {selected_expansion} (카테고리: {emotion_category.value})")
+            
+            # 3) 이야기 이어가기 - 간단한 질문으로 대화 이어가기
+            continuation_templates = [
+                "그런데 그때 어떤 기분이었어?",
+                "다른 사람들은 어떻게 반응했어?",
+                "그 다음에는 어떻게 되었어?",
+                "비슷한 경험이 또 있었어?",
+                "그런 일이 있을 때 보통 어떻게 해?",
+                "그때 뭔가 특별한 느낌이 있었어?"
+            ]
+            
+            selected_continuation = random.choice(continuation_templates)
+            
+            # 전체 응답 조합
+            full_response = f"{selected_reaction} {selected_expansion} {selected_continuation}"
+            
+            # 학습 단어 생성 - 감정 카테고리 기반
+            emotion_word_mapping = {
+                EmotionCategory.HAPPY: ("happy", "기쁜, 행복한", "I'm happy today!", "해피"),
+                EmotionCategory.SAD: ("sad", "슬픈, 속상한", "I feel sad.", "새드"),
+                EmotionCategory.ANGRY: ("angry", "화난, 짜증난", "I'm angry about this.", "앵그리"),
+                EmotionCategory.SCARED: ("scared", "무서운, 두려운", "I'm scared of the dark.", "스케어드"),
+                EmotionCategory.SHY: ("shy", "부끄러운, 수줍은", "I'm shy around new people.", "샤이"),
+                EmotionCategory.SLEEPY: ("sleepy", "졸린, 피곤한", "I'm sleepy now.", "슬리피"),
+                EmotionCategory.UPSET: ("upset", "속상한, 실망한", "I'm upset about the news.", "업셋"),
+                EmotionCategory.CONFUSED: ("confused", "혼란스러운, 헷갈린", "I'm confused about this.", "컨퓨즈드"),
+                EmotionCategory.BORED: ("bored", "지루한, 심심한", "I'm bored at home.", "보어드"),
+                EmotionCategory.LOVE: ("love", "사랑, 매우 좋아함", "I love this song!", "러브"),
+                EmotionCategory.PROUD: ("proud", "자랑스러운, 뿌듯한", "I'm proud of you.", "프라우드"),
+                EmotionCategory.NERVOUS: ("nervous", "긴장한, 불안한", "I'm nervous about the test.", "너버스")
+            }
+            
+            emotion_word_data = emotion_word_mapping.get(emotion_category, ("happy", "기쁜", "I'm happy!", "해피"))
+            
+            learn_words = [
+                LearnWord(
+                    word=emotion_word_data[0],
+                    meaning=emotion_word_data[1],
+                    example=emotion_word_data[2],
+                    pronunciation=emotion_word_data[3]
+                ),
+                LearnWord(
+                    word="feeling",
+                    meaning="기분, 감정",
+                    example="How are you feeling?",
+                    pronunciation="필링"
+                )
+            ]
+            
+            # 음성 URL 찾기 (반응 부분 우선, 감정 부분 폴백)
+            audio_url = None
+            try:
+                # 1) 반응 텍스트에 대한 음성 파일 찾기 시도
+                audio_url = self._find_audio_url_for_text(
+                    selected_reaction,
+                    "reactions/" + reaction_category.value.lower(),
+                    user_language,
+                    ai_language
+                )
+                
+                if audio_url:
+                    logger.info(f"반응 음성 파일 URL 찾음: {audio_url}")
+                else:
+                    # 2) 반응 음성이 없으면 감정 설명 음성 파일 찾기 시도
+                    audio_url = self._find_audio_url_for_text(
+                        selected_expansion,
+                        "emotions/" + emotion_category.value.lower(),
+                        user_language,
+                        ai_language
+                    )
+                    
+                    if audio_url:
+                        logger.info(f"감정 설명 음성 파일 URL 찾음: {audio_url}")
+                    else:
+                        logger.info(f"음성 파일을 찾을 수 없음: {reaction_category.value}, {emotion_category.value}")
+                    
+            except Exception as e:
+                logger.error(f"음성 파일 URL 찾기 오류: {str(e)}")
+            
+            return full_response, learn_words, audio_url
+            
+        except Exception as e:
+            logger.error(f"템플릿 기반 채팅 응답 생성 오류: {str(e)}")
+            # 폴백: 기본 응답 사용
+            fallback_response = "그렇구나~ 더 말해줄래?"
+            fallback_words = [
+                LearnWord(word="more", meaning="더", example="Tell me more.", pronunciation="모어")
+            ]
+            return fallback_response, fallback_words, None
+    
     def _load_audio_metadata(self) -> None:
         """
         음성 파일 메타데이터를 로드합니다.
@@ -263,6 +612,14 @@ class OpenAIService:
             # 카테고리별로 찾기
             if category == "greetings":
                 metadata_section = self._audio_metadata.get("greetings", {})
+            elif category.startswith("reactions/"):
+                # reactions의 경우 (e.g., "reactions/empathy" -> "empathy")
+                reaction_name = category.split("/")[-1] if "/" in category else category
+                metadata_section = self._audio_metadata.get("reactions", {}).get(reaction_name, {})
+            elif category.startswith("emotions/"):
+                # emotions의 경우 (e.g., "emotions/happy" -> "happy")
+                emotion_name = category.split("/")[-1] if "/" in category else category
+                metadata_section = self._audio_metadata.get("emotions", {}).get(emotion_name, {})
             else:
                 # topics의 경우 (e.g., "topics/favorites" -> "favorites")
                 topic_name = category.split("/")[-1] if "/" in category else category

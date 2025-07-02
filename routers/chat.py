@@ -95,8 +95,8 @@ async def generate_chat_response(
     try:
         logger.info(f"채팅 응답 생성 요청: {request.lastUserMessage[:50]}... ({request.userLanguage} -> {request.aiLanguage}, {request.difficultyLevel})")
         
-        # OpenAI를 사용하여 채팅 응답 생성 (응답과 학습 단어 함께 받음)
-        chat_response, learn_words = await openai_service.generate_chat_response(
+        # 템플릿 기반 채팅 응답 생성 (응답, 학습 단어, 음성 URL 함께 받음)
+        chat_response, learn_words, audio_url = await openai_service.generate_templated_chat_response(
             messages=request.messages,
             user_language=request.userLanguage,
             ai_language=request.aiLanguage,
@@ -104,14 +104,16 @@ async def generate_chat_response(
             last_user_message=request.lastUserMessage
         )
         
-        logger.info(f"채팅 응답 생성 완료: {chat_response[:50]}... (학습 단어 {len(learn_words)}개)")
+        audio_status = "있음" if audio_url else "없음"
+        logger.info(f"템플릿 기반 채팅 응답 생성 완료: {chat_response[:50]}... (학습 단어 {len(learn_words)}개, 음성 {audio_status})")
         
         return ChatResponseResponse(
             success=True,
             data=ChatResponseData(
                 response=chat_response,
                 practiceExpression=None,  # 필요시 추후 구현
-                learnWords=learn_words
+                learnWords=learn_words,
+                audioUrl=audio_url
             )
         )
         
