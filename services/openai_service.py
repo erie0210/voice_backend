@@ -6,12 +6,16 @@ import json
 import time
 import boto3
 import logging
+import hashlib
+import tempfile
+import requests
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
+from pydub import AudioSegment
 from config.settings import settings
-from models.api_models import ChatMessage, LearnWord, TopicEnum, ReactionCategory, EmotionCategory
-from services.r2_service import upload_file_to_r2
+from models.api_models import ChatMessage, LearnWord, TopicEnum, ReactionCategory, EmotionCategory, ContinuationCategory
+from services.r2_service import upload_file_to_r2, R2Service
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -94,6 +98,12 @@ class OpenAIService:
         
         # 감정 카테고리 캐시
         self._emotion_cache: Dict[str, List[str]] = {}
+        
+        # 이어가기 카테고리 캐시
+        self._continuation_cache: Dict[str, List[str]] = {}
+        
+        # R2 서비스 인스턴스
+        self.r2_service = R2Service()
     
     def _load_greetings_from_assets_by_language(self, user_language: str, ai_language: str) -> List[str]:
         """
@@ -450,6 +460,255 @@ class OpenAIService:
         logger.info(f"감정 카테고리 선택: {selected_emotion.value} (반응 기반 매핑)")
         return selected_emotion
     
+    def _load_continuation_from_assets(self, continuation_category: ContinuationCategory, user_language: str, ai_language: str) -> List[str]:
+        """
+        Assets 파일에서 특정 이어가기 카테고리의 텍스트를 로드합니다.
+        """
+        cache_key = f"{continuation_category.value}_{user_language}_{ai_language}"
+        
+        # 캐시된 이어가기가 있는지 확인
+        if cache_key in self._continuation_cache:
+            return self._continuation_cache[cache_key]
+        
+        try:
+            # 이어가기 카테고리별 파일명 매핑
+            continuation_files = {
+                ContinuationCategory.EMOTION_EXPLORATION: "emotion_exploration.json",
+                ContinuationCategory.EMOTION_ACTION: "emotion_action.json",
+                ContinuationCategory.EMOTION_LEARNING: "emotion_learning.json",
+                ContinuationCategory.QUESTION_EXPANSION: "question_expansion.json",
+                ContinuationCategory.ENCOURAGEMENT_FLOW: "encouragement_flow.json",
+                ContinuationCategory.EMOTION_TRANSITION: "emotion_transition.json"
+            }
+            
+            filename = continuation_files.get(continuation_category, "emotion_exploration.json")
+            continuation_file = self.chat_responses_path / "continuations" / filename
+            
+            if continuation_file.exists():
+                with open(continuation_file, 'r', encoding='utf-8') as f:
+                    continuation_data = json.load(f)
+                    
+                # from_{user_language} -> {ai_language} 경로로 찾기
+                user_key = f"from_{user_language}"
+                if user_key in continuation_data and ai_language in continuation_data[user_key]:
+                    continuations = continuation_data[user_key][ai_language]
+                    # 캐시에 저장
+                    self._continuation_cache[cache_key] = continuations
+                    return continuations
+                else:
+                    logger.warning(f"이어가기 조합을 찾을 수 없음: {user_language} -> {ai_language} for {continuation_category.value}")
+                    return self._get_fallback_continuation(continuation_category)
+            else:
+                logger.warning(f"이어가기 파일을 찾을 수 없습니다: {continuation_file}")
+                return self._get_fallback_continuation(continuation_category)
+                
+        except Exception as e:
+            logger.error(f"이어가기 파일 로드 오류: {str(e)}")
+            return self._get_fallback_continuation(continuation_category)
+    
+    def _get_fallback_continuation(self, continuation_category: ContinuationCategory) -> List[str]:
+        """
+        폴백용 기본 이어가기 질문
+        """
+        fallback_continuations = {
+            ContinuationCategory.EMOTION_EXPLORATION: ["왜 그렇게 느꼈는지 말해줄 수 있어?", "그럴 땐 어떤 생각이 들었어?"],
+            ContinuationCategory.EMOTION_ACTION: ["그럴 땐 뭘 하고 싶어졌어?", "그런 기분일 때 뭘 하면 도움이 될까?"],
+            ContinuationCategory.EMOTION_LEARNING: ["영어로도 말해볼래?", "이 기분을 영어로 표현해볼까?"],
+            ContinuationCategory.QUESTION_EXPANSION: ["다른 사람은 어떻게 느꼈을까?", "이전에 이런 기분 느낀 적 있어?"],
+            ContinuationCategory.ENCOURAGEMENT_FLOW: ["말해줘서 고마워~", "네 마음을 표현하는 게 정말 잘했어."],
+            ContinuationCategory.EMOTION_TRANSITION: ["우리 깊게 숨 쉬어볼까?", "좋아하는 노래 하나 불러볼까?"]
+        }
+        return fallback_continuations.get(continuation_category, ["더 얘기해볼까?"])
+    
+    def _analyze_for_continuation_category(self, emotion_category: EmotionCategory, reaction_category: ReactionCategory, user_message: str) -> ContinuationCategory:
+        """
+        감정 카테고리, 반응 카테고리, 사용자 메시지를 기반으로 적절한 이어가기 카테고리를 선택합니다.
+        """
+        message_lower = user_message.lower()
+        
+        # 메시지 길이 기반 판단
+        if len(user_message.strip()) < 10:
+            # 짧은 메시지는 감정 탐색으로 더 깊이 물어보기
+            logger.info(f"이어가기 카테고리 선택: {ContinuationCategory.EMOTION_EXPLORATION.value} (짧은 메시지)")
+            return ContinuationCategory.EMOTION_EXPLORATION
+        
+        # 영어 학습 관련 키워드 감지
+        learning_keywords = ['영어', '말해', '표현', 'english', 'say', 'how', 'what']
+        if any(keyword in message_lower for keyword in learning_keywords):
+            logger.info(f"이어가기 카테고리 선택: {ContinuationCategory.EMOTION_LEARNING.value} (학습 키워드)")
+            return ContinuationCategory.EMOTION_LEARNING
+        
+        # 감정 카테고리에 따른 이어가기 전략
+        emotion_to_continuation = {
+            # 긍정적 감정은 질문 확장이나 격려
+            EmotionCategory.HAPPY: [ContinuationCategory.QUESTION_EXPANSION, ContinuationCategory.ENCOURAGEMENT_FLOW],
+            EmotionCategory.LOVE: [ContinuationCategory.QUESTION_EXPANSION, ContinuationCategory.ENCOURAGEMENT_FLOW],
+            EmotionCategory.PROUD: [ContinuationCategory.QUESTION_EXPANSION, ContinuationCategory.ENCOURAGEMENT_FLOW],
+            
+            # 부정적 감정은 감정 탐색이나 전환 유도
+            EmotionCategory.SAD: [ContinuationCategory.EMOTION_EXPLORATION, ContinuationCategory.EMOTION_TRANSITION],
+            EmotionCategory.ANGRY: [ContinuationCategory.EMOTION_ACTION, ContinuationCategory.EMOTION_TRANSITION],
+            EmotionCategory.SCARED: [ContinuationCategory.EMOTION_EXPLORATION, ContinuationCategory.EMOTION_TRANSITION],
+            EmotionCategory.UPSET: [ContinuationCategory.EMOTION_EXPLORATION, ContinuationCategory.EMOTION_ACTION],
+            
+            # 중성적 감정은 상황에 따라
+            EmotionCategory.SHY: [ContinuationCategory.EMOTION_EXPLORATION, ContinuationCategory.ENCOURAGEMENT_FLOW],
+            EmotionCategory.NERVOUS: [ContinuationCategory.EMOTION_ACTION, ContinuationCategory.EMOTION_TRANSITION],
+            EmotionCategory.CONFUSED: [ContinuationCategory.EMOTION_EXPLORATION, ContinuationCategory.EMOTION_ACTION],
+            EmotionCategory.BORED: [ContinuationCategory.QUESTION_EXPANSION, ContinuationCategory.EMOTION_TRANSITION],
+            EmotionCategory.SLEEPY: [ContinuationCategory.EMOTION_ACTION, ContinuationCategory.EMOTION_TRANSITION]
+        }
+        
+        # 반응 카테고리에 따른 추가 조정
+        if reaction_category in [ReactionCategory.COMFORT, ReactionCategory.ACCEPTANCE]:
+            # 위로나 수용 반응 후에는 감정 전환 유도
+            logger.info(f"이어가기 카테고리 선택: {ContinuationCategory.EMOTION_TRANSITION.value} (위로/수용 후 전환)")
+            return ContinuationCategory.EMOTION_TRANSITION
+        elif reaction_category == ReactionCategory.SLOW_QUESTIONING:
+            # 천천히 되물음 후에는 감정 탐색
+            logger.info(f"이어가기 카테고리 선택: {ContinuationCategory.EMOTION_EXPLORATION.value} (더 깊은 탐색)")
+            return ContinuationCategory.EMOTION_EXPLORATION
+        
+        # 감정 기반 선택
+        possible_continuations = emotion_to_continuation.get(emotion_category, [ContinuationCategory.QUESTION_EXPANSION])
+        selected_continuation = random.choice(possible_continuations)
+        
+        logger.info(f"이어가기 카테고리 선택: {selected_continuation.value} (감정 기반 매핑)")
+        return selected_continuation
+    
+    async def _analyze_user_message_with_openai(self, user_message: str, user_language: str) -> tuple[ReactionCategory, EmotionCategory, ContinuationCategory]:
+        """
+        OpenAI를 사용하여 사용자 메시지를 분석하고 최적의 3단계 카테고리 조합을 선택합니다.
+        
+        Args:
+            user_message: 사용자 메시지
+            user_language: 사용자 언어
+            
+        Returns:
+            tuple: (reaction_category, emotion_category, continuation_category)
+        """
+        try:
+            # 카테고리 설명을 포함한 시스템 프롬프트
+            system_content = f"""당신은 언어 학습 AI 튜터입니다. 사용자의 메시지를 분석하여 가장 적절한 3단계 응답 조합을 선택해주세요.
+
+**1단계: 반응 카테고리 (REACTION)**
+- EMPATHY: 🙋‍♀️ 공감 - "그랬구나~", "정말 그렇게 느꼈구나."
+- ACCEPTANCE: 🫶 수용 - "그래, 그런 기분 들 수 있어."
+- SURPRISE: 😮 놀람 - "어, 진짜?", "정말 그런 일이 있었어?"
+- COMFORT: 😢 위로 - "마음이 아팠겠다.", "속상했겠다~"
+- JOY_SHARING: 😊 기쁨 나눔 - "우와~ 신났겠다!", "기분 좋았겠다!"
+- CONFIRMATION: 🤔 확인/공명 - "~해서 슬펐던 거야?", "화가 나서 그런 기분이 들었구나?"
+- SLOW_QUESTIONING: 🐢 천천히 되물음 - "다시 말해줄 수 있어?", "좀 더 알려줄래?"
+
+**2단계: 감정 카테고리 (EMOTION)**
+- HAPPY: 😄 기쁨 - "Happy는 기쁠 때 쓰는 말이야."
+- SAD: 😢 슬픔 - "Sad는 마음이 아프거나 울고 싶을 때."
+- ANGRY: 😠 화남 - "Angry는 속상하고 짜증날 때 써."
+- SCARED: 😨 무서움 - "Scared는 무서울 때, 깜짝 놀랐을 때 쓰는 말이야."
+- SHY: 😳 부끄러움 - "Shy는 사람들이 많아서 말 못 할 때나, 얼굴이 빨개질 때."
+- SLEEPY: 😴 졸림 - "Sleepy는 졸릴 때, 눈이 무거울 때 쓰는 말이야."
+- UPSET: 😔 속상함 - "Upset은 뭔가 기대했는데 안 됐을 때 마음이 울적할 때야."
+- CONFUSED: 😵 혼란/당황 - "Confused는 잘 모르겠거나 헷갈릴 때 쓰는 말이야."
+- BORED: 🥱 지루함 - "Bored는 심심하고 할 게 없을 때 쓰는 말이야."
+- LOVE: 😍 좋아함 - "I love~는 너무너무 좋아할 때 쓰고, like는 그냥 좋아할 때!"
+- PROUD: 😎 자랑스러움 - "Proud는 내가 잘했을 때 뿌듯한 기분이야."
+- NERVOUS: 😬 긴장됨 - "Nervous는 발표 전처럼 두근거릴 때 쓰는 말이야."
+
+**3단계: 이어가기 카테고리 (CONTINUATION)**
+- EMOTION_EXPLORATION: 감정 탐색 - "왜 그렇게 느꼈는지 말해줄 수 있어?"
+- EMOTION_ACTION: 🧩 감정+행동 연결 - "그럴 땐 뭘 하고 싶어졌어?"
+- EMOTION_LEARNING: 📚 감정+표현 학습 - "그건 angry라고 해. 한 번 말해볼까?"
+- QUESTION_EXPANSION: 💬 질문 확장 - "너는 언제 제일 happy해?"
+- ENCOURAGEMENT_FLOW: 🌟 격려 + 다음 흐름 - "말해줘서 고마워~"
+- EMOTION_TRANSITION: 🌈 감정 전환 유도 - "우리 깊게 숨 쉬어볼까?"
+
+사용자 메시지의 감정, 상황, 맥락을 고려하여 가장 적절한 조합을 선택해주세요.
+
+JSON 형식으로만 응답하세요:
+{{
+  "reaction": "카테고리명",
+  "emotion": "카테고리명", 
+  "continuation": "카테고리명",
+  "reasoning": "선택 이유 (간단히)"
+}}"""
+
+            user_prompt = f"""사용자 메시지 ({user_language}): "{user_message}"
+
+이 메시지에 가장 적절한 3단계 응답 조합을 선택해주세요."""
+
+            response = self.client.chat.completions.create(
+                model=self.default_model,
+                messages=[
+                    {"role": "system", "content": system_content},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=200,
+                temperature=0.3,  # 일관성 있는 선택을 위해 낮은 온도
+                response_format={"type": "json_object"}
+            )
+            
+            response_content = response.choices[0].message.content.strip()
+            
+            try:
+                parsed_response = json.loads(response_content)
+                
+                # 카테고리 변환
+                reaction_str = parsed_response.get("reaction", "EMPATHY")
+                emotion_str = parsed_response.get("emotion", "HAPPY")
+                continuation_str = parsed_response.get("continuation", "QUESTION_EXPANSION")
+                reasoning = parsed_response.get("reasoning", "")
+                
+                # Enum으로 변환
+                try:
+                    reaction_category = ReactionCategory(reaction_str)
+                except ValueError:
+                    logger.warning(f"유효하지 않은 반응 카테고리: {reaction_str}, 기본값 사용")
+                    reaction_category = ReactionCategory.EMPATHY
+                
+                try:
+                    emotion_category = EmotionCategory(emotion_str)
+                except ValueError:
+                    logger.warning(f"유효하지 않은 감정 카테고리: {emotion_str}, 기본값 사용")
+                    emotion_category = EmotionCategory.HAPPY
+                
+                try:
+                    continuation_category = ContinuationCategory(continuation_str)
+                except ValueError:
+                    logger.warning(f"유효하지 않은 이어가기 카테고리: {continuation_str}, 기본값 사용")
+                    continuation_category = ContinuationCategory.QUESTION_EXPANSION
+                
+                logger.info(f"OpenAI 카테고리 선택 완료:")
+                logger.info(f"  - 반응: {reaction_category.value}")
+                logger.info(f"  - 감정: {emotion_category.value}")
+                logger.info(f"  - 이어가기: {continuation_category.value}")
+                logger.info(f"  - 선택 이유: {reasoning}")
+                
+                return reaction_category, emotion_category, continuation_category
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"OpenAI 응답 JSON 파싱 실패: {str(e)}")
+                logger.error(f"응답 내용: {response_content}")
+                # 폴백: 기본 규칙 기반 선택
+                return self._fallback_category_selection(user_message)
+                
+        except Exception as e:
+            logger.error(f"OpenAI 카테고리 분석 오류: {str(e)}")
+            # 폴백: 기본 규칙 기반 선택
+            return self._fallback_category_selection(user_message)
+    
+    def _fallback_category_selection(self, user_message: str) -> tuple[ReactionCategory, EmotionCategory, ContinuationCategory]:
+        """
+        OpenAI 분석 실패시 사용할 폴백 카테고리 선택
+        """
+        logger.info("폴백 카테고리 선택 사용")
+        
+        # 기존 규칙 기반 방식 사용
+        reaction_category = self._analyze_user_message_for_reaction(user_message)
+        emotion_category = self._analyze_user_message_for_emotion(user_message, reaction_category)
+        continuation_category = self._analyze_for_continuation_category(emotion_category, reaction_category, user_message)
+        
+        return reaction_category, emotion_category, continuation_category
+    
     async def generate_templated_chat_response(self, messages: List[ChatMessage], user_language: str, 
                                              ai_language: str, difficulty_level: str, last_user_message: str) -> tuple[str, List[LearnWord], Optional[str]]:
         """
@@ -460,31 +719,27 @@ class OpenAIService:
             tuple: (response, learn_words, audio_url)
         """
         try:
-            # 1) 반응 및 수용 - 사용자 메시지 분석하여 적절한 반응 선택
-            reaction_category = self._analyze_user_message_for_reaction(last_user_message)
+            # OpenAI를 사용하여 사용자 메시지 분석 및 최적의 3단계 카테고리 조합 선택
+            logger.info(f"사용자 메시지 OpenAI 분석 시작: {last_user_message}")
+            reaction_category, emotion_category, continuation_category = await self._analyze_user_message_with_openai(last_user_message, user_language)
+            
+            # 1) 반응 및 수용 - 선택된 카테고리로 템플릿 로드
             reactions = self._load_reaction_from_assets(reaction_category, user_language, ai_language)
             selected_reaction = random.choice(reactions)
             
             logger.info(f"선택된 반응: {selected_reaction} (카테고리: {reaction_category.value})")
             
-            # 2) 설명 및 확장 - 감정 카테고리 기반 템플릿 사용
-            emotion_category = self._analyze_user_message_for_emotion(last_user_message, reaction_category)
+            # 2) 설명 및 확장 - 선택된 카테고리로 템플릿 로드
             emotions = self._load_emotion_from_assets(emotion_category, user_language, ai_language)
             selected_expansion = random.choice(emotions)
             
             logger.info(f"선택된 감정 설명: {selected_expansion} (카테고리: {emotion_category.value})")
             
-            # 3) 이야기 이어가기 - 간단한 질문으로 대화 이어가기
-            continuation_templates = [
-                "그런데 그때 어떤 기분이었어?",
-                "다른 사람들은 어떻게 반응했어?",
-                "그 다음에는 어떻게 되었어?",
-                "비슷한 경험이 또 있었어?",
-                "그런 일이 있을 때 보통 어떻게 해?",
-                "그때 뭔가 특별한 느낌이 있었어?"
-            ]
+            # 3) 이야기 이어가기 - 선택된 카테고리로 템플릿 로드
+            continuations = self._load_continuation_from_assets(continuation_category, user_language, ai_language)
+            selected_continuation = random.choice(continuations)
             
-            selected_continuation = random.choice(continuation_templates)
+            logger.info(f"선택된 이어가기: {selected_continuation} (카테고리: {continuation_category.value})")
             
             # 전체 응답 조합
             full_response = f"{selected_reaction} {selected_expansion} {selected_continuation}"
@@ -522,35 +777,44 @@ class OpenAIService:
                 )
             ]
             
-            # 음성 URL 찾기 (반응 부분 우선, 감정 부분 폴백)
+            # 3단계 모든 음성 URL 찾기 및 합치기
             audio_url = None
             try:
-                # 1) 반응 텍스트에 대한 음성 파일 찾기 시도
-                audio_url = self._find_audio_url_for_text(
-                    selected_reaction,
-                    "reactions/" + reaction_category.value.lower(),
-                    user_language,
-                    ai_language
+                # 3단계 모든 음성 URL 찾기
+                reaction_audio_url, emotion_audio_url, continuation_audio_url = self._find_all_audio_urls_for_templated_response(
+                    selected_reaction, reaction_category,
+                    selected_expansion, emotion_category,
+                    selected_continuation, continuation_category,
+                    user_language, ai_language
                 )
                 
-                if audio_url:
-                    logger.info(f"반응 음성 파일 URL 찾음: {audio_url}")
-                else:
-                    # 2) 반응 음성이 없으면 감정 설명 음성 파일 찾기 시도
-                    audio_url = self._find_audio_url_for_text(
-                        selected_expansion,
-                        "emotions/" + emotion_category.value.lower(),
-                        user_language,
-                        ai_language
-                    )
+                # 찾은 음성 URL들을 합치기
+                valid_audio_urls = []
+                if reaction_audio_url:
+                    valid_audio_urls.append(reaction_audio_url)
+                    logger.info(f"반응 음성 파일 URL 찾음: {reaction_audio_url}")
+                if emotion_audio_url:
+                    valid_audio_urls.append(emotion_audio_url)
+                    logger.info(f"감정 설명 음성 파일 URL 찾음: {emotion_audio_url}")
+                if continuation_audio_url:
+                    valid_audio_urls.append(continuation_audio_url)
+                    logger.info(f"이어가기 음성 파일 URL 찾음: {continuation_audio_url}")
+                
+                if valid_audio_urls:
+                    logger.info(f"총 {len(valid_audio_urls)}개 음성 파일을 합치는 중...")
+                    audio_url = await self._combine_audio_files(valid_audio_urls)
                     
                     if audio_url:
-                        logger.info(f"감정 설명 음성 파일 URL 찾음: {audio_url}")
+                        logger.info(f"합쳐진 음성 파일 URL: {audio_url}")
                     else:
-                        logger.info(f"음성 파일을 찾을 수 없음: {reaction_category.value}, {emotion_category.value}")
+                        logger.warning("음성 파일 합치기 실패, 폴백 음성 사용")
+                        # 폴백: 첫 번째 유효한 음성 사용
+                        audio_url = valid_audio_urls[0] if valid_audio_urls else None
+                else:
+                    logger.info(f"음성 파일을 찾을 수 없음: {reaction_category.value}, {emotion_category.value}, {continuation_category.value}")
                     
             except Exception as e:
-                logger.error(f"음성 파일 URL 찾기 오류: {str(e)}")
+                logger.error(f"음성 파일 처리 오류: {str(e)}")
             
             return full_response, learn_words, audio_url
             
@@ -620,6 +884,10 @@ class OpenAIService:
                 # emotions의 경우 (e.g., "emotions/happy" -> "happy")
                 emotion_name = category.split("/")[-1] if "/" in category else category
                 metadata_section = self._audio_metadata.get("emotions", {}).get(emotion_name, {})
+            elif category.startswith("continuations/"):
+                # continuations의 경우 (e.g., "continuations/emotion_exploration" -> "emotion_exploration")
+                continuation_name = category.split("/")[-1] if "/" in category else category
+                metadata_section = self._audio_metadata.get("continuations", {}).get(continuation_name, {})
             else:
                 # topics의 경우 (e.g., "topics/favorites" -> "favorites")
                 topic_name = category.split("/")[-1] if "/" in category else category
@@ -649,6 +917,181 @@ class OpenAIService:
         except Exception as e:
             logger.error(f"음성 URL 찾기 오류: {str(e)}")
             return None
+    
+    def _find_all_audio_urls_for_templated_response(self, 
+                                                   selected_reaction: str, reaction_category: ReactionCategory,
+                                                   selected_expansion: str, emotion_category: EmotionCategory,
+                                                   selected_continuation: str, continuation_category: ContinuationCategory,
+                                                   user_language: str, ai_language: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        """
+        3단계 템플릿 응답에 대응하는 모든 음성 URL을 찾습니다.
+        
+        Returns:
+            tuple: (reaction_audio_url, emotion_audio_url, continuation_audio_url)
+        """
+        try:
+            # 1) 반응 음성 URL 찾기
+            reaction_audio_url = self._find_audio_url_for_text(
+                selected_reaction,
+                "reactions/" + reaction_category.value.lower(),
+                user_language,
+                ai_language
+            )
+            
+            # 2) 감정 설명 음성 URL 찾기
+            emotion_audio_url = self._find_audio_url_for_text(
+                selected_expansion,
+                "emotions/" + emotion_category.value.lower(),
+                user_language,
+                ai_language
+            )
+            
+            # 3) 이어가기 음성 URL 찾기
+            continuation_audio_url = self._find_audio_url_for_text(
+                selected_continuation,
+                "continuations/" + continuation_category.value.lower(),
+                user_language,
+                ai_language
+            )
+            
+            logger.info(f"음성 URL 검색 결과: 반응={bool(reaction_audio_url)}, 감정={bool(emotion_audio_url)}, 이어가기={bool(continuation_audio_url)}")
+            
+            return reaction_audio_url, emotion_audio_url, continuation_audio_url
+            
+        except Exception as e:
+            logger.error(f"모든 음성 URL 찾기 오류: {str(e)}")
+            return None, None, None
+    
+    async def _download_audio_file(self, url: str) -> Optional[bytes]:
+        """
+        음성 파일을 다운로드합니다.
+        
+        Args:
+            url: 다운로드할 음성 파일 URL
+            
+        Returns:
+            bytes: 다운로드된 음성 파일 데이터 (실패시 None)
+        """
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            return response.content
+        except Exception as e:
+            logger.error(f"음성 파일 다운로드 실패 ({url}): {str(e)}")
+            return None
+    
+    async def _combine_audio_files(self, audio_urls: List[str]) -> Optional[str]:
+        """
+        여러 음성 파일을 하나로 합칩니다.
+        
+        Args:
+            audio_urls: 합칠 음성 파일 URL 리스트
+            
+        Returns:
+            str: 합쳐진 음성 파일의 R2 URL (실패시 None)
+        """
+        try:
+            # 빈 URL 제거
+            valid_urls = [url for url in audio_urls if url]
+            if not valid_urls:
+                logger.warning("합칠 유효한 음성 URL이 없습니다.")
+                return None
+            
+            if len(valid_urls) == 1:
+                # 하나의 URL만 있으면 그대로 반환
+                logger.info("음성 파일이 하나뿐이므로 합치기 건너뜀")
+                return valid_urls[0]
+            
+            # 임시 파일들을 저장할 리스트
+            audio_segments = []
+            temp_files = []
+            
+            # 각 음성 파일 다운로드 및 로드
+            for i, url in enumerate(valid_urls):
+                logger.info(f"음성 파일 {i+1}/{len(valid_urls)} 다운로드 중: {url}")
+                
+                audio_data = await self._download_audio_file(url)
+                if not audio_data:
+                    logger.warning(f"음성 파일 다운로드 실패, 건너뜀: {url}")
+                    continue
+                
+                # 임시 파일에 저장
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+                    temp_file.write(audio_data)
+                    temp_file_path = temp_file.name
+                    temp_files.append(temp_file_path)
+                
+                # AudioSegment로 로드
+                try:
+                    audio_segment = AudioSegment.from_mp3(temp_file_path)
+                    audio_segments.append(audio_segment)
+                    logger.info(f"음성 파일 로드 성공: {len(audio_segment)}ms")
+                except Exception as e:
+                    logger.error(f"음성 파일 로드 실패: {str(e)}")
+                    continue
+            
+            if not audio_segments:
+                logger.error("로드된 음성 세그먼트가 없습니다.")
+                return None
+            
+            # 음성 파일들을 연결 (사이에 0.5초 간격 추가)
+            logger.info(f"{len(audio_segments)}개 음성 파일 합치는 중...")
+            silence = AudioSegment.silent(duration=500)  # 0.5초 무음
+            
+            combined_audio = audio_segments[0]
+            for segment in audio_segments[1:]:
+                combined_audio = combined_audio + silence + segment
+            
+            # 합쳐진 음성을 임시 파일로 저장
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as combined_temp:
+                combined_audio.export(combined_temp.name, format="mp3", bitrate="128k")
+                combined_temp_path = combined_temp.name
+            
+            # 합쳐진 파일을 R2에 업로드
+            with open(combined_temp_path, 'rb') as f:
+                combined_audio_data = f.read()
+            
+            # 고유한 파일명 생성 (현재 시간 + 해시)
+            timestamp = int(time.time())
+            audio_hash = hashlib.md5(combined_audio_data).hexdigest()[:8]
+            combined_file_path = f"conversation_starters/combined_audio/{timestamp}_{audio_hash}.mp3"
+            
+            # R2에 업로드
+            upload_success = await self.r2_service.upload_file(
+                file_content=combined_audio_data,
+                file_path=combined_file_path,
+                content_type="audio/mpeg"
+            )
+            
+            if upload_success:
+                combined_url = f"https://voice-assets.ekfrl.site/{combined_file_path}"
+                logger.info(f"합쳐진 음성 파일 업로드 성공: {combined_url}")
+                
+                # 임시 파일들 정리
+                for temp_file in temp_files + [combined_temp_path]:
+                    try:
+                        os.unlink(temp_file)
+                    except Exception as e:
+                        logger.warning(f"임시 파일 삭제 실패: {str(e)}")
+                
+                return combined_url
+            else:
+                logger.error("합쳐진 음성 파일 업로드 실패")
+                return None
+                
+        except Exception as e:
+            logger.error(f"음성 파일 합치기 오류: {str(e)}")
+            return None
+        finally:
+            # 임시 파일들 정리 (에러 발생시에도)
+            try:
+                for temp_file in temp_files:
+                    if os.path.exists(temp_file):
+                        os.unlink(temp_file)
+                if 'combined_temp_path' in locals() and os.path.exists(combined_temp_path):
+                    os.unlink(combined_temp_path)
+            except Exception as e:
+                logger.warning(f"임시 파일 정리 오류: {str(e)}")
     
     def _get_cache_key(self, *args) -> str:
         """캐시 키 생성"""

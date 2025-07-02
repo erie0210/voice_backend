@@ -19,7 +19,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from services.openai_service import OpenAIService
 from services.r2_service import R2Service
-from models.api_models import TopicEnum, ReactionCategory, EmotionCategory
+from models.api_models import TopicEnum, ReactionCategory, EmotionCategory, ContinuationCategory
 
 # 로깅 설정
 logging.basicConfig(
@@ -358,7 +358,70 @@ class AudioGenerator:
         
         return results
     
-    async def save_metadata(self, greetings_results: Dict, topics_results: Dict, reactions_results: Dict = None, emotions_results: Dict = None):
+    async def process_continuations(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+        """continuations/*.json의 모든 텍스트를 음성으로 변환합니다."""
+        logger.info("=== 이어가기 카테고리 음성 생성 시작 ===")
+        
+        # 이어가기 카테고리별 파일명 매핑
+        continuation_files = {
+            "emotion_exploration": "emotion_exploration.json",
+            "emotion_action": "emotion_action.json",
+            "emotion_learning": "emotion_learning.json",
+            "question_expansion": "question_expansion.json",
+            "encouragement_flow": "encouragement_flow.json",
+            "emotion_transition": "emotion_transition.json"
+        }
+        
+        results = {}
+        
+        for continuation_name, filename in continuation_files.items():
+            continuation_file = self.chat_responses_path / "continuations" / filename
+            
+            try:
+                with open(continuation_file, 'r', encoding='utf-8') as f:
+                    continuation_data = json.load(f)
+            except Exception as e:
+                logger.error(f"{filename} 로드 실패: {str(e)}")
+                continue
+            
+            results[continuation_name] = {}
+            
+            for from_lang, to_langs in continuation_data.items():
+                results[continuation_name][from_lang] = {}
+                
+                for to_lang, texts in to_langs.items():
+                    if to_lang not in self.target_languages:
+                        logger.info(f"스킵: {to_lang} (대상 언어 아님)")
+                        continue
+                    
+                    results[continuation_name][from_lang][to_lang] = []
+                    
+                    for index, text in enumerate(texts):
+                        text_hash = self._get_text_hash(text)
+                        file_path = self._get_audio_file_path(f"continuations/{continuation_name}", from_lang, to_lang, index, text_hash)
+                        
+                        # 이미 존재하는지 확인
+                        if await self._check_file_exists(file_path):
+                            file_url = f"https://voice-assets.ekfrl.site/{file_path}"
+                            logger.info(f"기존 파일 사용: {file_url}")
+                            results[continuation_name][from_lang][to_lang].append(file_url)
+                            continue
+                        
+                        # 새로 생성
+                        success, result = await self._generate_and_upload_audio(text, to_lang, file_path)
+                        
+                        if success:
+                            results[continuation_name][from_lang][to_lang].append(result)
+                        else:
+                            logger.error(f"음성 생성 실패: {text[:50]}... - {result}")
+                            results[continuation_name][from_lang][to_lang].append(None)
+                        
+                        # API 호출 제한을 위한 잠시 대기
+                        await asyncio.sleep(1)
+        
+        return results
+    
+    async def save_metadata(self, greetings_results: Dict, topics_results: Dict, reactions_results: Dict = None, emotions_results: Dict = None, continuations_results: Dict = None):
         """생성된 음성 파일 메타데이터를 저장합니다."""
         metadata = {
             "greetings": greetings_results,
@@ -374,6 +437,10 @@ class AudioGenerator:
         # 감정 결과가 있으면 추가
         if emotions_results:
             metadata["emotions"] = emotions_results
+            
+        # 이어가기 결과가 있으면 추가
+        if continuations_results:
+            metadata["continuations"] = continuations_results
         
         # 로컬에 메타데이터 저장
         metadata_file = self.assets_path / "audio_metadata.json"
@@ -392,7 +459,7 @@ class AudioGenerator:
     
     async def run(self):
         """전체 음성 생성 프로세스를 실행합니다."""
-        logger.info("🎙️ Conversation Starters & Chat Responses 음성 생성 시작")
+        logger.info("🎙️ Complete Voice Template System 음성 생성 시작")
         logger.info(f"대상 언어: {', '.join(self.target_languages)}")
         
         try:
@@ -408,8 +475,11 @@ class AudioGenerator:
             # 4. 감정 카테고리 음성 생성
             emotions_results = await self.process_emotions()
             
-            # 5. 메타데이터 저장
-            await self.save_metadata(greetings_results, topics_results, reactions_results, emotions_results)
+            # 5. 이어가기 카테고리 음성 생성
+            continuations_results = await self.process_continuations()
+            
+            # 6. 메타데이터 저장
+            await self.save_metadata(greetings_results, topics_results, reactions_results, emotions_results, continuations_results)
             
             logger.info("✅ 모든 음성 생성 완료!")
             
@@ -422,13 +492,16 @@ class AudioGenerator:
                                 for lang_data in reaction_data.values() for lang in self.target_languages if lang in lang_data)
             total_emotions = sum(len(lang_data.get(lang, [])) for emotion_data in emotions_results.values() 
                                for lang_data in emotion_data.values() for lang in self.target_languages if lang in lang_data)
+            total_continuations = sum(len(lang_data.get(lang, [])) for continuation_data in continuations_results.values() 
+                                    for lang_data in continuation_data.values() for lang in self.target_languages if lang in lang_data)
             
             logger.info(f"📊 생성 결과:")
             logger.info(f"   - 인사말 음성 파일: {total_greetings}개")
             logger.info(f"   - 주제별 음성 파일: {total_topics}개")
             logger.info(f"   - 반응 음성 파일: {total_reactions}개")
             logger.info(f"   - 감정 음성 파일: {total_emotions}개")
-            logger.info(f"   - 총 음성 파일: {total_greetings + total_topics + total_reactions + total_emotions}개")
+            logger.info(f"   - 이어가기 음성 파일: {total_continuations}개")
+            logger.info(f"   - 총 음성 파일: {total_greetings + total_topics + total_reactions + total_emotions + total_continuations}개")
             
         except Exception as e:
             logger.error(f"❌ 음성 생성 중 오류 발생: {str(e)}")

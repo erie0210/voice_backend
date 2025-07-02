@@ -519,11 +519,379 @@
       }
     }
   },
-  "generated_at": "1338.283022541",
+  "generated_at": "787.370158458",
   "target_languages": [
     "English",
     "Spanish",
     "Chinese",
     "Korean"
-  ]
+  ],
+  "reactions": {
+    "empathy": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/empathy/from_Korean_Korean/0_fe49cbd7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/empathy/from_Korean_Korean/1_8db36517.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/empathy/from_Korean_Korean/2_3f08e6e4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/empathy/from_Korean_Korean/3_91bdb430.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/empathy/from_Korean_Korean/4_4c7f3ac7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/empathy/from_Korean_Korean/5_7b7d4f93.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/empathy/from_Korean_Korean/6_49430e9c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/empathy/from_Korean_Korean/7_515df0e8.mp3"
+        ]
+      }
+    },
+    "acceptance": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/acceptance/from_Korean_Korean/0_c7ee6ecd.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/acceptance/from_Korean_Korean/1_1838fa57.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/acceptance/from_Korean_Korean/2_259702e8.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/acceptance/from_Korean_Korean/3_4eee2a7b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/acceptance/from_Korean_Korean/4_2f69ac86.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/acceptance/from_Korean_Korean/5_af106414.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/acceptance/from_Korean_Korean/6_52c7fe43.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/acceptance/from_Korean_Korean/7_49457850.mp3"
+        ]
+      }
+    },
+    "surprise": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/surprise/from_Korean_Korean/0_721d9243.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/surprise/from_Korean_Korean/1_571669e4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/surprise/from_Korean_Korean/2_1a6fe155.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/surprise/from_Korean_Korean/3_02a8e76e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/surprise/from_Korean_Korean/4_deecd282.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/surprise/from_Korean_Korean/5_3197b3be.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/surprise/from_Korean_Korean/6_7c403bd0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/surprise/from_Korean_Korean/7_caa04cc9.mp3"
+        ]
+      }
+    },
+    "comfort": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/comfort/from_Korean_Korean/0_20683c8e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/comfort/from_Korean_Korean/1_614bb0a5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/comfort/from_Korean_Korean/2_9733e47f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/comfort/from_Korean_Korean/3_e36b1cd6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/comfort/from_Korean_Korean/4_d8b79eb4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/comfort/from_Korean_Korean/5_80e2f12a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/comfort/from_Korean_Korean/6_57296d8b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/comfort/from_Korean_Korean/7_697ab729.mp3"
+        ]
+      }
+    },
+    "joy_sharing": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/joy_sharing/from_Korean_Korean/0_24e2c33b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/joy_sharing/from_Korean_Korean/1_0ac7cf2a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/joy_sharing/from_Korean_Korean/2_c654f5ae.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/joy_sharing/from_Korean_Korean/3_e70949a3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/joy_sharing/from_Korean_Korean/4_c5830d1e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/joy_sharing/from_Korean_Korean/5_35e08278.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/joy_sharing/from_Korean_Korean/6_64f0e459.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/joy_sharing/from_Korean_Korean/7_58bd6d4a.mp3"
+        ]
+      }
+    },
+    "confirmation": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/confirmation/from_Korean_Korean/0_e9f87dfc.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/confirmation/from_Korean_Korean/1_686e3eea.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/confirmation/from_Korean_Korean/2_aa3befe2.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/confirmation/from_Korean_Korean/3_e87bf529.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/confirmation/from_Korean_Korean/4_032cd584.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/confirmation/from_Korean_Korean/5_724817f5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/confirmation/from_Korean_Korean/6_eae9d823.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/confirmation/from_Korean_Korean/7_4f083a22.mp3"
+        ]
+      }
+    },
+    "slow_questioning": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/slow_questioning/from_Korean_Korean/0_8972e8f6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/slow_questioning/from_Korean_Korean/1_4190a1d3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/slow_questioning/from_Korean_Korean/2_eece2676.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/slow_questioning/from_Korean_Korean/3_905b5bde.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/slow_questioning/from_Korean_Korean/4_ed692758.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/slow_questioning/from_Korean_Korean/5_d61cbc4e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/slow_questioning/from_Korean_Korean/6_5c66c217.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/reactions/slow_questioning/from_Korean_Korean/7_9c37a73c.mp3"
+        ]
+      }
+    }
+  },
+  "emotions": {
+    "happy": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/happy/from_Korean_Korean/0_bebdd5d9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/happy/from_Korean_Korean/1_439f4874.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/happy/from_Korean_Korean/2_bb8c0424.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/happy/from_Korean_Korean/3_57a4b97b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/happy/from_Korean_Korean/4_ca4659dd.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/happy/from_Korean_Korean/5_4ca1799f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/happy/from_Korean_Korean/6_5a3fe881.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/happy/from_Korean_Korean/7_db70ab70.mp3"
+        ]
+      }
+    },
+    "sad": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sad/from_Korean_Korean/0_2e642893.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sad/from_Korean_Korean/1_bede9ca4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sad/from_Korean_Korean/2_da9e64fa.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sad/from_Korean_Korean/3_a34fa2f5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sad/from_Korean_Korean/4_e842b9ed.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sad/from_Korean_Korean/5_409c9699.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sad/from_Korean_Korean/6_ab4e0740.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sad/from_Korean_Korean/7_6279b407.mp3"
+        ]
+      }
+    },
+    "angry": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/angry/from_Korean_Korean/0_caaadc3b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/angry/from_Korean_Korean/1_db68de32.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/angry/from_Korean_Korean/2_e190f07b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/angry/from_Korean_Korean/3_dc84303e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/angry/from_Korean_Korean/4_ad1bd60b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/angry/from_Korean_Korean/5_95970841.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/angry/from_Korean_Korean/6_a388225a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/angry/from_Korean_Korean/7_5c3b59c9.mp3"
+        ]
+      }
+    },
+    "scared": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/scared/from_Korean_Korean/0_763ba2df.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/scared/from_Korean_Korean/1_13bb62e4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/scared/from_Korean_Korean/2_c757d95f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/scared/from_Korean_Korean/3_4eaeb946.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/scared/from_Korean_Korean/4_031a5f37.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/scared/from_Korean_Korean/5_6580326e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/scared/from_Korean_Korean/6_8137b467.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/scared/from_Korean_Korean/7_410a7bfd.mp3"
+        ]
+      }
+    },
+    "shy": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/shy/from_Korean_Korean/0_5a54dada.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/shy/from_Korean_Korean/1_49223a8b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/shy/from_Korean_Korean/2_cbe642d7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/shy/from_Korean_Korean/3_a4c9ac1e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/shy/from_Korean_Korean/4_5e785f04.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/shy/from_Korean_Korean/5_bb9cbc97.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/shy/from_Korean_Korean/6_f1e054c2.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/shy/from_Korean_Korean/7_afec35bb.mp3"
+        ]
+      }
+    },
+    "sleepy": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sleepy/from_Korean_Korean/0_4fb9de56.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sleepy/from_Korean_Korean/1_0547dea9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sleepy/from_Korean_Korean/2_2615f441.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sleepy/from_Korean_Korean/3_6dfba10a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sleepy/from_Korean_Korean/4_dda41937.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sleepy/from_Korean_Korean/5_73675abb.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sleepy/from_Korean_Korean/6_3d132122.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/sleepy/from_Korean_Korean/7_b661d739.mp3"
+        ]
+      }
+    },
+    "upset": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/upset/from_Korean_Korean/0_4d5e841d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/upset/from_Korean_Korean/1_6ac9e9f4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/upset/from_Korean_Korean/2_6b2ab0da.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/upset/from_Korean_Korean/3_8b0c991b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/upset/from_Korean_Korean/4_9f6340eb.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/upset/from_Korean_Korean/5_f24709c9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/upset/from_Korean_Korean/6_26f9fc9a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/upset/from_Korean_Korean/7_1b4b38a7.mp3"
+        ]
+      }
+    },
+    "confused": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/confused/from_Korean_Korean/0_2d10307d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/confused/from_Korean_Korean/1_0b994004.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/confused/from_Korean_Korean/2_06c4ae94.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/confused/from_Korean_Korean/3_5f1fd28c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/confused/from_Korean_Korean/4_89740646.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/confused/from_Korean_Korean/5_274ec4f8.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/confused/from_Korean_Korean/6_6ada55b5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/confused/from_Korean_Korean/7_9b1dca10.mp3"
+        ]
+      }
+    },
+    "bored": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/bored/from_Korean_Korean/0_50c4f15d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/bored/from_Korean_Korean/1_184ee1f2.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/bored/from_Korean_Korean/2_98b8eb6a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/bored/from_Korean_Korean/3_483bbe83.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/bored/from_Korean_Korean/4_8e6d6489.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/bored/from_Korean_Korean/5_e677a404.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/bored/from_Korean_Korean/6_333d9759.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/bored/from_Korean_Korean/7_73fafa70.mp3"
+        ]
+      }
+    },
+    "love": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/love/from_Korean_Korean/0_98a12d28.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/love/from_Korean_Korean/1_78868fe3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/love/from_Korean_Korean/2_e456b1bf.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/love/from_Korean_Korean/3_243ceba1.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/love/from_Korean_Korean/4_93488770.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/love/from_Korean_Korean/5_e5ed1948.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/love/from_Korean_Korean/6_b2c588a9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/love/from_Korean_Korean/7_37b6af74.mp3"
+        ]
+      }
+    },
+    "proud": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/proud/from_Korean_Korean/0_f3091eac.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/proud/from_Korean_Korean/1_0b1f07e9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/proud/from_Korean_Korean/2_41a005dc.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/proud/from_Korean_Korean/3_b12e9cc3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/proud/from_Korean_Korean/4_0d378714.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/proud/from_Korean_Korean/5_243776ea.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/proud/from_Korean_Korean/6_8c56de40.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/proud/from_Korean_Korean/7_f254bc8d.mp3"
+        ]
+      }
+    },
+    "nervous": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/nervous/from_Korean_Korean/0_085f9704.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/nervous/from_Korean_Korean/1_c313ac7a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/nervous/from_Korean_Korean/2_223fc0ad.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/nervous/from_Korean_Korean/3_518c0a47.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/nervous/from_Korean_Korean/4_dac69b31.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/nervous/from_Korean_Korean/5_74e4ad75.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/nervous/from_Korean_Korean/6_638e3bfc.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/emotions/nervous/from_Korean_Korean/7_e6f357eb.mp3"
+        ]
+      }
+    }
+  },
+  "continuations": {
+    "emotion_exploration": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/0_d85d3dff.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/1_6d57c606.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/2_cee9cdd4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/3_b8962d46.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/4_1474093a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/5_a6b2312d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/6_1fa88fcc.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/7_d9be27df.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/8_20a6d2d7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_exploration/from_Korean_Korean/9_5eca5a73.mp3"
+        ]
+      }
+    },
+    "emotion_action": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/0_37ca827f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/1_32e29946.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/2_5aec8b4d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/3_12ca609f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/4_f3f2d053.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/5_9938e945.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/6_ec9e7ed0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/7_eb5e2cfd.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/8_7ddba246.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_action/from_Korean_Korean/9_d9e48948.mp3"
+        ]
+      }
+    },
+    "emotion_learning": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/0_e472689f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/1_533967b8.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/2_eb7329e2.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/3_075d4ef9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/4_6b2b471e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/5_65ccec4d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/6_49e8a4bd.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/7_e30c5e5f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/8_d6d10898.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_learning/from_Korean_Korean/9_cdaefbca.mp3"
+        ]
+      }
+    },
+    "question_expansion": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/0_40c93b9e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/1_953575a8.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/2_49373cf6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/3_6c7db506.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/4_611e160f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/5_fea7c394.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/6_c0409efd.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/7_b02a4f38.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/8_1091af39.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/question_expansion/from_Korean_Korean/9_6b7f04f7.mp3"
+        ]
+      }
+    },
+    "encouragement_flow": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/0_8264bfa9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/1_582f247d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/2_4a187a9e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/3_41c5a9f7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/4_22b6effc.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/5_1f39d891.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/6_2f0060b6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/7_0ef606eb.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/8_ea8c0d91.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/encouragement_flow/from_Korean_Korean/9_581e4364.mp3"
+        ]
+      }
+    },
+    "emotion_transition": {
+      "from_Korean": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/0_307e709e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/1_fb9b3353.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/2_8687fca6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/3_cbc31160.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/4_f66bce93.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/5_0793277a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/6_51b4f2c4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/7_fa3ca3c3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/8_0043c713.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/continuations/emotion_transition/from_Korean_Korean/9_8d2e22d5.mp3"
+        ]
+      }
+    }
+  }
 }

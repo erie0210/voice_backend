@@ -34,6 +34,15 @@ class EmotionCategory(str, Enum):
     PROUD = "PROUD"                        # 😎 자랑스러움
     NERVOUS = "NERVOUS"                    # 😬 긴장됨
 
+class ContinuationCategory(str, Enum):
+    """이야기 이어가기 카테고리 - 대화 연결용 템플릿"""
+    EMOTION_EXPLORATION = "EMOTION_EXPLORATION"        # 감정 탐색 이어가기
+    EMOTION_ACTION = "EMOTION_ACTION"                  # 🧩 감정+행동 연결
+    EMOTION_LEARNING = "EMOTION_LEARNING"              # 📚 감정+표현 학습 연결
+    QUESTION_EXPANSION = "QUESTION_EXPANSION"          # 💬 질문 확장
+    ENCOURAGEMENT_FLOW = "ENCOURAGEMENT_FLOW"          # 🌟 격려 + 다음 흐름
+    EMOTION_TRANSITION = "EMOTION_TRANSITION"          # 🌈 감정 전환 유도
+
 # 공통 에러 모델
 class ApiError(BaseModel):
     code: str
