@@ -127,9 +127,10 @@ class ConversationStartRequest(BaseModel):
     difficultyLevel: str  # easy, intermediate, advanced
 
 class ConversationStartData(BaseModel):
-    conversation: str  # 생성된 대화 시작 문장
+    conversation: str  # 생성된 대화 시작 문장 (인사말 + 본문)
     topic: TopicEnum  # 사용된 주제
     difficulty: str   # 난이도
+    learnWords: List[LearnWord] = []  # 학습할 단어/표현 목록
 
 class ConversationStartResponse(BaseModel):
     success: bool

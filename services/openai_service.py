@@ -253,10 +253,64 @@ JSON FORMAT:
             raise Exception(f"환영 메시지 생성 중 오류가 발생했습니다: {str(e)}")
     
     async def generate_conversation_starters(self, user_language: str, ai_language: str, 
-                                           topic: TopicEnum, difficulty_level: str) -> str:
+                                           topic: TopicEnum, difficulty_level: str) -> tuple[str, List[LearnWord]]:
         """
         주제와 언어에 맞는 대화 시작 문장을 20개 생성하고 그 중 하나를 랜덤 선택합니다.
+        인사말과 함께 반환하며, 학습할 단어들도 추출하여 함께 제공합니다.
         """
+        # 언어별 인사말 정의 (try 블록 밖에서 정의)
+        greetings = {
+            "English": [
+                "Hello! Nice to see you again! 😊",
+                "Hi there! Hope you're having a great day! ✨",
+                "Hey! Ready for some fun conversation? 🎉",
+                "Good to see you! Let's chat! 💬",
+                "Hi! Excited to practice with you today! 🌟"
+            ],
+            "Spanish": [
+                "¡Hola! ¡Qué gusto verte de nuevo! 😊",
+                "¡Hola! ¡Espero que tengas un gran día! ✨",
+                "¡Oye! ¿Listo para una conversación divertida? 🎉",
+                "¡Qué bueno verte! ¡Vamos a charlar! 💬",
+                "¡Hola! ¡Emocionado de practicar contigo hoy! 🌟"
+            ],
+            "Japanese": [
+                "こんにちは！また会えて嬉しいです！😊",
+                "こんにちは！素敵な一日をお過ごしください！✨",
+                "やあ！楽しい会話の準備はできましたか？🎉",
+                "お会いできて良かったです！お話ししましょう！💬",
+                "こんにちは！今日一緒に練習できて嬉しいです！🌟"
+            ],
+            "Korean": [
+                "안녕하세요! 다시 만나서 반가워요! 😊",
+                "안녕하세요! 좋은 하루 보내세요! ✨",
+                "안녕! 재미있는 대화 준비됐나요? 🎉",
+                "만나서 좋아요! 대화해봐요! 💬",
+                "안녕하세요! 오늘 함께 연습할 수 있어서 기뻐요! 🌟"
+            ],
+            "Chinese": [
+                "你好！很高兴再次见到你！😊",
+                "你好！希望你今天过得愉快！✨",
+                "嘿！准备好有趣的对话了吗？🎉",
+                "很高兴见到你！我们聊聊吧！💬",
+                "你好！今天能和你一起练习很兴奋！🌟"
+            ],
+            "French": [
+                "Bonjour ! Ravi de te revoir ! 😊",
+                "Salut ! J'espère que tu passes une excellente journée ! ✨",
+                "Hey ! Prêt pour une conversation amusante ? 🎉",
+                "Content de te voir ! Discutons ! 💬",
+                "Bonjour ! Excité de pratiquer avec toi aujourd'hui ! 🌟"
+            ],
+            "German": [
+                "Hallo! Schön, dich wiederzusehen! 😊",
+                "Hi! Ich hoffe, du hast einen tollen Tag! ✨",
+                "Hey! Bereit für ein lustiges Gespräch? 🎉",
+                "Schön, dich zu sehen! Lass uns reden! 💬",
+                "Hallo! Freue mich, heute mit dir zu üben! 🌟"
+            ]
+        }
+        
         try:
             # 주제별 프롬프트 정의
             topic_prompts = {
@@ -362,18 +416,154 @@ Return as JSON array:
                 selected_starter = random.choice(starters[:20])
                 logger.info(f"선택된 대화 시작 문장: {selected_starter}")
                 
-                return selected_starter
+                # 인사말 선택 및 조합
+                greeting = random.choice(greetings.get(ai_language, greetings["English"]))
+                full_conversation = f"{greeting} {selected_starter}"
+                
+                # 학습 단어 추출
+                learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
+                
+                return full_conversation, learn_words
                 
             except json.JSONDecodeError:
                 logger.error(f"JSON 파싱 실패, 기본 문장 사용: {response_content[:200]}")
                 default_starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
-                return random.choice(default_starters)
+                selected_starter = random.choice(default_starters)
+                greeting = random.choice(greetings.get(ai_language, greetings["English"]))
+                full_conversation = f"{greeting} {selected_starter}"
+                learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
+                return full_conversation, learn_words
             
         except Exception as e:
             logger.error(f"대화 시작 문장 생성 오류: {str(e)}")
             # 폴백: 기본 문장 사용
             default_starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
-            return random.choice(default_starters)
+            selected_starter = random.choice(default_starters)
+            greeting = random.choice(greetings.get(ai_language, greetings["English"]))
+            full_conversation = f"{greeting} {selected_starter}"
+            learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
+            return full_conversation, learn_words
+    
+    def _extract_learn_words_from_starter(self, conversation: str, ai_language: str, user_language: str) -> List[LearnWord]:
+        """
+        대화 시작 문장에서 학습할 수 있는 단어들을 추출합니다.
+        """
+        try:
+            # 언어별 핵심 단어 및 표현 정의
+            language_words = {
+                "English": [
+                    {"word": "Hello", "meaning": "안녕하세요", "pronunciation": "헬로우"},
+                    {"word": "Nice", "meaning": "좋은, 멋진", "pronunciation": "나이스"},
+                    {"word": "music", "meaning": "음악", "pronunciation": "뮤직"},
+                    {"word": "favorite", "meaning": "가장 좋아하는", "pronunciation": "페이버릿"},
+                    {"word": "hobby", "meaning": "취미", "pronunciation": "하비"},
+                    {"word": "feeling", "meaning": "기분", "pronunciation": "필링"},
+                    {"word": "wearing", "meaning": "입고 있는", "pronunciation": "웨어링"},
+                    {"word": "style", "meaning": "스타일", "pronunciation": "스타일"}
+                ],
+                "Spanish": [
+                    {"word": "¡Hola!", "meaning": "안녕하세요!", "pronunciation": "올라"},
+                    {"word": "música", "meaning": "음악", "pronunciation": "무시카"},
+                    {"word": "favorito", "meaning": "가장 좋아하는", "pronunciation": "파보리토"},
+                    {"word": "escuchar", "meaning": "듣다", "pronunciation": "에스쿠차르"},
+                    {"word": "sentir", "meaning": "느끼다", "pronunciation": "센티르"},
+                    {"word": "llevar", "meaning": "입다, 가지고 다니다", "pronunciation": "예바르"},
+                    {"word": "estilo", "meaning": "스타일", "pronunciation": "에스틸로"},
+                    {"word": "gustar", "meaning": "좋아하다", "pronunciation": "구스타르"}
+                ],
+                "Japanese": [
+                    {"word": "こんにちは", "meaning": "안녕하세요", "pronunciation": "곤니치와"},
+                    {"word": "音楽", "meaning": "음악", "pronunciation": "온가쿠"},
+                    {"word": "好き", "meaning": "좋아하는", "pronunciation": "스키"},
+                    {"word": "聞く", "meaning": "듣다", "pronunciation": "키쿠"},
+                    {"word": "気分", "meaning": "기분", "pronunciation": "키분"},
+                    {"word": "着る", "meaning": "입다", "pronunciation": "키루"},
+                    {"word": "スタイル", "meaning": "스타일", "pronunciation": "스타이루"},
+                    {"word": "趣味", "meaning": "취미", "pronunciation": "슈미"}
+                ],
+                "Korean": [
+                    {"word": "안녕하세요", "meaning": "Hello", "pronunciation": "annyeonghaseyo"},
+                    {"word": "음악", "meaning": "music", "pronunciation": "eumak"},
+                    {"word": "좋아하다", "meaning": "to like", "pronunciation": "johahada"},
+                    {"word": "듣다", "meaning": "to listen", "pronunciation": "deutda"},
+                    {"word": "기분", "meaning": "feeling", "pronunciation": "gibun"},
+                    {"word": "입다", "meaning": "to wear", "pronunciation": "ipda"},
+                    {"word": "스타일", "meaning": "style", "pronunciation": "seutail"},
+                    {"word": "취미", "meaning": "hobby", "pronunciation": "chwimi"}
+                ],
+                "Chinese": [
+                    {"word": "你好", "meaning": "안녕하세요", "pronunciation": "니하오"},
+                    {"word": "音乐", "meaning": "음악", "pronunciation": "인위에"},
+                    {"word": "喜欢", "meaning": "좋아하다", "pronunciation": "시환"},
+                    {"word": "听", "meaning": "듣다", "pronunciation": "팅"},
+                    {"word": "心情", "meaning": "기분", "pronunciation": "신칭"},
+                    {"word": "穿", "meaning": "입다", "pronunciation": "촨"},
+                    {"word": "风格", "meaning": "스타일", "pronunciation": "펑거"},
+                    {"word": "爱好", "meaning": "취미", "pronunciation": "아이하오"}
+                ],
+                "French": [
+                    {"word": "Bonjour", "meaning": "안녕하세요", "pronunciation": "봉주르"},
+                    {"word": "musique", "meaning": "음악", "pronunciation": "뮈지크"},
+                    {"word": "préféré", "meaning": "가장 좋아하는", "pronunciation": "프레페레"},
+                    {"word": "écouter", "meaning": "듣다", "pronunciation": "에쿠테"},
+                    {"word": "sentiment", "meaning": "기분", "pronunciation": "상티망"},
+                    {"word": "porter", "meaning": "입다", "pronunciation": "포르테"},
+                    {"word": "style", "meaning": "스타일", "pronunciation": "스틸"},
+                    {"word": "passe-temps", "meaning": "취미", "pronunciation": "파스-땅"}
+                ],
+                "German": [
+                    {"word": "Hallo", "meaning": "안녕하세요", "pronunciation": "할로"},
+                    {"word": "Musik", "meaning": "음악", "pronunciation": "무지크"},
+                    {"word": "Lieblings-", "meaning": "가장 좋아하는", "pronunciation": "립링스"},
+                    {"word": "hören", "meaning": "듣다", "pronunciation": "회렌"},
+                    {"word": "Gefühl", "meaning": "기분", "pronunciation": "게퓔"},
+                    {"word": "tragen", "meaning": "입다", "pronunciation": "트라겐"},
+                    {"word": "Stil", "meaning": "스타일", "pronunciation": "슈틸"},
+                    {"word": "Hobby", "meaning": "취미", "pronunciation": "호비"}
+                ]
+            }
+            
+            # 해당 언어의 단어 목록 가져오기
+            words_list = language_words.get(ai_language, language_words["English"])
+            
+            # 대화 문장에서 찾을 수 있는 단어들 추출
+            learn_words = []
+            conversation_lower = conversation.lower()
+            
+            for word_info in words_list:
+                word = word_info["word"].lower()
+                # 단어가 대화에 포함되어 있는지 확인
+                if word in conversation_lower:
+                    learn_word = LearnWord(
+                        word=word_info["word"],
+                        meaning=word_info["meaning"],
+                        example=f"Example: {conversation[:50]}...",
+                        pronunciation=word_info.get("pronunciation")
+                    )
+                    learn_words.append(learn_word)
+            
+            # 최소 2개의 학습 단어 보장
+            if len(learn_words) < 2:
+                # 부족한 경우 기본 단어들로 채움
+                remaining_words = [w for w in words_list if w not in learn_words][:2-len(learn_words)]
+                for word_info in remaining_words:
+                    learn_word = LearnWord(
+                        word=word_info["word"],
+                        meaning=word_info["meaning"],
+                        example=None,
+                        pronunciation=word_info.get("pronunciation")
+                    )
+                    learn_words.append(learn_word)
+            
+            return learn_words[:3]  # 최대 3개까지만 반환
+            
+        except Exception as e:
+            logger.error(f"학습 단어 추출 중 오류: {str(e)}")
+            # 기본 학습 단어 반환
+            return [
+                LearnWord(word="Hello", meaning="안녕하세요", example=None, pronunciation="헬로우"),
+                LearnWord(word="Good", meaning="좋은", example=None, pronunciation="굿")
+            ]
     
     def _get_default_starters(self, topic: TopicEnum, ai_language: str, user_language: str, difficulty_level: str) -> List[str]:
         """
