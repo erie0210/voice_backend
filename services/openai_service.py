@@ -595,7 +595,7 @@ class OpenAIService:
 - EMPATHY: 🙋‍♀️ 공감 - "그랬구나~", "정말 그렇게 느꼈구나."
 - ACCEPTANCE: 🫶 수용 - "그래, 그런 기분 들 수 있어."
 - SURPRISE: 😮 놀람 - "어, 진짜?", "정말 그런 일이 있었어?"
-- COMFORT: 😢 위로 - "마음이 아팠겠다.", "속상했겠다~"
+- COMFORT: 😢 위로 - "마음이 아팠겠다.", "정말 속상했겠다."
 - JOY_SHARING: 😊 기쁨 나눔 - "우와~ 신났겠다!", "기분 좋았겠다!"
 - CONFIRMATION: 🤔 확인/공명 - "~해서 슬펐던 거야?", "화가 나서 그런 기분이 들었구나?"
 - SLOW_QUESTIONING: 🐢 천천히 되물음 - "다시 말해줄 수 있어?", "좀 더 알려줄래?"
@@ -1065,7 +1065,7 @@ JSON 형식으로만 응답하세요:
             )
             
             if upload_success:
-                combined_url = f"https://voice-assets.ekfrl.site/{combined_file_path}"
+                combined_url = f"https://voice.kreators.dev/{combined_file_path}"
                 logger.info(f"합쳐진 음성 파일 업로드 성공: {combined_url}")
                 
                 # 임시 파일들 정리

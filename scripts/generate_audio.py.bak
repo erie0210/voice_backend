@@ -110,7 +110,7 @@ class AudioGenerator:
             os.remove(temp_file_path)
             
             if upload_result:
-                file_url = f"https://voice.kreators.dev/{file_path}"
+                file_url = f"https://voice-assets.ekfrl.site/{file_path}"
                 logger.info(f"R2 업로드 성공: {file_url}")
                 return True, file_url
             else:
@@ -152,7 +152,7 @@ class AudioGenerator:
                     
                     # 이미 존재하는지 확인
                     if await self._check_file_exists(file_path):
-                        file_url = f"https://voice.kreators.dev/{file_path}"
+                        file_url = f"https://voice-assets.ekfrl.site/{file_path}"
                         logger.info(f"기존 파일 사용: {file_url}")
                         results[from_lang][to_lang].append(file_url)
                         continue
@@ -206,7 +206,7 @@ class AudioGenerator:
                         
                         # 이미 존재하는지 확인
                         if await self._check_file_exists(file_path):
-                            file_url = f"https://voice.kreators.dev/{file_path}"
+                            file_url = f"https://voice-assets.ekfrl.site/{file_path}"
                             logger.info(f"기존 파일 사용: {file_url}")
                             results[topic][from_lang][to_lang].append(file_url)
                             continue
@@ -270,7 +270,7 @@ class AudioGenerator:
                         
                         # 이미 존재하는지 확인
                         if await self._check_file_exists(file_path):
-                            file_url = f"https://voice.kreators.dev/{file_path}"
+                            file_url = f"https://voice-assets.ekfrl.site/{file_path}"
                             logger.info(f"기존 파일 사용: {file_url}")
                             results[reaction_name][from_lang][to_lang].append(file_url)
                             continue
@@ -339,7 +339,7 @@ class AudioGenerator:
                         
                         # 이미 존재하는지 확인
                         if await self._check_file_exists(file_path):
-                            file_url = f"https://voice.kreators.dev/{file_path}"
+                            file_url = f"https://voice-assets.ekfrl.site/{file_path}"
                             logger.info(f"기존 파일 사용: {file_url}")
                             results[emotion_name][from_lang][to_lang].append(file_url)
                             continue
@@ -402,7 +402,7 @@ class AudioGenerator:
                         
                         # 이미 존재하는지 확인
                         if await self._check_file_exists(file_path):
-                            file_url = f"https://voice.kreators.dev/{file_path}"
+                            file_url = f"https://voice-assets.ekfrl.site/{file_path}"
                             logger.info(f"기존 파일 사용: {file_url}")
                             results[continuation_name][from_lang][to_lang].append(file_url)
                             continue
