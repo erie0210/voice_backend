@@ -83,6 +83,10 @@ class OpenAIService:
         
         # Assets 경로 설정
         self.assets_path = Path(__file__).parent.parent / "assets" / "conversation_starters"
+        
+        # 음성 파일 메타데이터 캐시
+        self._audio_metadata = None
+        self._metadata_loaded = False
     
     def _load_greetings_from_assets_by_language(self, user_language: str, ai_language: str) -> List[str]:
         """
@@ -167,23 +171,127 @@ class OpenAIService:
         """
         폴백용 기본 주제 시작 문장 (언어 조합별)
         """
+        topic_display = self._get_topic_display_name(topic)
+        
         if user_language == "Korean":
             if ai_language == "English":
-                return [f"Let's talk about {topic.value}! 😊"]
+                return [f"Let's talk about {topic_display}! 😊"]
             elif ai_language == "Spanish":
-                return [f"¡Hablemos sobre {topic.value}! 😊"]
+                return [f"¡Hablemos sobre {topic_display}! 😊"]
             elif ai_language == "Japanese":
-                return [f"{topic.value}について話しましょう！😊"]
+                return [f"{topic_display}について話しましょう！😊"]
             elif ai_language == "Chinese":
-                return [f"我们来聊聊{topic.value}吧！😊"]
+                return [f"我们来聊聊{topic_display}吧！😊"]
             elif ai_language == "French":
-                return [f"Parlons de {topic.value}! 😊"]
+                return [f"Parlons de {topic_display}! 😊"]
             elif ai_language == "German":
-                return [f"Lass uns über {topic.value} sprechen! 😊"]
+                return [f"Lass uns über {topic_display} sprechen! 😊"]
             else:
-                return [f"{topic.value}에 대해 얘기해봐요! 😊"]
+                topic_korean = self._get_topic_korean_name(topic)
+                return [f"{topic_korean}에 대해 얘기해봐요! 😊"]
         else:
-            return [f"Let's talk about {topic.value}! 😊"]
+            return [f"Let's talk about {topic_display}! 😊"]
+    
+    def _get_topic_display_name(self, topic: TopicEnum) -> str:
+        """
+        TopicEnum을 사용자에게 보여줄 텍스트로 변환합니다.
+        """
+        display_names = {
+            TopicEnum.FAVORITES: "favorite things",
+            TopicEnum.FEELINGS: "feelings",
+            TopicEnum.OOTD: "outfit of the day"
+        }
+        return display_names.get(topic, topic.value.lower())
+    
+    def _get_topic_korean_name(self, topic: TopicEnum) -> str:
+        """
+        TopicEnum을 한국어 텍스트로 변환합니다.
+        """
+        korean_names = {
+            TopicEnum.FAVORITES: "좋아하는 것들",
+            TopicEnum.FEELINGS: "기분 표현",
+            TopicEnum.OOTD: "오늘의 옷차림"
+        }
+        return korean_names.get(topic, topic.value)
+    
+    def _load_audio_metadata(self) -> None:
+        """
+        음성 파일 메타데이터를 로드합니다.
+        """
+        if self._metadata_loaded:
+            return
+            
+        try:
+            metadata_file = self.assets_path / "audio_metadata.json"
+            if metadata_file.exists():
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    self._audio_metadata = json.load(f)
+                logger.info("음성 파일 메타데이터 로드 완료")
+            else:
+                logger.warning("음성 파일 메타데이터를 찾을 수 없습니다. 첫 실행이거나 음성 생성이 필요합니다.")
+                self._audio_metadata = {}
+        except Exception as e:
+            logger.error(f"음성 파일 메타데이터 로드 오류: {str(e)}")
+            self._audio_metadata = {}
+        finally:
+            self._metadata_loaded = True
+    
+    def _get_text_hash(self, text: str) -> str:
+        """텍스트의 해시값을 생성합니다."""
+        import hashlib
+        return hashlib.md5(text.encode('utf-8')).hexdigest()[:8]
+    
+    def _find_audio_url_for_text(self, text: str, category: str, from_lang: str, to_lang: str) -> Optional[str]:
+        """
+        주어진 텍스트에 대응하는 음성 파일 URL을 찾습니다.
+        
+        Args:
+            text: 찾을 텍스트
+            category: 카테고리 ("greetings" 또는 "topics/favorites" 등)
+            from_lang: 출발 언어
+            to_lang: 대상 언어
+            
+        Returns:
+            str: 음성 파일 URL (없으면 None)
+        """
+        self._load_audio_metadata()
+        
+        if not self._audio_metadata:
+            return None
+            
+        try:
+            # 카테고리별로 찾기
+            if category == "greetings":
+                metadata_section = self._audio_metadata.get("greetings", {})
+            else:
+                # topics의 경우 (e.g., "topics/favorites" -> "favorites")
+                topic_name = category.split("/")[-1] if "/" in category else category
+                metadata_section = self._audio_metadata.get("topics", {}).get(topic_name, {})
+            
+            # from_lang -> to_lang 경로로 찾기
+            user_key = f"from_{from_lang}"
+            if user_key not in metadata_section:
+                return None
+                
+            lang_section = metadata_section[user_key].get(to_lang, [])
+            
+            # 텍스트 해시로 매칭 시도
+            text_hash = self._get_text_hash(text)
+            
+            # URL에서 해시 추출하여 매칭
+            for url in lang_section:
+                if url and text_hash in url:
+                    return url
+            
+            # 해시 매칭 실패 시 첫 번째 URL 반환 (fallback)
+            if lang_section and len(lang_section) > 0:
+                return lang_section[0]
+                
+            return None
+            
+        except Exception as e:
+            logger.error(f"음성 URL 찾기 오류: {str(e)}")
+            return None
     
     def _get_cache_key(self, *args) -> str:
         """캐시 키 생성"""
@@ -358,11 +466,17 @@ JSON FORMAT:
             raise Exception(f"환영 메시지 생성 중 오류가 발생했습니다: {str(e)}")
     
     async def generate_conversation_starters(self, user_language: str, ai_language: str, 
-                                           topic: TopicEnum, difficulty_level: str) -> tuple[str, List[LearnWord]]:
+                                           topic: TopicEnum, difficulty_level: str) -> tuple[str, List[LearnWord], Optional[str]]:
         """
         주제와 언어에 맞는 대화 시작 문장을 20개 생성하고 그 중 하나를 랜덤 선택합니다.
-        인사말과 함께 반환하며, 학습할 단어들도 추출하여 함께 제공합니다.
+        인사말과 함께 반환하며, 학습할 단어들과 음성 파일 URL도 함께 제공합니다.
+        
+        Returns:
+            tuple: (conversation, learn_words, audio_url)
         """
+        # 지원 언어 확인 (음성 파일이 있는 언어만)
+        supported_audio_languages = ["English", "Spanish", "Chinese", "Korean"]
+        
         # Assets에서 언어 조합별 인사말 로드
         greetings = self._load_greetings_from_assets_by_language(user_language, ai_language)
         
@@ -372,29 +486,62 @@ JSON FORMAT:
             
             if not starters:
                 logger.warning(f"언어 조합 {user_language} -> {ai_language}에 대한 시작 문장을 찾을 수 없음. 기본 문장 사용.")
-                starters = [f"Let's talk about {topic.value}! 😊"]
+                topic_display = self._get_topic_display_name(topic)
+                starters = [f"Let's talk about {topic_display}! 😊"]
             
             # 랜덤하게 하나 선택
             selected_starter = random.choice(starters)
             logger.info(f"선택된 대화 시작 문장: {selected_starter}")
             
             # 인사말 선택 및 조합
-            greeting = random.choice(greetings)
-            full_conversation = f"{greeting} {selected_starter}"
+            selected_greeting = random.choice(greetings)
+            full_conversation = f"{selected_greeting} {selected_starter}"
             
             # 학습 단어 추출
             learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
             
-            return full_conversation, learn_words
+            # 음성 URL 찾기 (지원 언어인 경우만)
+            audio_url = None
+            if ai_language in supported_audio_languages:
+                try:
+                    # 전체 대화의 음성 파일 찾기 시도
+                    audio_url = self._find_audio_url_for_text(
+                        full_conversation, 
+                        f"topics/{topic.value.lower()}", 
+                        user_language, 
+                        ai_language
+                    )
+                    
+                    # 전체 대화의 음성이 없으면 인사말만 찾기
+                    if not audio_url:
+                        audio_url = self._find_audio_url_for_text(
+                            selected_greeting,
+                            "greetings",
+                            user_language,
+                            ai_language
+                        )
+                    
+                    if audio_url:
+                        logger.info(f"음성 파일 URL 찾음: {audio_url}")
+                    else:
+                        logger.warning(f"음성 파일을 찾을 수 없음: {user_language} -> {ai_language}")
+                        
+                except Exception as e:
+                    logger.error(f"음성 파일 URL 찾기 오류: {str(e)}")
+            else:
+                logger.info(f"음성 파일 미지원 언어: {ai_language}")
+            
+            return full_conversation, learn_words, audio_url
             
         except Exception as e:
             logger.error(f"대화 시작 문장 생성 오류: {str(e)}")
             # 폴백: 기본 문장 사용
             greeting = "Hello! 😊"
-            starter = f"Let's talk about {topic.value}!"
+            topic_display = self._get_topic_display_name(topic)
+            starter = f"Let's talk about {topic_display}!"
             full_conversation = f"{greeting} {starter}"
             learn_words = self._extract_learn_words_from_starter(full_conversation, ai_language, user_language)
-            return full_conversation, learn_words
+            return full_conversation, learn_words, None
     
     def _extract_learn_words_from_starter(self, conversation: str, ai_language: str, user_language: str) -> List[LearnWord]:
         """

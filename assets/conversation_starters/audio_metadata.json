@@ -1,0 +1,529 @@
+{
+  "greetings": {
+    "from_Korean": {
+      "English": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_English/0_0acd9d67.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_English/1_2bb34f97.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_English/2_a2130853.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_English/3_18731714.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_English/4_c23651c1.mp3"
+      ],
+      "Spanish": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Spanish/0_1e8ee612.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Spanish/1_46d34c44.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Spanish/2_7ea9635f.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Spanish/3_9d41be09.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Spanish/4_97749bcb.mp3"
+      ],
+      "Korean": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Korean/0_4808d7e2.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Korean/1_68a811df.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Korean/2_0c7d0733.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Korean/3_90277831.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Korean/4_880659f6.mp3"
+      ],
+      "Chinese": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Chinese/0_1761caa5.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Chinese/1_8d07878d.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Chinese/2_468a9168.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Chinese/3_5c15b02e.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Korean_Chinese/4_9ea4df06.mp3"
+      ]
+    },
+    "from_English": {
+      "Korean": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Korean/0_5dc96a41.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Korean/1_3ba99ffe.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Korean/2_5bf3cf88.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Korean/3_c285bc1e.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Korean/4_468f1799.mp3"
+      ],
+      "Spanish": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Spanish/0_f9f5c876.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Spanish/1_11c2f128.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Spanish/2_6f0a727c.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Spanish/3_f39d0a1c.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Spanish/4_e2433f67.mp3"
+      ],
+      "Chinese": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Chinese/0_47857e3a.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Chinese/1_0a1c7d10.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Chinese/2_c8e03854.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Chinese/3_0f5a23be.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_Chinese/4_e1b3e460.mp3"
+      ],
+      "English": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_English/0_ce90d9f5.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_English/1_0b6083e1.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_English/2_b1629aea.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_English/3_3d6c0b6c.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_English_English/4_6ee412cb.mp3"
+      ]
+    },
+    "from_Spanish": {
+      "English": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_English/0_f3a71478.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_English/1_b3fe1696.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_English/2_99186809.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_English/3_dda114b0.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_English/4_f3f01daa.mp3"
+      ],
+      "Korean": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Korean/0_cb2244cd.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Korean/1_20803546.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Korean/2_08d23cc0.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Korean/3_e5e96fd9.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Korean/4_d58a2115.mp3"
+      ],
+      "Chinese": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Chinese/0_80dfa4c0.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Chinese/1_e7730dd2.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Chinese/2_892ee3a3.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Chinese/3_65f1bbda.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Chinese/4_a7063739.mp3"
+      ],
+      "Spanish": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Spanish/0_c60ec4b7.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Spanish/1_28046e19.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Spanish/2_b0f89066.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Spanish/3_f5aa92a5.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Spanish_Spanish/4_3bf6e687.mp3"
+      ]
+    },
+    "from_Japanese": {
+      "English": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_English/0_21c34bb2.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_English/1_f8db0857.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_English/2_76426608.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_English/3_80971e1b.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_English/4_fa2b6876.mp3"
+      ],
+      "Korean": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Korean/0_6bfd1529.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Korean/1_d5712f71.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Korean/2_6b109c4d.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Korean/3_4890546f.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Korean/4_69c5a455.mp3"
+      ],
+      "Spanish": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Spanish/0_df33863b.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Spanish/1_5b44af91.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Spanish/2_4aa51b3c.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Spanish/3_e326a513.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Spanish/4_9148a72e.mp3"
+      ],
+      "Chinese": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Chinese/0_369f6f91.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Chinese/1_89d6bec4.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Chinese/2_2d77e9ef.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Chinese/3_d6d210a2.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Japanese_Chinese/4_f4ebe657.mp3"
+      ]
+    },
+    "from_Chinese": {
+      "English": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_English/0_fbf78e43.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_English/1_08c743cb.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_English/2_748cc428.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_English/3_889ac866.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_English/4_521586b2.mp3"
+      ],
+      "Korean": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Korean/0_d0626cfc.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Korean/1_b5ebfbe7.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Korean/2_c3a20107.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Korean/3_3abfb5ea.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Korean/4_caad87ef.mp3"
+      ],
+      "Spanish": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Spanish/0_61836d4a.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Spanish/1_0febbccc.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Spanish/2_7d6115cc.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Spanish/3_9a9be2fd.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Spanish/4_7083df57.mp3"
+      ],
+      "Chinese": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Chinese/0_1bcebf2d.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Chinese/1_9e18c296.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Chinese/2_ab489c85.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Chinese/3_88cf8c4e.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_Chinese_Chinese/4_a6d22719.mp3"
+      ]
+    },
+    "from_French": {
+      "English": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_English/0_a4805eff.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_English/1_d22e5471.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_English/2_08dc1ba5.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_English/3_d23a4762.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_English/4_41c7e2af.mp3"
+      ],
+      "Korean": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Korean/0_b15f1d94.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Korean/1_1b99c009.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Korean/2_5eacd231.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Korean/3_918af29f.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Korean/4_6fa4c5bf.mp3"
+      ],
+      "Spanish": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Spanish/0_325e5c72.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Spanish/1_db528936.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Spanish/2_8a8ba452.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Spanish/3_c285d5c8.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Spanish/4_0ce6086a.mp3"
+      ],
+      "Chinese": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Chinese/0_cffda7da.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Chinese/1_7539610c.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Chinese/2_b8f9f715.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Chinese/3_4c1befe1.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_French_Chinese/4_7f4aa900.mp3"
+      ]
+    },
+    "from_German": {
+      "English": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_English/0_0b917783.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_English/1_19bc5d1a.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_English/2_6ae2e9a2.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_English/3_613d8d08.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_English/4_e63fa2c7.mp3"
+      ],
+      "Korean": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Korean/0_3a64407d.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Korean/1_ca92415e.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Korean/2_7a3c6bb0.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Korean/3_67e9d5bc.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Korean/4_43982df7.mp3"
+      ],
+      "Spanish": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Spanish/0_100daca6.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Spanish/1_d0d1eb76.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Spanish/2_ab1348d3.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Spanish/3_bfa7a354.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Spanish/4_34bacbb1.mp3"
+      ],
+      "Chinese": [
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Chinese/0_7ac64738.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Chinese/1_ddd8192e.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Chinese/2_76f1fe18.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Chinese/3_59d1eae9.mp3",
+        "https://voice-assets.ekfrl.site/conversation_starters/greetings/from_German_Chinese/4_e75b17af.mp3"
+      ]
+    }
+  },
+  "topics": {
+    "favorites": {
+      "from_Korean": {
+        "English": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/0_57fc0486.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/1_8c011ce4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/2_1b8a9bfd.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/3_3d4c5500.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/4_799ba731.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/5_5a99caeb.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/6_fc7df1f6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/7_79a4d592.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/8_f74fcbb1.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_English/9_9c06cfb7.mp3"
+        ],
+        "Spanish": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/0_f1e62c24.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/1_7533ec7c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/2_bafdb078.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/3_c8b5ba5c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/4_c827fca1.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/5_9e493937.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/6_3dcd2389.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/7_2052a69a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/8_2665e536.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Spanish/9_96ea3d0b.mp3"
+        ],
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/0_1883df06.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/1_957af3e0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/2_42cebc04.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/3_d754512f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/4_c05f314c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/5_4d495010.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/6_e696bb9d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/7_0ea646d6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/8_64933005.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Korean/9_d0fe4796.mp3"
+        ],
+        "Chinese": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/0_5c40ed02.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/1_ff152c9f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/2_c81c1aab.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/3_b5a475af.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/4_2a057feb.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/5_b41fb0ae.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/6_5a858a8a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/7_7aa89946.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/8_f657f294.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_Korean_Chinese/9_80950999.mp3"
+        ]
+      },
+      "from_English": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/0_efc19249.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/1_c3ed0d88.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/2_ddb990f9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/3_388683e7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/4_445559a8.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/5_854f9a35.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/6_6cb62d80.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/7_685b4f26.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/8_d20a08fc.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Korean/9_5d5574e3.mp3"
+        ],
+        "Spanish": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/0_40af46ea.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/1_5ff8ec4c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/2_4ef0e509.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/3_326497bb.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/4_f915c82c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/5_7da2bfe5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/6_4573d4a0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/7_13e7f49f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/8_c7ad10aa.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Spanish/9_ee38279a.mp3"
+        ],
+        "Chinese": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/0_072c50f4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/1_a65be7ac.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/2_78bf68b1.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/3_f674f359.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/4_bcff64ce.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/5_7941df4a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/6_cc473023.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/7_66edfae1.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/8_347e17cd.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_Chinese/9_44116c30.mp3"
+        ],
+        "English": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/0_b8936100.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/1_ca961f88.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/2_c0a1f9bd.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/3_83367089.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/4_c23349c7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/5_83d8c0b5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/6_52243e7b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/7_708c7bb0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/8_a6aee0a8.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/favorites/from_English_English/9_b6a92866.mp3"
+        ]
+      }
+    },
+    "feelings": {
+      "from_Korean": {
+        "English": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/0_648b201a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/1_bbf3f6c1.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/2_dfbe961a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/3_d977a655.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/4_15a26609.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/5_d0670820.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/6_ea9fce22.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/7_aebb16dc.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/8_f46425c5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_English/9_a668b1e5.mp3"
+        ],
+        "Spanish": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/0_ebb1fcab.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/1_47479bb7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/2_372b0bb9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/3_6941b63e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/4_6c7dfbf5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/5_7863650d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/6_0dd247ce.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/7_14f207bc.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/8_aa154747.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Spanish/9_d808fda3.mp3"
+        ],
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/0_29bd836a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/1_9d12963a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/2_a431429e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/3_78b383e2.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/4_e8883ac8.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/5_d5522bfb.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/6_aee9c975.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/7_b6a99a74.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/8_b91bc7e4.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Korean/9_e8867097.mp3"
+        ],
+        "Chinese": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/0_6fd95b06.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/1_fe0c2d51.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/2_7f0c3780.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/3_c7dd9159.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/4_bee61488.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/5_00ca8b6d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/6_cc1a6335.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/7_752caf28.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/8_495f377d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_Korean_Chinese/9_5e998800.mp3"
+        ]
+      },
+      "from_English": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/0_d3a9c6eb.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/1_bc45bb55.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/2_eb5e137c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/3_38b443d2.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/4_8d199d83.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/5_064763f3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/6_4dc98016.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/7_740abcb9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/8_9cdc38b3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Korean/9_57c42c4b.mp3"
+        ],
+        "Spanish": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/0_9d089fe7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/1_e8b2d9e7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/2_7e30d174.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/3_262c19de.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/4_c8a2116c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/5_02ec36c0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/6_dd27497e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/7_339a6724.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/8_e8bd88d6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Spanish/9_f5a88440.mp3"
+        ],
+        "Chinese": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/0_a6a7f73f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/1_7c90560b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/2_59faba3a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/3_d2b7ced1.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/4_780bfd2d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/5_b88a59e0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/6_6761d945.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/7_9a3f5c54.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/8_e4b1fdaa.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_Chinese/9_cf8c0963.mp3"
+        ],
+        "English": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/0_405d2f34.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/1_62ff6444.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/2_fc0a0101.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/3_1c752e28.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/4_35f55ac5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/5_6a0a33fa.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/6_824a5aaa.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/7_14065cd7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/8_d39ebde2.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/feelings/from_English_English/9_61378b1b.mp3"
+        ]
+      }
+    },
+    "ootd": {
+      "from_Korean": {
+        "English": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/0_c5c8e685.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/1_f29ad71c.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/2_b81ead99.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/3_f54a3636.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/4_96ab3c6e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/5_f65522ad.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/6_9ff1d263.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/7_98adc7e7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/8_da31b634.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_English/9_cef91aec.mp3"
+        ],
+        "Spanish": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/0_a47b6490.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/1_1ba603fa.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/2_5d67497f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/3_25025fb5.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/4_f8f6293d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/5_076689e6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/6_22ff3d78.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/7_95bbb9b9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/8_78ea8578.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Spanish/9_68dffa0e.mp3"
+        ],
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/0_fb666656.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/1_5a639843.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/2_29d80dad.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/3_110f94c7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/4_6833397e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/5_566f1b8d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/6_8d307653.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/7_593ab037.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/8_4c910e25.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Korean/9_5217de19.mp3"
+        ],
+        "Chinese": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/0_318dd47b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/1_6d0c101b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/2_bebb2aa6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/3_2c639ce0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/4_055daaf3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/5_477c42b1.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/6_243293b2.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/7_1448ee00.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/8_71144f56.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_Korean_Chinese/9_ecfc20fb.mp3"
+        ]
+      },
+      "from_English": {
+        "Korean": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/0_dfb7ab4f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/1_8f4bd1ce.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/2_b4853ae0.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/3_9208a656.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/4_c9f123c8.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/5_b0fcd58a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/6_a5a47667.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/7_e3ba0ae7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/8_f68e908a.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Korean/9_c55391e8.mp3"
+        ],
+        "Spanish": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/0_e6c3f1db.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/1_676f5024.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/2_67bbd315.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/3_f8d9ff44.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/4_c5719aa9.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/5_e548be2d.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/6_210a4562.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/7_6a80f483.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/8_7f44ccd7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Spanish/9_32462947.mp3"
+        ],
+        "Chinese": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/0_d2661b84.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/1_49c46724.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/2_3aba8e83.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/3_baab933e.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/4_bb80911b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/5_0c02e259.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/6_ec9d3e91.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/7_20da5bc6.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/8_a7a6b4b7.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_Chinese/9_3b5fbe27.mp3"
+        ],
+        "English": [
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/0_74cacba3.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/1_9dce6639.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/2_59f91266.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/3_0ef2f500.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/4_e2980c7f.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/5_444d4183.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/6_e3e3be25.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/7_561f3667.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/8_95342e5b.mp3",
+          "https://voice-assets.ekfrl.site/conversation_starters/topics/ootd/from_English_English/9_f0101fd4.mp3"
+        ]
+      }
+    }
+  },
+  "generated_at": "1338.283022541",
+  "target_languages": [
+    "English",
+    "Spanish",
+    "Chinese",
+    "Korean"
+  ]
+}

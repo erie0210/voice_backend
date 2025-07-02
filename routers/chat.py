@@ -151,15 +151,16 @@ async def generate_conversation_start(
         
         # TopicEnum 사용으로 자동 검증됨 (Pydantic이 처리)
         
-        # OpenAI를 사용하여 대화 시작 문장 생성
-        conversation_starter, learn_words = await openai_service.generate_conversation_starters(
+        # OpenAI를 사용하여 대화 시작 문장 생성 (음성 URL 포함)
+        conversation_starter, learn_words, audio_url = await openai_service.generate_conversation_starters(
             user_language=request.userLanguage,
             ai_language=request.aiLanguage,
             topic=request.topic,
             difficulty_level=request.difficultyLevel
         )
         
-        logger.info(f"대화 시작 문장 생성 완료: {conversation_starter[:50]}... (학습 단어 {len(learn_words)}개)")
+        audio_status = "있음" if audio_url else "없음"
+        logger.info(f"대화 시작 문장 생성 완료: {conversation_starter[:50]}... (학습 단어 {len(learn_words)}개, 음성 {audio_status})")
         
         return ConversationStartResponse(
             success=True,
@@ -167,7 +168,8 @@ async def generate_conversation_start(
                 conversation=conversation_starter,
                 topic=request.topic,
                 difficulty=request.difficultyLevel,
-                learnWords=learn_words
+                learnWords=learn_words,
+                audioUrl=audio_url
             )
         )
         

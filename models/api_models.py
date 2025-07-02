@@ -5,8 +5,8 @@ from enum import Enum
 
 # 주제 ENUM
 class TopicEnum(str, Enum):
-    FAVORITES = "좋아하는 것들 말하기"
-    FEELINGS = "기분 표현하기"
+    FAVORITES = "FAVORITES"
+    FEELINGS = "FEELINGS"
     OOTD = "OOTD"
 
 # 공통 에러 모델
@@ -131,6 +131,7 @@ class ConversationStartData(BaseModel):
     topic: TopicEnum  # 사용된 주제
     difficulty: str   # 난이도
     learnWords: List[LearnWord] = []  # 학습할 단어/표현 목록
+    audioUrl: Optional[str] = None  # 음성 파일 URL
 
 class ConversationStartResponse(BaseModel):
     success: bool
