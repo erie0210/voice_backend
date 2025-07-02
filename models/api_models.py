@@ -1,6 +1,13 @@
 from pydantic import BaseModel
 from typing import Optional, Any, List
 from datetime import datetime
+from enum import Enum
+
+# 주제 ENUM
+class TopicEnum(str, Enum):
+    FAVORITES = "좋아하는 것들 말하기"
+    FEELINGS = "기분 표현하기"
+    OOTD = "OOTD"
 
 # 공통 에러 모델
 class ApiError(BaseModel):
@@ -110,4 +117,21 @@ class ValidateKeyData(BaseModel):
 class ValidateKeyResponse(BaseModel):
     success: bool
     data: Optional[ValidateKeyData] = None
+    error: Optional[ApiError] = None
+
+# 대화 시작 API 모델들
+class ConversationStartRequest(BaseModel):
+    userLanguage: str  # 사용자의 모국어
+    aiLanguage: str    # 학습할 언어
+    topic: TopicEnum   # 주제: TopicEnum 사용
+    difficultyLevel: str  # easy, intermediate, advanced
+
+class ConversationStartData(BaseModel):
+    conversation: str  # 생성된 대화 시작 문장
+    topic: TopicEnum  # 사용된 주제
+    difficulty: str   # 난이도
+
+class ConversationStartResponse(BaseModel):
+    success: bool
+    data: Optional[ConversationStartData] = None
     error: Optional[ApiError] = None 

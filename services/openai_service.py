@@ -9,7 +9,7 @@ import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from config.settings import settings
-from models.api_models import ChatMessage, LearnWord
+from models.api_models import ChatMessage, LearnWord, TopicEnum
 from services.r2_service import upload_file_to_r2
 
 # 로깅 설정
@@ -251,6 +251,297 @@ JSON FORMAT:
             
         except Exception as e:
             raise Exception(f"환영 메시지 생성 중 오류가 발생했습니다: {str(e)}")
+    
+    async def generate_conversation_starters(self, user_language: str, ai_language: str, 
+                                           topic: TopicEnum, difficulty_level: str) -> str:
+        """
+        주제와 언어에 맞는 대화 시작 문장을 20개 생성하고 그 중 하나를 랜덤 선택합니다.
+        """
+        try:
+            # 주제별 프롬프트 정의
+            topic_prompts = {
+                TopicEnum.FAVORITES: {
+                    "en": "talking about favorite things (hobbies, food, movies, music, etc.)",
+                    "description": "Express preferences and talk about things you like"
+                },
+                TopicEnum.FEELINGS: {
+                    "en": "expressing feelings and emotions",
+                    "description": "Share how you feel and describe emotional states"
+                },
+                TopicEnum.OOTD: {
+                    "en": "describing outfit of the day and fashion",
+                    "description": "Talk about clothes, style, and what you're wearing"
+                }
+            }
+            
+            topic_info = topic_prompts.get(topic, topic_prompts[TopicEnum.FAVORITES])
+            topic_english = topic_info["en"]
+            topic_description = topic_info["description"]
+            
+            # 난이도별 지시사항
+            difficulty_instructions = {
+                "easy": f"""
+- Generate conversation starters in {user_language} (user's native language)
+- Include simple {ai_language} words with pronunciation in parentheses
+- Be encouraging and use very simple vocabulary
+- Example format: "안녕! 오늘 뭘 좋아해? (Hello! What do you like today?)"
+""",
+                "intermediate": f"""
+- Generate conversation starters in {ai_language} using elementary level vocabulary
+- Use simple, clear sentences that beginners can understand
+- Include common expressions that are useful for daily conversation
+""",
+                "advanced": f"""
+- Generate conversation starters in {ai_language} using natural, native expressions
+- Use sophisticated vocabulary and complex sentence structures
+- Include cultural references and nuanced language appropriate for advanced learners
+"""
+            }
+            
+            current_difficulty = difficulty_instructions.get(difficulty_level, difficulty_instructions["easy"])
+            
+            # 시스템 프롬프트
+            system_prompt = f"""You are MurMur, a language learning AI teacher.
+
+Generate exactly 20 different conversation starters about "{topic_english}" for {ai_language} language learning.
+
+Topic Focus: {topic_description}
+Target Language: {ai_language}
+User's Native Language: {user_language}
+Difficulty: {difficulty_level}
+
+{current_difficulty}
+
+Requirements:
+1. Create 20 diverse, engaging conversation starters
+2. Each should be 10-25 words
+3. Make them natural and culturally appropriate
+4. Focus specifically on the topic: {topic.value}
+5. Vary the question types (open-ended, specific, creative)
+6. Include emoji where appropriate
+7. Make them conversation-friendly and engaging
+
+Return as JSON array:
+{{
+  "starters": [
+    "conversation starter 1",
+    "conversation starter 2",
+    ...
+    "conversation starter 20"
+  ]
+}}"""
+
+            response = self.client.chat.completions.create(
+                model=self.default_model,
+                messages=[
+                    {"role": "system", "content": system_prompt}
+                ],
+                max_tokens=800,
+                temperature=0.8,  # 더 창의적인 응답을 위해 높은 temperature
+                response_format={"type": "json_object"}
+            )
+            
+            response_content = response.choices[0].message.content.strip()
+            logger.info(f"대화 시작 문장 생성 완료: {len(response_content)} 문자")
+            
+            # JSON 파싱
+            try:
+                parsed_response = json.loads(response_content)
+                starters = parsed_response.get("starters", [])
+                
+                if not starters:
+                    # 기본 시작 문장들 제공
+                    starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
+                
+                # 20개가 안 되면 기본 문장으로 채움
+                while len(starters) < 20:
+                    default_starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
+                    starters.extend(default_starters[:20-len(starters)])
+                
+                # 랜덤하게 하나 선택
+                selected_starter = random.choice(starters[:20])
+                logger.info(f"선택된 대화 시작 문장: {selected_starter}")
+                
+                return selected_starter
+                
+            except json.JSONDecodeError:
+                logger.error(f"JSON 파싱 실패, 기본 문장 사용: {response_content[:200]}")
+                default_starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
+                return random.choice(default_starters)
+            
+        except Exception as e:
+            logger.error(f"대화 시작 문장 생성 오류: {str(e)}")
+            # 폴백: 기본 문장 사용
+            default_starters = self._get_default_starters(topic, ai_language, user_language, difficulty_level)
+            return random.choice(default_starters)
+    
+    def _get_default_starters(self, topic: TopicEnum, ai_language: str, user_language: str, difficulty_level: str) -> List[str]:
+        """
+        기본 대화 시작 문장들을 반환합니다.
+        """
+        default_starters = {
+            TopicEnum.FAVORITES: {
+                "English": [
+                    "What's your favorite hobby? 😊",
+                    "Tell me about something you really enjoy!",
+                    "What kind of music do you like?",
+                    "Do you have a favorite food?",
+                    "What's your favorite way to spend weekends?"
+                ],
+                "Korean": [
+                    "좋아하는 취미가 뭐예요? 😊",
+                    "정말 좋아하는 것에 대해 말해주세요!",
+                    "어떤 음악을 좋아해요?",
+                    "좋아하는 음식이 있어요?",
+                    "주말에 뭘 하는 걸 좋아해요?"
+                ],
+                                 "Japanese": [
+                     "好きな趣味は何ですか？😊",
+                     "本当に好きなことについて教えてください！",
+                     "どんな音楽が好きですか？",
+                     "好きな食べ物はありますか？",
+                     "週末は何をするのが好きですか？"
+                 ],
+                 "Spanish": [
+                     "¿Cuál es tu pasatiempo favorito? 😊",
+                     "¡Cuéntame sobre algo que realmente disfrutas!",
+                     "¿Qué tipo de música te gusta?",
+                     "¿Tienes una comida favorita?",
+                     "¿Cuál es tu forma favorita de pasar los fines de semana?"
+                 ],
+                 "Chinese": [
+                     "你最喜欢的爱好是什么？😊",
+                     "告诉我你真正喜欢的东西！",
+                     "你喜欢什么类型的音乐？",
+                     "你有最喜欢的食物吗？",
+                     "你最喜欢怎么过周末？"
+                 ],
+                 "French": [
+                     "Quel est ton passe-temps préféré ? 😊",
+                     "Parle-moi de quelque chose que tu aimes vraiment !",
+                     "Quel genre de musique aimes-tu ?",
+                     "As-tu un plat préféré ?",
+                     "Quelle est ta façon préférée de passer les week-ends ?"
+                 ],
+                 "German": [
+                     "Was ist dein Lieblingshobby? 😊",
+                     "Erzähl mir von etwas, was du wirklich gerne machst!",
+                     "Welche Art von Musik magst du?",
+                     "Hast du ein Lieblingsessen?",
+                     "Wie verbringst du am liebsten deine Wochenenden?"
+                                  ]
+             },
+             TopicEnum.FEELINGS: {
+                "English": [
+                    "How are you feeling today? 😊",
+                    "What makes you happy?",
+                    "Tell me about your mood right now!",
+                    "How do you feel when it's sunny?",
+                    "What cheers you up when you're sad?"
+                ],
+                "Korean": [
+                    "오늘 기분이 어때요? 😊",
+                    "뭐가 행복하게 만들어요?",
+                    "지금 기분에 대해 말해주세요!",
+                    "날씨가 좋으면 기분이 어때요?",
+                    "슬플 때 뭐가 기운을 나게 해요?"
+                ],
+                                 "Japanese": [
+                     "今日の気分はどうですか？😊",
+                     "何が幸せにしてくれますか？",
+                     "今の気持ちについて教えてください！",
+                     "晴れの日はどんな気分ですか？",
+                     "悲しい時、何が元気にしてくれますか？"
+                 ],
+                 "Spanish": [
+                     "¿Cómo te sientes hoy? 😊",
+                     "¿Qué te hace feliz?",
+                     "¡Cuéntame sobre tu estado de ánimo ahora!",
+                     "¿Cómo te sientes cuando hace sol?",
+                     "¿Qué te anima cuando estás triste?"
+                 ],
+                 "Chinese": [
+                     "你今天感觉怎么样？😊",
+                     "什么让你开心？",
+                     "告诉我你现在的心情！",
+                     "晴天的时候你感觉如何？",
+                     "伤心时什么能让你振作起来？"
+                 ],
+                 "French": [
+                     "Comment te sens-tu aujourd'hui ? 😊",
+                     "Qu'est-ce qui te rend heureux ?",
+                     "Parle-moi de ton humeur maintenant !",
+                     "Comment te sens-tu quand il fait beau ?",
+                     "Qu'est-ce qui te remonte le moral quand tu es triste ?"
+                 ],
+                 "German": [
+                     "Wie fühlst du dich heute? 😊",
+                     "Was macht dich glücklich?",
+                     "Erzähl mir von deiner Stimmung gerade!",
+                     "Wie fühlst du dich, wenn die Sonne scheint?",
+                     "Was muntert dich auf, wenn du traurig bist?"
+                                  ]
+             },
+             TopicEnum.OOTD: {
+                "English": [
+                    "What are you wearing today? 👗",
+                    "Tell me about your style!",
+                    "What's your favorite outfit?",
+                    "Do you like fashion?",
+                    "What colors do you like to wear?"
+                ],
+                "Korean": [
+                    "오늘 뭐 입었어요? 👗",
+                    "스타일에 대해 말해주세요!",
+                    "가장 좋아하는 옷차림이 뭐예요?",
+                    "패션을 좋아해요?",
+                    "어떤 색깔 옷을 좋아해요?"
+                ],
+                                 "Japanese": [
+                     "今日は何を着ていますか？👗",
+                     "スタイルについて教えてください！",
+                     "一番好きなコーディネートは何ですか？",
+                     "ファッションは好きですか？",
+                     "何色の服が好きですか？"
+                 ],
+                 "Spanish": [
+                     "¿Qué llevas puesto hoy? 👗",
+                     "¡Cuéntame sobre tu estilo!",
+                     "¿Cuál es tu outfit favorito?",
+                     "¿Te gusta la moda?",
+                     "¿Qué colores te gusta usar?"
+                 ],
+                 "Chinese": [
+                     "你今天穿什么？👗",
+                     "告诉我你的风格！",
+                     "你最喜欢的搭配是什么？",
+                     "你喜欢时尚吗？",
+                     "你喜欢穿什么颜色的衣服？"
+                 ],
+                 "French": [
+                     "Qu'est-ce que tu portes aujourd'hui ? 👗",
+                     "Parle-moi de ton style !",
+                     "Quelle est ta tenue préférée ?",
+                     "Tu aimes la mode ?",
+                     "Quelles couleurs aimes-tu porter ?"
+                 ],
+                 "German": [
+                     "Was trägst du heute? 👗",
+                     "Erzähl mir von deinem Stil!",
+                     "Was ist dein Lieblings-Outfit?",
+                     "Magst du Mode?",
+                     "Welche Farben trägst du gerne?"
+                 ]
+            }
+        }
+        
+        # 주제와 언어에 맞는 기본 문장들 가져오기
+        topic_starters = default_starters.get(topic, default_starters[TopicEnum.FAVORITES])
+        language_starters = topic_starters.get(ai_language, topic_starters.get("English", []))
+        
+        # 20개까지 확장
+        extended_starters = language_starters * 4  # 기본 5개 * 4 = 20개
+        return extended_starters[:20]
     
     async def generate_chat_response(self, messages: List[ChatMessage], user_language: str, 
                                    ai_language: str, difficulty_level: str, last_user_message: str) -> tuple[str, List[LearnWord]]:

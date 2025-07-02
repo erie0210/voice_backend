@@ -5,7 +5,8 @@ import logging
 from models.api_models import (
     WelcomeMessageRequest, WelcomeMessageResponse, WelcomeMessageData,
     ChatResponseRequest, ChatResponseResponse, ChatResponseData,
-    ApiError
+    ConversationStartRequest, ConversationStartResponse, ConversationStartData,
+    TopicEnum, ApiError
 )
 from services.openai_service import openai_service
 from config.settings import settings
@@ -122,5 +123,60 @@ async def generate_chat_response(
             error=ApiError(
                 code="CHAT_RESPONSE_ERROR",
                 message=f"채팅 응답 생성 중 오류가 발생했습니다: {str(e)}"
+            )
+        )
+
+@router.post("/conversation-start", response_model=ConversationStartResponse)
+async def generate_conversation_start(
+    request: ConversationStartRequest,
+    api_key: str = Depends(verify_api_key)
+):
+    """
+    대화를 시작할 때 사용할 첫 문장을 생성합니다.
+    주제와 언어에 맞는 20개의 문장 중 랜덤하게 하나를 선택하여 반환합니다.
+    """
+    try:
+        logger.info(f"대화 시작 문장 생성 요청: {request.topic.value} ({request.userLanguage} -> {request.aiLanguage}, {request.difficultyLevel})")
+        
+        # 지원하는 언어 검증
+        supported_languages = ["English", "Spanish", "Japanese", "Korean", "Chinese", "French", "German"]
+        if request.aiLanguage not in supported_languages:
+            return ConversationStartResponse(
+                success=False,
+                error=ApiError(
+                    code="UNSUPPORTED_LANGUAGE",
+                    message=f"지원하지 않는 언어입니다. 지원 언어: {', '.join(supported_languages)}"
+                )
+            )
+        
+        # TopicEnum 사용으로 자동 검증됨 (Pydantic이 처리)
+        
+        # OpenAI를 사용하여 대화 시작 문장 생성
+        conversation_starter = await openai_service.generate_conversation_starters(
+            user_language=request.userLanguage,
+            ai_language=request.aiLanguage,
+            topic=request.topic,
+            difficulty_level=request.difficultyLevel
+        )
+        
+        logger.info(f"대화 시작 문장 생성 완료: {conversation_starter[:50]}...")
+        
+        return ConversationStartResponse(
+            success=True,
+            data=ConversationStartData(
+                conversation=conversation_starter,
+                topic=request.topic,
+                difficulty=request.difficultyLevel
+            )
+        )
+        
+    except Exception as e:
+        logger.error(f"대화 시작 문장 생성 오류: {str(e)}")
+        
+        return ConversationStartResponse(
+            success=False,
+            error=ApiError(
+                code="CONVERSATION_START_ERROR",
+                message=f"대화 시작 문장 생성 중 오류가 발생했습니다: {str(e)}"
             )
         ) 
