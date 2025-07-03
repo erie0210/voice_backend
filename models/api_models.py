@@ -3,6 +3,13 @@ from typing import Optional, Any, List
 from datetime import datetime
 from enum import Enum
 
+# 언어 코드 ENUM
+class LanguageCode(str, Enum):
+    KOREAN = "KOREAN"
+    ENGLISH = "ENGLISH"
+    JAPANESE = "JAPANESE"
+    CHINESE = "CHINESE"
+
 # 주제 ENUM
 class TopicEnum(str, Enum):
     FAVORITES = "FAVORITES"
