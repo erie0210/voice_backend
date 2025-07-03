@@ -359,8 +359,8 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
     
     # STARTER 단계에서는 voice_input으로 직접 진행 (Mixed language)
     if session.stage == ConversationStage.STARTER:
-        # Mixed language로 응답 생성
-        response_text = f"{session.emotion} 감정과 관련된 expressions를 배워봐요! 음성으로 최근에 {session.emotion}을 느낀 경험을 이야기해주세요."
+        # Mixed language로 응답 생성 - 짧게 수정
+        response_text = f"좋아요! 최근에 {session.emotion}을 느낀 경험을 말해주세요."
         next_action = "감정에 대해 음성으로 이야기해주세요"
         
         # Apply TTS to response_text (is_tts_enabled가 True일 때만)
@@ -387,18 +387,16 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
     elif session.stage == ConversationStage.PARAPHRASE:
         # Paraphrase 단계에서 학습된 표현들을 보여주고 따라해보라고 말하기
         
-        # 학습된 표현들 표시
+        # 학습된 표현들 표시 - 예시 제거
         if session.learned_expressions:
             expressions_text = ""
             for i, expr in enumerate(session.learned_expressions, 1):
                 expressions_text += f"{i}. {expr.word} - {expr.meaning} ({expr.pronunciation})\n"
-                if expr.example:
-                    expressions_text += f"   Example: {expr.example}\n"
         else:
             expressions_text = "새로운 expressions가 없어요."
         
-        # 따라해보라고 말하기 (Mixed language로)
-        response_text = f"좋아요! 이런 expressions들을 배워봐요:\n\n{expressions_text}\n위의 expressions들을 따라해보세요! 큰 소리로 말해봐요 😊"
+        # 따라해보라고 말하기 (Mixed language로) - 짧게 수정
+        response_text = f"새로운 expressions를 배워봐요:\n\n{expressions_text}\n따라해보세요!"
         next_action = "따라해보신 후 음성으로 다음 이야기를 들려주세요"
         
         # 다시 voice_input을 받기 위해 stage는 paraphrase로 유지
@@ -757,15 +755,15 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         emotion_in_ai_lang = session.emotion if session.to_lang == "english" else session.emotion  # 영어 감정명 그대로 사용
         
         if stage == ConversationStage.STARTER:
-            # 시작 단계: 감정 표현 학습 소개 + 질문
+            # 시작 단계: 간단한 인사 + 아이스브레이킹
             prompt = f"""
-            User selected {session.emotion} emotion.
+            User selected {session.emotion} emotion for language learning.
             
-            Create response in {mixed_language} (mixing Korean and English naturally):
-            1. Introduce learning expressions related to "{emotion_in_ai_lang}" emotion in {session.to_lang}
-            2. Ask engaging question like "~하면 {emotion_in_ai_lang}을 느끼게 되죠. 얘기해볼까요?" or "최근에 {emotion_in_ai_lang}을 느낀 적이 있나요?" in {session.from_lang}
+            Create a response in {mixed_language} (mixing Korean and English naturally):
+            - First sentence: brief, friendly greeting.
+            - Second sentence: simple ice-breaking question about the {emotion_in_ai_lang} emotion.
             
-            2-3 sentences, friendly casual tone. Mix languages naturally.   
+            The response MUST be exactly 2 short sentences. Do NOT mention specific expressions or examples. Be warm and conversational.
             """
             
         elif stage == ConversationStage.FINISHER:
@@ -780,15 +778,15 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
             """
             
         elif stage == ConversationStage.RESTART:
-            # 재시작 단계: 감정 표현 학습 소개 + 질문
+            # 재시작 단계: 간단한 재시작 인사 + 아이스브레이킹
             prompt = f"""
-            Restarting conversation with {session.emotion} emotion.
+            Restarting conversation with {session.emotion} emotion for language learning.
             
-            Create response in {mixed_language} (mixing Korean and English naturally):
-            1. Introduce learning expressions related to "{emotion_in_ai_lang}" emotion in English
-            2. Ask engaging question like "~하면 {emotion_in_ai_lang}을 느끼게 되죠. 얘기해볼까요?" or "최근에 {emotion_in_ai_lang}을 느낀 적이 있나요?"
+            Create a short restart greeting in {mixed_language} (mixing Korean and English naturally):
+            - First sentence: brief friendly restart greeting.
+            - Second sentence: simple ice-breaking question about the {emotion_in_ai_lang} emotion.
             
-            2-3 sentences, friendly casual tone. Mix languages naturally.
+            The response MUST be exactly 2 short sentences. Do NOT mention specific expressions or examples. Be warm and conversational.
             """
             
         else:
@@ -832,11 +830,11 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         # Emergency fallback - Mixed language 사용
         fallback_text = ""
         if stage == ConversationStage.STARTER:
-            fallback_text = f"안녕하세요! {session.emotion} 감정과 관련된 expressions를 배워봐요. 최근에 {session.emotion}을 느낀 적이 있어요?"
+            fallback_text = f"안녕하세요! 최근에 {session.emotion}을 느낀 적이 있나요?"
         elif stage == ConversationStage.FINISHER:
             fallback_text = f"{session.emotion} 감정에 대해 이야기해주셔서 감사해요. 새로운 expressions를 잘 배우셨어요!"
         elif stage == ConversationStage.RESTART:
-            fallback_text = f"새롭게 시작해봐요! {session.emotion}과 관련된 expressions를 배워볼까요?"
+            fallback_text = f"새롭게 시작해봐요! 최근에 {session.emotion}을 느낀 적이 있나요?"
         else:
             fallback_text = f"{session.emotion} 감정을 이해해요. 더 이야기해주실 수 있어요?"
         
