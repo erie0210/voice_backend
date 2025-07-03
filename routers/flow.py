@@ -539,11 +539,11 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             "pronunciation": "아이 언더스탠드"
         }
         
-        # OpenAI로 사용자 답변 분석 및 학습 표현 생성 (4단계 구조)
+        # OpenAI로 사용자 답변 분석 및 학습 표현 생성 (구조)
         analysis_prompt = f"""
         사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다. (대화 {session.user_input_count}회차)
         
-        다음과 같은 4단계 구조로 응답을 생성해주세요. 순서를 직접 언급하지 마세요.:
+        다음과 같은 구조로 응답을 생성해주세요. 순서를 직접 언급하지 마세요.:
         
         - **반응하기**: 사용자의 input에 공감하고 반응
         - **표현 소개**: 유사한 의미의 영어 slang/idiom/phrase 소개
@@ -572,7 +572,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                     "example": "감정 표현 예문"
                 }}
             ],
-            "paraphrase": "4단계 구조로 작성된 자연스러운 영어 응답"
+            "paraphrase": "구조로 작성된 자연스러운 영어 응답"
         }}
         
         응답 예시 형식:
@@ -582,7 +582,9 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         - learned_expressions는 반드시 영어 slang, idiom, phrase여야 함
         - 일반적인 단어가 아닌 원어민이 실제로 사용하는 표현
         - {session.emotion} 감정과 관련된 자연스러운 표현들
-        - paraphrase는 4단계 구조를 모두 포함한 자연스러운 대화체
+        - paraphrase는 구조를 모두 포함한 자연스러운 대화체
+        - 마크다운이나 볼드체(**) 사용 금지
+        - 모든 text는 단순한 텍스트 형태로만 작성
         """
         
         _log_session_activity(session.session_id, "USER_ANSWER_RECEIVED", {
@@ -597,9 +599,11 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             logger.info(f"[FLOW_OPENAI_REQUEST] Session: {session.session_id} | Paraphrasing user input")
             logger.info(f"[FLOW_OPENAI_REQUEST_PROMPT] Session: {session.session_id} | Prompt: {analysis_prompt}")
             
-            paraphrase_response = await openai_service.get_chat_completion(
+            paraphrase_response = await openai_service.client.chat.completions.create(
+                model=openai_service.default_model,
                 messages=[{"role": "user", "content": analysis_prompt}],
-                temperature=0.7
+                temperature=0.7,
+                response_format={"type": "json_object"}  # JSON 강제 포맷
             )
             response_content = paraphrase_response.choices[0].message.content
             
@@ -615,11 +619,17 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                 # LearnWord 객체들 생성
                 learned_expressions = []
                 for expr_data in learned_expressions_data:
+                    # 마크다운 제거 (**, ##, 등)
+                    word = expr_data.get("word", "").replace('**', '').replace('##', '').strip()
+                    meaning = expr_data.get("meaning", "").replace('**', '').replace('##', '').strip()
+                    pronunciation = expr_data.get("pronunciation", "").replace('**', '').replace('##', '').strip()
+                    example = expr_data.get("example", "").replace('**', '').replace('##', '').strip()
+                    
                     learn_word = LearnWord(
-                        word=expr_data.get("word", ""),
-                        meaning=expr_data.get("meaning", ""),
-                        pronunciation=expr_data.get("pronunciation", ""),
-                        example=expr_data.get("example", "")
+                        word=word,
+                        meaning=meaning,
+                        pronunciation=pronunciation,
+                        example=example
                     )
                     learned_expressions.append(learn_word)
                 
@@ -646,13 +656,13 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                     fallback_prompt = f"""
                     사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
                     
-                    다음 4단계 구조로 응답해주세요:
-                    1. 반응하기: "아 ~~했구나!"
-                    2. 표현 소개: "그 표현은 '[영어 slang/idiom]'라고 표현할 수 있어."
-                    3. Paraphrasing: "[사용자 표현을 영어로 paraphrasing]"
-                    4. 대화 이어가기: "더 이야기해줄 수 있어?"
+                    다음 4단계를 자연스럽게 포함한 영어 응답을 만들어주세요:
+                    - 사용자 input에 공감하고 반응
+                    - 관련된 영어 표현 소개  
+                    - 사용자 표현을 영어로 paraphrasing
+                    - 대화를 이어갈 질문
                     
-                    영어로 자연스러운 대화체로 작성해주세요:
+                    자연스러운 영어 대화체로 작성해주세요. 번호나 구분 표시 없이 연결된 문장으로:
                     """
                     
                     fallback_response = await openai_service.get_chat_completion(
@@ -681,13 +691,13 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                 main_fallback_prompt = f"""
                 사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
                 
-                다음 4단계 구조로 응답해주세요:
-                1. 반응하기: "아 ~~했구나!"
-                2. 표현 소개: "그 표현은 '[영어 slang/idiom]'라고 표현할 수 있어."
-                3. Paraphrasing: "[사용자 표현을 영어로 paraphrasing]"
-                4. 대화 이어가기: "더 이야기해줄 수 있어?"
+                다음 4단계를 자연스럽게 포함한 영어 응답을 만들어주세요:
+                - 사용자 input에 공감하고 반응
+                - 관련된 영어 표현 소개  
+                - 사용자 표현을 영어로 paraphrasing
+                - 대화를 이어갈 질문
                 
-                영어로 자연스러운 대화체로 작성해주세요:
+                자연스러운 영어 대화체로 작성해주세요. 번호나 구분 표시 없이 연결된 문장으로:
                 """
                 
                 main_fallback_response = await openai_service.get_chat_completion(
@@ -1016,12 +1026,15 @@ async def _generate_fallback_expressions(session: ConversationSession, user_inpu
         - pronunciation: 발음 가이드 (한글 발음)
         - example: 자연스러운 예문 (영어)
         
-        간단한 텍스트 형태로 응답해주세요:
+        간단한 텍스트 형태로 응답해주세요. 마크다운 형식(**, ##, 등)을 사용하지 마세요:
         1. [영어 slang/idiom] - [한국어 의미] - [발음] - [예문]
         2. [영어 phrase/idiom] - [한국어 의미] - [발음] - [예문]
         3. [교육 표현] - [한국어 의미] - [발음] - [예문]
         
-        중요: 일반적인 단어가 아닌 slang, idiom, phrase만 사용하세요.
+        중요: 
+        - 일반적인 단어가 아닌 slang, idiom, phrase만 사용하세요
+        - 마크다운이나 볼드체(**) 사용 금지
+        - 단순한 텍스트 형태로만 응답
         """
         
         logger.info(f"[FLOW_FALLBACK_EXPRESSIONS_REQUEST] Session: {session.session_id} | Generating fallback expressions")
@@ -1048,11 +1061,17 @@ async def _generate_fallback_expressions(session: ConversationSession, user_inpu
                     if word.startswith(('1.', '2.', '3.')):
                         word = word[2:].strip()
                     
+                    # 마크다운 제거 (**, ##, 등)
+                    word = word.replace('**', '').replace('##', '').strip()
+                    meaning = parts[1].strip().replace('**', '').replace('##', '').strip()
+                    pronunciation = parts[2].strip().replace('**', '').replace('##', '').strip()
+                    example = parts[3].strip().replace('**', '').replace('##', '').strip()
+                    
                     learned_expressions.append(LearnWord(
                         word=word,
-                        meaning=parts[1].strip(),
-                        pronunciation=parts[2].strip(),
-                        example=parts[3].strip()
+                        meaning=meaning,
+                        pronunciation=pronunciation,
+                        example=example
                     ))
         
         # 3개 미만이면 추가 생성
