@@ -539,23 +539,19 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             "pronunciation": "아이 언더스탠드"
         }
         
+        # 언어 설정
+        user_language = "한국어" if session.from_lang == "korean" else session.from_lang 
+        ai_language = "영어" if session.to_lang == "english" else session.to_lang
+        
         # 1단계: 자연스러운 paraphrase 응답 생성
         paraphrase_prompt = f"""
-        사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다. (대화 {session.user_input_count}회차)
+        사용자: "{user_input}" ({session.emotion} 감정)
         
-        다음 4단계를 자연스럽게 포함한 영어 응답을 만들어주세요:
-        - 사용자 input에 공감하고 반응
-        - 관련된 영어 slang/idiom/phrase 자연스럽게 소개 (실제로 사용되는 표현)
-        - 사용자 표현을 영어로 paraphrasing
-        - 대화를 이어갈 질문
+        {user_language}로 4단계 응답을 만드세요:
+        1. 공감 반응 2. {ai_language} 표현 소개 3. {ai_language}로 paraphrasing 4. 질문하기
         
-        자연스러운 영어 대화체로 작성해주세요. 번호나 구분 표시 없이 연결된 문장으로:
-        
-        중요사항:
-        - 원어민이 실제로 사용하는 자연스러운 slang/idiom/phrase 포함
-        - {session.emotion} 감정과 관련된 표현들 사용
-        - 마크다운이나 볼드체(**) 사용 금지
-        - 자연스러운 대화 흐름 유지
+        자연스러운 {user_language} 대화체로 작성하세요.
+        {ai_language} 표현은 실제 원어민이 쓰는 slang/idiom을 포함하세요.
         """
         
         _log_session_activity(session.session_id, "USER_ANSWER_RECEIVED", {
@@ -583,31 +579,13 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             # 2단계: 생성된 paraphrase에서 학습 표현 추출
             try:
                 extraction_prompt = f"""
-                다음 영어 응답에서 학습 가치가 있는 슬랭/이디엄/구문을 추출해주세요:
-                
                 응답: "{paraphrase_text}"
                 
-                다음 기준에 맞는 표현들만 추출하세요:
-                - 원어민이 실제로 사용하는 slang/idiom/phrase
-                - 일반적인 단어가 아닌 교육적 가치가 있는 표현
-                - 최대 3개까지
+                위 응답에서 {ai_language} slang/idiom을 추출하세요.
+                최대 3개까지만 추출하세요.
                 
-                JSON 형태로 응답해주세요:
-                {{
-                    "learned_expressions": [
-                        {{
-                            "word": "추출된 표현",
-                            "meaning": "한국어 의미",
-                            "pronunciation": "발음 가이드",
-                            "example": "자연스러운 예문"
-                        }}
-                    ]
-                }}
-                
-                중요사항:
-                - 실제로 응답에 사용된 표현들만 추출
-                - 마크다운이나 볼드체(**) 사용 금지
-                - 모든 text는 단순한 텍스트 형태로만 작성
+                JSON 형태로 응답:
+                {{"learned_expressions": [{{"word": "표현", "meaning": "{user_language} 의미", "pronunciation": "발음", "example": "예문"}}]}}
                 """
                 
                 logger.info(f"[FLOW_EXTRACTION_REQUEST] Session: {session.session_id} | Extracting learned expressions")
@@ -694,15 +672,10 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             try:
                 # 간단한 paraphrase 응답 생성
                 main_fallback_prompt = f"""
-                사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
+                사용자: "{user_input}" ({session.emotion} 감정)
                 
-                다음 4단계를 자연스럽게 포함한 영어 응답을 만들어주세요:
-                - 사용자 input에 공감하고 반응
-                - 관련된 영어 표현 자연스럽게 소개
-                - 사용자 표현을 영어로 paraphrasing
-                - 대화를 이어갈 질문
-                
-                자연스러운 영어 대화체로 작성해주세요. 번호나 구분 표시 없이 연결된 문장으로:
+                {user_language}로 응답하세요: 공감 → {ai_language} 표현 소개 → paraphrasing → 질문
+                자연스러운 {user_language} 대화체로 작성하세요.
                 """
                 
                 main_fallback_response = await openai_service.get_chat_completion(
@@ -910,81 +883,44 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
     """OpenAI로 단계별 응답 생성"""
     
     try:
+        # 언어 설정
+        user_language = "한국어" if session.from_lang == "korean" else session.from_lang 
+        ai_language = "영어" if session.to_lang == "english" else session.to_lang
         if stage == ConversationStage.STARTER:
             # 시작 단계: 감정 인사 + 원인 질문
             prompt = f"""
-            사용자가 {session.emotion} 감정을 선택했습니다. 
+            사용자가 {session.emotion} 감정을 선택했습니다.
             
-            다음 두 가지를 자연스럽게 결합한 응답을 생성해주세요:
-            1. 그 감정에 대해같이 이야기해보자는 말
-            2. 그 감정의 원인을 묻는 질문
-            
-            요구사항:
-            - 영어로 작성
-            - 친근하고 공감적인 톤
-            - 2-3문장으로 간단하게
-            - 감정에 적절한 이모지 포함
-            
-            예시 감정별 스타일:
-            - happy: 밝고 축하하는 톤
-            - sad: 부드럽고 위로하는 톤  
-            - angry: 차분하고 이해하는 톤
-            - scared: 안전하고 보호하는 톤
-            
-            응답만 생성해주세요 (추가 설명 없이):
+            한국어로 인사하세요: 감정 공감 + 원인 질문.
+            2-3문장으로 간단하게.
             """
             
         elif stage == ConversationStage.FINISHER:
             # 완료 단계: 대화 마무리
             learned_words = [expr.word for expr in session.learned_expressions] if session.learned_expressions else []
             prompt = f"""
-            사용자와 {session.emotion} 감정에 대해 {session.user_input_count}회의 대화를 마쳤습니다.
+            {session.emotion} 감정에 대해 {session.user_input_count}회 대화 완료.
+            학습 표현: {', '.join(learned_words) if learned_words else '없음'}
             
-            학습한 표현들: {', '.join(learned_words) if learned_words else '없음'}
-            
-            대화를 따뜻하게 마무리하는 응답을 생성해주세요:
-            1. 대화에 참여해준 것에 대한 감사
-            2. 감정과 관련된 격려나 응원
-            3. 학습한 표현들에 대한 언급 (있다면)
-            
-            요구사항:
-            - 영어로 작성
-            - 긍정적이고 격려하는 톤
-            - 2-3문장으로 간단하게
-            - 감정에 적절한 이모지 포함
-            
-            응답만 생성해주세요 (추가 설명 없이):
+            한국어로 마무리 인사하세요. 감사 + 격려 + 학습표현 언급.
+            2-3문장으로 간단하게.
             """
             
         elif stage == ConversationStage.RESTART:
             # 재시작 단계
             prompt = f"""
-            사용자가 {session.emotion} 감정으로 대화를 다시 시작하고 싶어합니다.
+            {session.emotion} 감정으로 대화 재시작.
             
-            다음을 포함한 재시작 응답을 생성해주세요:
-            1. 새로운 시작에 대한 환영
-            2. 그 감정에 대해 이야기해보자는 제안
-            
-            요구사항:
-            - 영어로 작성
-            - 친근하고 새로운 에너지를 주는 톤
-            - 2-3문장으로 간단하게
-            - 감정에 적절한 이모지 포함
-            
-            응답만 생성해주세요 (추가 설명 없이):
+            한국어로 환영 인사하세요. 새로운 시작 + 감정 대화 제안.
+            2-3문장으로 간단하게.
             """
             
         else:
             # 기타 단계의 경우 컨텍스트 사용
             prompt = f"""
-            사용자가 {session.emotion} 감정 상태에서 {context}
+            {session.emotion} 감정에서 {context}
             
-            적절한 응답을 생성해주세요:
-            - 영어로 작성
-            - 공감적이고 자연스러운 톤
-            - 2-3문장으로 간단하게
-            
-            응답만 생성해주세요 (추가 설명 없이):
+            한국어로 공감하며 응답하세요. 2-3문장으로 간단하게.
             """
         
         logger.info(f"[FLOW_OPENAI_STAGE_REQUEST] Session: {session.session_id} | Stage: {stage} | Generating response")
@@ -1001,9 +937,9 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         # TTS로 음성 변환 및 R2 업로드
         audio_url = None
         try:
-            # 영어 텍스트에 대해 TTS 실행
-            language = "English"  # flow API는 영어로 응답
-            audio_url, duration = await openai_service.text_to_speech(generated_text, language)
+            # 사용자 언어로 TTS 실행
+            tts_language = "Korean" if session.from_lang == "korean" else "English"
+            audio_url, duration = await openai_service.text_to_speech(generated_text, tts_language)
             logger.info(f"[FLOW_TTS_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
         except Exception as tts_error:
             logger.error(f"[FLOW_TTS_ERROR] Session: {session.session_id} | Stage: {stage} | TTS failed: {str(tts_error)}")
@@ -1017,19 +953,19 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         # Emergency fallback - 매우 기본적인 응답만 사용
         fallback_text = ""
         if stage == ConversationStage.STARTER:
-            fallback_text = f"Hello! I can see you're feeling {session.emotion}. What made you feel this way?"
+            fallback_text = f"안녕하세요! {session.emotion} 감정이시군요. 무엇 때문에 그런 기분이 드셨나요?"
         elif stage == ConversationStage.FINISHER:
-            fallback_text = f"Thank you for sharing your feelings about being {session.emotion}. You did great!"
+            fallback_text = f"{session.emotion} 감정에 대해 이야기해주셔서 감사합니다. 정말 잘하셨어요!"
         elif stage == ConversationStage.RESTART:
-            fallback_text = f"Let's start fresh! Tell me about feeling {session.emotion}."
+            fallback_text = f"새롭게 시작해봐요! {session.emotion} 감정에 대해 이야기해주세요."
         else:
-            fallback_text = f"I understand you're feeling {session.emotion}. Can you tell me more?"
+            fallback_text = f"{session.emotion} 감정을 이해해요. 더 이야기해주실 수 있나요?"
         
         # 폴백 응답에 대해서도 TTS 시도
         audio_url = None
         try:
-            language = "English"
-            audio_url, duration = await openai_service.text_to_speech(fallback_text, language)
+            fallback_tts_language = "Korean" if session.from_lang == "korean" else "English"
+            audio_url, duration = await openai_service.text_to_speech(fallback_text, fallback_tts_language)
             logger.info(f"[FLOW_TTS_FALLBACK_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url}")
         except Exception as tts_error:
             logger.error(f"[FLOW_TTS_FALLBACK_ERROR] Session: {session.session_id} | Stage: {stage} | TTS failed: {str(tts_error)}")
@@ -1040,29 +976,17 @@ async def _generate_fallback_expressions(session: ConversationSession, user_inpu
     """OpenAI로 폴백 학습 표현 생성"""
     
     try:
+        # 언어 설정
+        user_language = "한국어" if session.from_lang == "korean" else session.from_lang 
+        ai_language = "영어" if session.to_lang == "english" else session.to_lang
+        
         expressions_prompt = f"""
-        사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
+        사용자: "{user_input}" ({session.emotion} 감정)
         
-        다음 3개의 영어 slang/idiom/phrase를 생성해주세요:
-        1. 사용자 표현과 유사한 의미의 영어 slang/idiom (1개)
-        2. {session.emotion} 감정과 관련된 영어 phrase/idiom (1개)  
-        3. 교육 표현: "{selected_teaching_expression['word']}"
+        {ai_language} slang/idiom 3개 생성하세요:
+        1. 사용자 표현과 유사한 의미 2. {session.emotion} 감정 관련 3. {selected_teaching_expression['word']}
         
-        각 표현에 대해 다음 정보를 포함해주세요:
-        - word: 영어 slang/idiom/phrase (원어민이 실제 사용하는 표현)
-        - meaning: 한국어 의미
-        - pronunciation: 발음 가이드 (한글 발음)
-        - example: 자연스러운 예문 (영어)
-        
-        간단한 텍스트 형태로 응답해주세요. 마크다운 형식(**, ##, 등)을 사용하지 마세요:
-        1. [영어 slang/idiom] - [한국어 의미] - [발음] - [예문]
-        2. [영어 phrase/idiom] - [한국어 의미] - [발음] - [예문]
-        3. [교육 표현] - [한국어 의미] - [발음] - [예문]
-        
-        중요: 
-        - 일반적인 단어가 아닌 slang, idiom, phrase만 사용하세요
-        - 마크다운이나 볼드체(**) 사용 금지
-        - 단순한 텍스트 형태로만 응답
+        형식: [표현] - [{user_language} 의미] - [발음] - [예문]
         """
         
         logger.info(f"[FLOW_FALLBACK_EXPRESSIONS_REQUEST] Session: {session.session_id} | Generating fallback expressions")
