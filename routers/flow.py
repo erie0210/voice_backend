@@ -484,10 +484,8 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         
         Create a response in {mixed_language} with steps:
         - Empathetic reaction to user's feeling (if needed)
-        - Introduce related {ai_language} expressions 
-        - Paraphrase user's feeling in {ai_language}
-        
-        Then provide 2 {ai_language} expressions used in your paraphrase response.
+        - Paraphrase user's input in {ai_language}
+        - Then provide 2 {ai_language} expressions used in your paraphrase response.
         
         Respond in JSON format:
         {{
