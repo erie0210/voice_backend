@@ -5,8 +5,6 @@ Flow-Chat은 7단계 감정 기반 언어학습 대화 시스템입니다. 사�
 
 ## 📋 API 기본 정보
 
-**Base URL:** `http://localhost:8000/v1/ai`
-
 **Content-Type:** `application/json`
 
 **주요 엔드포인트:**
