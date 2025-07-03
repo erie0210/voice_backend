@@ -180,16 +180,15 @@ async def flow_chat(
     openai_service: OpenAIService = Depends(get_openai_service)
 ):
     """
-    Flow-Chat API: 7단계 감정 기반 언어학습 대화 시스템
+    Flow-Chat API: 6단계 감정 기반 언어학습 대화 시스템
     
     Stage 0: 감정 선택 (UI)
-    Stage 1: Starter (사전 생성 음성)
-    Stage 2: Prompt cause (사전 생성 음성)  
-    Stage 3: User answer (STT)
-    Stage 4: Paraphrase + keyword highlight (실시간 TTS)
-    Stage 5: Empathy + new vocabulary (사전 생성 음성)
-    Stage 6: User repeat & STT check (발음 교정)
-    Stage 7: Finisher (사전 생성 음성, 단어장 저장)
+    Stage 1: Starter + Prompt cause (사전 생성 음성)
+    Stage 2: User answer (STT)
+    Stage 3: Paraphrase + keyword highlight (실시간 TTS)
+    Stage 4: Empathy + new vocabulary (사전 생성 음성)
+    Stage 5: User repeat & STT check (발음 교정)
+    Stage 6: Finisher (사전 생성 음성, 단어장 저장)
     """
     
     start_time = time.time()
@@ -220,19 +219,27 @@ async def flow_chat(
                 "to_lang": request.to_lang.value
             })
             
-            # 첫 번째 단계: Starter
-            response_text = STAGE_RESPONSES[ConversationStage.STARTER].get(
+            # 첫 번째 단계: Starter + Prompt cause 통합
+            starter_text = STAGE_RESPONSES[ConversationStage.STARTER].get(
                 request.emotion.lower(), 
                 f"Hello! I can see you're feeling {request.emotion}. Let's talk about it!"
             )
             
+            prompt_cause_text = STAGE_RESPONSES[ConversationStage.PROMPT_CAUSE].get(
+                request.emotion.lower(),
+                f"What made you feel {request.emotion}? Tell me about it!"
+            )
+            
+            # 두 메시지를 자연스럽게 결합
+            combined_response = f"{starter_text} {prompt_cause_text}"
+            
             response = FlowChatResponse(
                 session_id=session_id,
                 stage=ConversationStage.STARTER,
-                response_text=response_text,
+                response_text=combined_response,
                 audio_url=f"https://voice.kreators.dev/flow_conversations/{request.emotion.lower()}/starter.mp3",
                 completed=False,
-                next_action="Listen to the audio and proceed to next stage"
+                next_action="Please tell me about what made you feel this way using voice input"
             )
             
             # 응답 로깅
@@ -283,7 +290,7 @@ async def flow_chat(
                 response_text=response_text,
                 audio_url=f"https://voice.kreators.dev/flow_conversations/{session.emotion}/starter.mp3",
                 completed=False,
-                next_action="Listen to the audio and proceed to next stage"
+                next_action="Please tell me about what made you feel this way using voice input"
             )
         
         else:
@@ -309,61 +316,48 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
     
     logger.info(f"[FLOW_STAGE_TRANSITION] Session: {session.session_id} | From: {session.stage} | Emotion: {session.emotion}")
     
+    # STARTER 단계에서는 더 이상 next_stage가 필요하지 않음 (voice_input으로 직접 진행)
     if session.stage == ConversationStage.STARTER:
-        # Stage 2: Prompt cause
-        session.stage = ConversationStage.PROMPT_CAUSE
-        response_text = STAGE_RESPONSES[ConversationStage.PROMPT_CAUSE][session.emotion]
-        
-        _log_session_activity(session.session_id, "STAGE_TRANSITION", {
-            "from_stage": ConversationStage.STARTER,
-            "to_stage": ConversationStage.PROMPT_CAUSE,
-            "emotion": session.emotion
-        })
+        response_text = "Please share what made you feel this way using voice input."
         
         return FlowChatResponse(
             session_id=session.session_id,
-            stage=ConversationStage.PROMPT_CAUSE,
+            stage=ConversationStage.STARTER,
             response_text=response_text,
-            audio_url=f"https://voice.kreators.dev/flow_conversations/{session.emotion}/prompt_cause.mp3",
+            audio_url=None,
             completed=False,
-            next_action="Please answer the question using voice input"
+            next_action="Please use voice input to tell me about your feelings"
         )
     
     elif session.stage == ConversationStage.USER_ANSWER:
-        # Stage 5: Empathy + new vocabulary
+        # Stage 3에서 Stage 4로: User answer -> Empathy + vocabulary
         session.stage = ConversationStage.EMPATHY_VOCAB
         
-        # 감정별 학습 단어 선택
-        vocab_words = EMOTION_VOCABULARY.get(session.emotion, ["wonderful", "amazing", "great"])
-        selected_words = vocab_words[:3]  # 3개 단어 선택
-        session.learned_words.extend(selected_words)
+        response_text = f"Now let's practice these expressions together. Try to repeat after me: {', '.join([expr.word for expr in session.learned_expressions])}"
         
-        response_text = f"I understand how you feel. Let me teach you some new words to express {session.emotion}: {', '.join(selected_words)}"
-        
-        _log_session_activity(session.session_id, "VOCABULARY_LEARNING", {
+        _log_session_activity(session.session_id, "VOCABULARY_PRACTICE", {
             "emotion": session.emotion,
-            "learned_words": selected_words,
-            "total_learned": len(session.learned_words)
+            "learned_expressions": [expr.word for expr in session.learned_expressions],
+            "total_expressions": len(session.learned_expressions)
         })
         
         return FlowChatResponse(
             session_id=session.session_id,
             stage=ConversationStage.EMPATHY_VOCAB,
             response_text=response_text,
-            audio_url=f"https://voice.kreators.dev/flow_conversations/{session.emotion}/empathy_vocab.mp3",
-            target_words=selected_words,
+            audio_url=None,  # 실시간 TTS
+            target_words=session.learned_expressions,
             completed=False,
-            next_action="Listen to the new vocabulary and try to repeat"
+            next_action="Please use voice input to practice pronunciation"
         )
     
     elif session.stage == ConversationStage.EMPATHY_VOCAB:
-        # Stage 5 -> Stage 6: 사용자가 단어를 들은 후 발음 연습으로 진행
-        # 일반적으로는 voice_input을 받아야 하지만, next_stage 액션이 들어온 경우 안내 메시지 제공
-        response_text = f"Great! Now it's time to practice pronunciation. Please say these words: {', '.join(session.learned_words)}"
+        # Stage 4 -> Stage 5: 사용자가 단어를 들은 후 발음 연습으로 진행
+        response_text = f"Great! Now it's time to practice pronunciation. Please say these expressions: {', '.join([expr.word for expr in session.learned_expressions])}"
         
         _log_session_activity(session.session_id, "PRONUNCIATION_PRACTICE_PROMPT", {
             "emotion": session.emotion,
-            "learned_words": session.learned_words,
+            "learned_expressions": [expr.word for expr in session.learned_expressions],
             "from_stage": ConversationStage.EMPATHY_VOCAB,
             "instruction": "Ready for pronunciation practice"
         })
@@ -373,19 +367,19 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
             stage=ConversationStage.EMPATHY_VOCAB,  # 동일한 단계 유지
             response_text=response_text,
             audio_url=None,  # 실시간 TTS
-            target_words=session.learned_words,
+            target_words=session.learned_expressions,
             completed=False,
             next_action="Please use voice input to practice pronunciation"
         )
     
     elif session.stage == ConversationStage.USER_REPEAT:
-        # Stage 7: Finisher
+        # Stage 5 -> Stage 6: Finisher
         session.stage = ConversationStage.FINISHER
         response_text = STAGE_RESPONSES[ConversationStage.FINISHER][session.emotion]
         
         _log_session_activity(session.session_id, "CONVERSATION_COMPLETED", {
             "emotion": session.emotion,
-            "learned_words": session.learned_words,
+            "learned_expressions": [expr.word for expr in session.learned_expressions],
             "user_answers": len(session.user_answers),
             "final_stage": ConversationStage.FINISHER
         })
@@ -396,34 +390,29 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
             response_text=response_text,
             audio_url=f"https://voice.kreators.dev/flow_conversations/{session.emotion}/finisher.mp3",
             completed=True,
-            next_action="Conversation completed! Your learned words have been saved."
+            next_action="Conversation completed! Your learned expressions have been saved."
         )
     
     elif session.stage == ConversationStage.PARAPHRASE:
-        # Stage 4 -> Stage 5: Paraphrase 단계에서 어휘 학습 단계로 진행
+        # Stage 3 -> Stage 4: Paraphrase 단계에서 어휘 학습 단계로 진행
         session.stage = ConversationStage.EMPATHY_VOCAB
         
-        # 감정별 학습 단어 선택
-        vocab_words = EMOTION_VOCABULARY.get(session.emotion, ["wonderful", "amazing", "great"])
-        selected_words = vocab_words[:3]  # 3개 단어 선택
-        session.learned_words.extend(selected_words)
+        response_text = f"Now let's practice these expressions together. Try to repeat after me: {', '.join([expr.word for expr in session.learned_expressions])}"
         
-        response_text = f"I understand how you feel. Let me teach you some new words to express {session.emotion}: {', '.join(selected_words)}"
-        
-        _log_session_activity(session.session_id, "VOCABULARY_LEARNING", {
+        _log_session_activity(session.session_id, "VOCABULARY_PRACTICE", {
             "emotion": session.emotion,
-            "learned_words": selected_words,
-            "total_learned": len(session.learned_words)
+            "learned_expressions": [expr.word for expr in session.learned_expressions],
+            "total_expressions": len(session.learned_expressions)
         })
         
         return FlowChatResponse(
             session_id=session.session_id,
             stage=ConversationStage.EMPATHY_VOCAB,
             response_text=response_text,
-            audio_url=f"https://voice.kreators.dev/flow_conversations/{session.emotion}/empathy_vocab.mp3",
-            target_words=selected_words,
+            audio_url=None,  # 실시간 TTS
+            target_words=session.learned_expressions,
             completed=False,
-            next_action="Listen to the new vocabulary and try to repeat"
+            next_action="Please use voice input to practice pronunciation"
         )
     
     else:
@@ -435,43 +424,77 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
     
     logger.info(f"[FLOW_VOICE_INPUT] Session: {session.session_id} | Stage: {session.stage} | Input: {user_input[:50]}...")
     
-    if session.stage == ConversationStage.PROMPT_CAUSE:
-        # Stage 3: User answer -> Stage 4: Paraphrase
+    # STARTER 단계에서 바로 voice_input 처리 (기존 PROMPT_CAUSE 단계 통합)
+    if session.stage == ConversationStage.STARTER:
+        # Stage 1: Starter -> Stage 2: User answer -> Stage 3: Paraphrase
         session.stage = ConversationStage.USER_ANSWER
         session.user_answers.append(user_input)
         
-        # OpenAI로 사용자 답변 패러프레이징
-        paraphrase_prompt = f"User said: '{user_input}' about feeling {session.emotion}. Please paraphrase this in a supportive way and highlight key emotional words."
+        # 감정별 교육 표현 선택
+        teaching_expressions = EMOTION_TEACHING_EXPRESSIONS.get(session.emotion, [])
+        selected_teaching_expression = teaching_expressions[0] if teaching_expressions else {
+            "word": "I understand", 
+            "meaning": "이해해요", 
+            "pronunciation": "아이 언더스탠드"
+        }
+        
+        # OpenAI로 사용자 답변 분석 및 학습 표현 생성
+        analysis_prompt = f"""
+        사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
+        
+        다음 3개의 학습 표현을 JSON 형태로 생성해주세요:
+        1. 사용자 한국어 표현을 영어로 번역한 것 (2개)
+        2. 감정 표현을 더 풍부하게 할 수 있는 교육 표현 (1개): "{selected_teaching_expression['word']}"
+        
+        JSON 형태:
+        {{
+            "learned_expressions": [
+                {{
+                    "word": "영어 표현",
+                    "meaning": "한국어 의미",
+                    "pronunciation": "발음",
+                    "example": "예문"
+                }}
+            ],
+            "paraphrase": "사용자의 답변을 공감하면서 교육 표현({selected_teaching_expression['word']})을 자연스럽게 포함한 응답"
+        }}
+        
+        교육 표현의 의미: {selected_teaching_expression['meaning']}
+        교육 표현의 발음: {selected_teaching_expression['pronunciation']}
+        """
         
         _log_session_activity(session.session_id, "USER_ANSWER_RECEIVED", {
             "emotion": session.emotion,
             "user_input": user_input,
-            "answer_count": len(session.user_answers)
+            "answer_count": len(session.user_answers),
+            "teaching_expression": selected_teaching_expression
         })
         
         try:
             logger.info(f"[FLOW_OPENAI_REQUEST] Session: {session.session_id} | Paraphrasing user input")
             paraphrase_response = await openai_service.get_chat_completion(
-                messages=[{"role": "user", "content": paraphrase_prompt}],
+                messages=[{"role": "user", "content": analysis_prompt}],
                 temperature=0.7
             )
-            response_text = paraphrase_response.choices[0].message.content
+            paraphrase_text = paraphrase_response.choices[0].message.content
             logger.info(f"[FLOW_OPENAI_RESPONSE] Session: {session.session_id} | Paraphrase successful")
         except Exception as e:
             logger.error(f"[FLOW_OPENAI_ERROR] Session: {session.session_id} | Paraphrase failed: {str(e)}")
-            response_text = f"I hear that you're feeling {session.emotion} because {user_input}. That's completely understandable."
+            paraphrase_text = f"I hear that you're feeling {session.emotion} because {user_input}. That's completely understandable."
         
         return FlowChatResponse(
             session_id=session.session_id,
             stage=ConversationStage.PARAPHRASE,
-            response_text=response_text,
+            response_text=paraphrase_text,
             audio_url=None,  # 실시간 TTS
+            target_words=session.learned_expressions,
             completed=False,
-            next_action="Proceed to learn new vocabulary"
+            next_action="Learn the new expressions and proceed to vocabulary practice"
         )
     
+    # 기존 EMPATHY_VOCAB 단계 처리 코드는 그대로 유지
     elif session.stage == ConversationStage.EMPATHY_VOCAB:
-        # Stage 6: User repeat & STT check
+        # Stage 5: User repeat & STT check
         session.stage = ConversationStage.USER_REPEAT
         
         # 발음 체크 (간단한 키워드 매칭)
