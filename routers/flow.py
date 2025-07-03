@@ -520,29 +520,50 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             "pronunciation": "아이 언더스탠드"
         }
         
-        # OpenAI로 사용자 답변 분석 및 학습 표현 생성
+        # OpenAI로 사용자 답변 분석 및 학습 표현 생성 (4단계 구조)
         analysis_prompt = f"""
         사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다. (대화 {session.user_input_count}회차)
         
-        다음 3개의 학습 표현을 JSON 형태로 생성해주세요:
-        1. 사용자 한국어 표현을 영어로 번역한 것 (2개)
-        2. 감정 표현을 더 풍부하게 할 수 있는 교육 표현 (1개): "{selected_teaching_expression['word']}"
+        다음과 같은 4단계 구조로 응답을 생성해주세요:
         
-        JSON 형태:
+        1. **반응하기**: 사용자의 input에 공감하고 반응
+        2. **표현 소개**: 유사한 의미의 영어 slang/idiom/phrase 소개
+        3. **Paraphrasing 유도**: 사용자의 표현을 영어로 paraphrasing 
+        4. **대화 이어가기**: 관련된 질문이나 더 이야기할 수 있도록 유도
+        
+        JSON 형태로 응답해주세요:
         {{
             "learned_expressions": [
                 {{
-                    "word": "영어 표현",
+                    "word": "영어 slang/idiom/phrase",
                     "meaning": "한국어 의미",
-                    "pronunciation": "발음",
-                    "example": "예문"
+                    "pronunciation": "발음 가이드",
+                    "example": "자연스러운 예문"
+                }},
+                {{
+                    "word": "또 다른 영어 slang/idiom/phrase",
+                    "meaning": "한국어 의미",
+                    "pronunciation": "발음 가이드", 
+                    "example": "자연스러운 예문"
+                }},
+                {{
+                    "word": "{selected_teaching_expression['word']}",
+                    "meaning": "{selected_teaching_expression['meaning']}",
+                    "pronunciation": "{selected_teaching_expression['pronunciation']}",
+                    "example": "감정 표현 예문"
                 }}
             ],
-            "paraphrase": "사용자의 답변을 공감하면서 교육 표현({selected_teaching_expression['word']})을 자연스럽게 포함한 응답"
+            "paraphrase": "4단계 구조로 작성된 자연스러운 영어 응답"
         }}
         
-        교육 표현의 의미: {selected_teaching_expression['meaning']}
-        교육 표현의 발음: {selected_teaching_expression['pronunciation']}
+        응답 예시 형식:
+        "아 ~~했구나! 그 표현은 '[slang/idiom]'라고 표현할 수 있어. '[사용자 표현의 영어 paraphrasing]'. 더 이야기해줄 수 있어?"
+        
+        중요사항:
+        - learned_expressions는 반드시 영어 slang, idiom, phrase여야 함
+        - 일반적인 단어가 아닌 원어민이 실제로 사용하는 표현
+        - {session.emotion} 감정과 관련된 자연스러운 표현들
+        - paraphrase는 4단계 구조를 모두 포함한 자연스러운 대화체
         """
         
         _log_session_activity(session.session_id, "USER_ANSWER_RECEIVED", {
@@ -601,14 +622,18 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                 logger.error(f"[FLOW_JSON_PARSE_ERROR] Session: {session.session_id} | Failed to parse JSON response")
                 logger.info(f"[FLOW_FALLBACK_ATTEMPT] Session: {session.session_id} | Attempting fallback OpenAI call")
                 
-                # 폴백: 간단한 OpenAI 호출로 paraphrase만 생성
+                # 폴백: 4단계 구조로 간단한 OpenAI 호출
                 try:
                     fallback_prompt = f"""
                     사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
                     
-                    사용자의 답변을 공감하면서 "{selected_teaching_expression['word']}"라는 표현을 자연스럽게 포함해서 응답해주세요.
+                    다음 4단계 구조로 응답해주세요:
+                    1. 반응하기: "아 ~~했구나!"
+                    2. 표현 소개: "그 표현은 '[영어 slang/idiom]'라고 표현할 수 있어."
+                    3. Paraphrasing: "[사용자 표현을 영어로 paraphrasing]"
+                    4. 대화 이어가기: "더 이야기해줄 수 있어?"
                     
-                    영어로 2-3문장의 간단한 응답만 작성해주세요:
+                    영어로 자연스러운 대화체로 작성해주세요:
                     """
                     
                     fallback_response = await openai_service.get_chat_completion(
@@ -621,8 +646,8 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                     
                 except Exception as fallback_error:
                     logger.error(f"[FLOW_FALLBACK_ERROR] Session: {session.session_id} | Fallback also failed: {str(fallback_error)}")
-                    # 최후 응급 처리
-                    paraphrase_text = f"I understand you're feeling {session.emotion}. {selected_teaching_expression['word']} - that's a great way to express how you feel!"
+                    # 최후 응급 처리 (4단계 구조)
+                    paraphrase_text = f"Oh, I see you're feeling {session.emotion}! You can say '{selected_teaching_expression['word']}' to express that. That sounds like you're really experiencing {session.emotion}. Can you tell me more about it?"
                 
                 # OpenAI로 폴백 학습 표현 생성
                 learned_expressions = await _generate_fallback_expressions(session, user_input, selected_teaching_expression, openai_service)
@@ -632,14 +657,18 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             logger.error(f"[FLOW_OPENAI_ERROR] Session: {session.session_id} | Paraphrase failed: {str(e)}")
             logger.info(f"[FLOW_MAIN_FALLBACK_ATTEMPT] Session: {session.session_id} | Attempting main fallback OpenAI call")
             
-            # 메인 폴백: 간단한 OpenAI 호출로 paraphrase만 생성
+            # 메인 폴백: 4단계 구조로 간단한 OpenAI 호출
             try:
                 main_fallback_prompt = f"""
                 사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
                 
-                사용자의 답변을 공감하면서 "{selected_teaching_expression['word']}"라는 표현을 자연스럽게 포함해서 응답해주세요.
+                다음 4단계 구조로 응답해주세요:
+                1. 반응하기: "아 ~~했구나!"
+                2. 표현 소개: "그 표현은 '[영어 slang/idiom]'라고 표현할 수 있어."
+                3. Paraphrasing: "[사용자 표현을 영어로 paraphrasing]"
+                4. 대화 이어가기: "더 이야기해줄 수 있어?"
                 
-                영어로 2-3문장의 간단한 응답만 작성해주세요:
+                영어로 자연스러운 대화체로 작성해주세요:
                 """
                 
                 main_fallback_response = await openai_service.get_chat_completion(
@@ -652,8 +681,8 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                 
             except Exception as main_fallback_error:
                 logger.error(f"[FLOW_MAIN_FALLBACK_ERROR] Session: {session.session_id} | Main fallback also failed: {str(main_fallback_error)}")
-                # 최후 응급 처리
-                paraphrase_text = f"I understand you're feeling {session.emotion}. {selected_teaching_expression['word']} - that's a great way to express how you feel!"
+                # 최후 응급 처리 (4단계 구조)
+                paraphrase_text = f"Oh, I see you're feeling {session.emotion}! You can say '{selected_teaching_expression['word']}' to express that. That sounds like you're really experiencing {session.emotion}. Can you tell me more about it?"
             
             # OpenAI로 폴백 학습 표현 생성
             learned_expressions = await _generate_fallback_expressions(session, user_input, selected_teaching_expression, openai_service)
@@ -821,7 +850,7 @@ async def _generate_openai_response(session: ConversationSession, stage: Convers
             사용자가 {session.emotion} 감정을 선택했습니다. 
             
             다음 두 가지를 자연스럽게 결합한 응답을 생성해주세요:
-            1. 그 감정에 대한 따뜻한 인사말
+            1. 그 감정에 대해같이 이야기해보자는 말
             2. 그 감정의 원인을 묻는 질문
             
             요구사항:
@@ -925,20 +954,23 @@ async def _generate_fallback_expressions(session: ConversationSession, user_inpu
         expressions_prompt = f"""
         사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
         
-        다음 3개의 영어 학습 표현을 생성해주세요:
-        1. 사용자의 한국어 표현에서 추출한 영어 표현 (2개)
-        2. 교육 표현: "{selected_teaching_expression['word']}"
+        다음 3개의 영어 slang/idiom/phrase를 생성해주세요:
+        1. 사용자 표현과 유사한 의미의 영어 slang/idiom (1개)
+        2. {session.emotion} 감정과 관련된 영어 phrase/idiom (1개)  
+        3. 교육 표현: "{selected_teaching_expression['word']}"
         
         각 표현에 대해 다음 정보를 포함해주세요:
-        - word: 영어 표현
+        - word: 영어 slang/idiom/phrase (원어민이 실제 사용하는 표현)
         - meaning: 한국어 의미
-        - pronunciation: 발음 (영어 발음 기호 또는 한글 발음)
-        - example: 예문 (영어)
+        - pronunciation: 발음 가이드 (한글 발음)
+        - example: 자연스러운 예문 (영어)
         
         간단한 텍스트 형태로 응답해주세요:
-        1. [영어 표현] - [한국어 의미] - [발음] - [예문]
-        2. [영어 표현] - [한국어 의미] - [발음] - [예문]
-        3. [영어 표현] - [한국어 의미] - [발음] - [예문]
+        1. [영어 slang/idiom] - [한국어 의미] - [발음] - [예문]
+        2. [영어 phrase/idiom] - [한국어 의미] - [발음] - [예문]
+        3. [교육 표현] - [한국어 의미] - [발음] - [예문]
+        
+        중요: 일반적인 단어가 아닌 slang, idiom, phrase만 사용하세요.
         """
         
         logger.info(f"[FLOW_FALLBACK_EXPRESSIONS_REQUEST] Session: {session.session_id} | Generating fallback expressions")
