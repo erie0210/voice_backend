@@ -539,52 +539,23 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             "pronunciation": "아이 언더스탠드"
         }
         
-        # OpenAI로 사용자 답변 분석 및 학습 표현 생성 (구조)
-        analysis_prompt = f"""
+        # 1단계: 자연스러운 paraphrase 응답 생성
+        paraphrase_prompt = f"""
         사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다. (대화 {session.user_input_count}회차)
         
-        다음과 같은 구조로 응답을 생성해주세요. 순서를 직접 언급하지 마세요.:
+        다음 4단계를 자연스럽게 포함한 영어 응답을 만들어주세요:
+        - 사용자 input에 공감하고 반응
+        - 관련된 영어 slang/idiom/phrase 자연스럽게 소개 (실제로 사용되는 표현)
+        - 사용자 표현을 영어로 paraphrasing
+        - 대화를 이어갈 질문
         
-        - **반응하기**: 사용자의 input에 공감하고 반응
-        - **표현 소개**: 유사한 의미의 영어 slang/idiom/phrase 소개
-        - **Paraphrasing 유도**: 사용자의 표현을 영어로 paraphrasing 
-        - **대화 이어가기**: 관련된 질문이나 더 이야기할 수 있도록 유도
-        
-        JSON 형태로 응답해주세요:
-        {{
-            "learned_expressions": [
-                {{
-                    "word": "영어 slang/idiom/phrase",
-                    "meaning": "한국어 의미",
-                    "pronunciation": "발음 가이드",
-                    "example": "자연스러운 예문"
-                }},
-                {{
-                    "word": "또 다른 영어 slang/idiom/phrase",
-                    "meaning": "한국어 의미",
-                    "pronunciation": "발음 가이드", 
-                    "example": "자연스러운 예문"
-                }},
-                {{
-                    "word": "{selected_teaching_expression['word']}",
-                    "meaning": "{selected_teaching_expression['meaning']}",
-                    "pronunciation": "{selected_teaching_expression['pronunciation']}",
-                    "example": "감정 표현 예문"
-                }}
-            ],
-            "paraphrase": "구조로 작성된 자연스러운 영어 응답"
-        }}
-        
-        응답 예시 형식:
-        "아 ~~했구나! 그 표현은 '[slang/idiom]'라고 표현할 수 있어. '[사용자 표현의 영어 paraphrasing]'. 더 이야기해줄 수 있어?"
+        자연스러운 영어 대화체로 작성해주세요. 번호나 구분 표시 없이 연결된 문장으로:
         
         중요사항:
-        - learned_expressions는 반드시 영어 slang, idiom, phrase여야 함
-        - 일반적인 단어가 아닌 원어민이 실제로 사용하는 표현
-        - {session.emotion} 감정과 관련된 자연스러운 표현들
-        - paraphrase는 구조를 모두 포함한 자연스러운 대화체
+        - 원어민이 실제로 사용하는 자연스러운 slang/idiom/phrase 포함
+        - {session.emotion} 감정과 관련된 표현들 사용
         - 마크다운이나 볼드체(**) 사용 금지
-        - 모든 text는 단순한 텍스트 형태로만 작성
+        - 자연스러운 대화 흐름 유지
         """
         
         _log_session_activity(session.session_id, "USER_ANSWER_RECEIVED", {
@@ -596,25 +567,65 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         })
         
         try:
-            logger.info(f"[FLOW_OPENAI_REQUEST] Session: {session.session_id} | Paraphrasing user input")
-            logger.info(f"[FLOW_OPENAI_REQUEST_PROMPT] Session: {session.session_id} | Prompt: {analysis_prompt}")
+            logger.info(f"[FLOW_OPENAI_REQUEST] Session: {session.session_id} | Generating paraphrase response")
+            logger.info(f"[FLOW_OPENAI_REQUEST_PROMPT] Session: {session.session_id} | Prompt: {paraphrase_prompt}")
             
-            paraphrase_response = await openai_service.client.chat.completions.create(
-                model=openai_service.default_model,
-                messages=[{"role": "user", "content": analysis_prompt}],
-                temperature=0.7,
-                response_format={"type": "json_object"}  # JSON 강제 포맷
+            # 1단계: 자연스러운 paraphrase 응답 생성
+            paraphrase_response = await openai_service.get_chat_completion(
+                messages=[{"role": "user", "content": paraphrase_prompt}],
+                temperature=0.7
             )
-            response_content = paraphrase_response.choices[0].message.content
+            paraphrase_text = paraphrase_response.choices[0].message.content.strip()
             
-            logger.info(f"[FLOW_OPENAI_RESPONSE] Session: {session.session_id} | Paraphrase successful")
-            logger.info(f"[FLOW_OPENAI_RESPONSE_CONTENT] Session: {session.session_id} | Response: {response_content}")
+            logger.info(f"[FLOW_PARAPHRASE_SUCCESS] Session: {session.session_id} | Generated paraphrase")
+            logger.info(f"[FLOW_PARAPHRASE_CONTENT] Session: {session.session_id} | Response: {paraphrase_text}")
             
-            # JSON 응답 파싱
+            # 2단계: 생성된 paraphrase에서 학습 표현 추출
             try:
-                parsed_response = json.loads(response_content)
+                extraction_prompt = f"""
+                다음 영어 응답에서 학습 가치가 있는 슬랭/이디엄/구문을 추출해주세요:
+                
+                응답: "{paraphrase_text}"
+                
+                다음 기준에 맞는 표현들만 추출하세요:
+                - 원어민이 실제로 사용하는 slang/idiom/phrase
+                - 일반적인 단어가 아닌 교육적 가치가 있는 표현
+                - 최대 3개까지
+                
+                JSON 형태로 응답해주세요:
+                {{
+                    "learned_expressions": [
+                        {{
+                            "word": "추출된 표현",
+                            "meaning": "한국어 의미",
+                            "pronunciation": "발음 가이드",
+                            "example": "자연스러운 예문"
+                        }}
+                    ]
+                }}
+                
+                중요사항:
+                - 실제로 응답에 사용된 표현들만 추출
+                - 마크다운이나 볼드체(**) 사용 금지
+                - 모든 text는 단순한 텍스트 형태로만 작성
+                """
+                
+                logger.info(f"[FLOW_EXTRACTION_REQUEST] Session: {session.session_id} | Extracting learned expressions")
+                
+                extraction_response = await openai_service.client.chat.completions.create(
+                    model=openai_service.default_model,
+                    messages=[{"role": "user", "content": extraction_prompt}],
+                    temperature=0.7,
+                    response_format={"type": "json_object"}  # JSON 강제 포맷
+                )
+                extraction_content = extraction_response.choices[0].message.content
+                
+                logger.info(f"[FLOW_EXTRACTION_SUCCESS] Session: {session.session_id} | Extracted expressions")
+                logger.info(f"[FLOW_EXTRACTION_CONTENT] Session: {session.session_id} | Response: {extraction_content}")
+                
+                # JSON 응답 파싱
+                parsed_response = json.loads(extraction_content)
                 learned_expressions_data = parsed_response.get("learned_expressions", [])
-                paraphrase_text = parsed_response.get("paraphrase", "")
                 
                 # LearnWord 객체들 생성
                 learned_expressions = []
@@ -633,15 +644,6 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                     )
                     learned_expressions.append(learn_word)
                 
-                # 교육 표현 추가
-                teaching_learn_word = LearnWord(
-                    word=selected_teaching_expression["word"],
-                    meaning=selected_teaching_expression["meaning"],
-                    pronunciation=selected_teaching_expression["pronunciation"],
-                    example=f"When you're feeling {session.emotion}, you can say: {selected_teaching_expression['word']}"
-                )
-                learned_expressions.append(teaching_learn_word)
-                
                 # 세션에 저장
                 session.learned_expressions = learned_expressions
                 
@@ -651,49 +653,52 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                 logger.error(f"[FLOW_JSON_PARSE_ERROR] Session: {session.session_id} | Failed to parse JSON response")
                 logger.info(f"[FLOW_FALLBACK_ATTEMPT] Session: {session.session_id} | Attempting fallback OpenAI call")
                 
-                # 폴백: 4단계 구조로 간단한 OpenAI 호출
+                # 폴백: 간단한 표현 생성
                 try:
-                    fallback_prompt = f"""
-                    사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
+                    learned_expressions = await _generate_fallback_expressions(session, user_input, selected_teaching_expression, openai_service)
+                    session.learned_expressions = learned_expressions
                     
-                    다음 4단계를 자연스럽게 포함한 영어 응답을 만들어주세요:
-                    - 사용자 input에 공감하고 반응
-                    - 관련된 영어 표현 소개  
-                    - 사용자 표현을 영어로 paraphrasing
-                    - 대화를 이어갈 질문
-                    
-                    자연스러운 영어 대화체로 작성해주세요. 번호나 구분 표시 없이 연결된 문장으로:
-                    """
-                    
-                    fallback_response = await openai_service.get_chat_completion(
-                        messages=[{"role": "user", "content": fallback_prompt}],
-                        temperature=0.7
-                    )
-                    paraphrase_text = fallback_response.choices[0].message.content.strip()
-                    
-                    logger.info(f"[FLOW_FALLBACK_SUCCESS] Session: {session.session_id} | Generated fallback paraphrase")
+                    logger.info(f"[FLOW_FALLBACK_SUCCESS] Session: {session.session_id} | Generated fallback expressions")
                     
                 except Exception as fallback_error:
                     logger.error(f"[FLOW_FALLBACK_ERROR] Session: {session.session_id} | Fallback also failed: {str(fallback_error)}")
-                    # 최후 응급 처리 (4단계 구조)
-                    paraphrase_text = f"Oh, I see you're feeling {session.emotion}! You can say '{selected_teaching_expression['word']}' to express that. That sounds like you're really experiencing {session.emotion}. Can you tell me more about it?"
-                
-                # OpenAI로 폴백 학습 표현 생성
-                learned_expressions = await _generate_fallback_expressions(session, user_input, selected_teaching_expression, openai_service)
-                session.learned_expressions = learned_expressions
+                    
+                    # 응급 표현 생성
+                    learned_expressions = [
+                        LearnWord(
+                            word="feel good",
+                            meaning="기분이 좋다",
+                            pronunciation="필 굿",
+                            example="I feel good when I accomplish my goals."
+                        ),
+                        LearnWord(
+                            word="work hard",
+                            meaning="열심히 일하다",
+                            pronunciation="워크 하드",
+                            example="If you work hard, you'll succeed."
+                        ),
+                        LearnWord(
+                            word=selected_teaching_expression["word"],
+                            meaning=selected_teaching_expression["meaning"],
+                            pronunciation=selected_teaching_expression["pronunciation"],
+                            example=f"When you're feeling {session.emotion}, you can say: {selected_teaching_expression['word']}"
+                        )
+                    ]
+                    session.learned_expressions = learned_expressions
                 
         except Exception as e:
             logger.error(f"[FLOW_OPENAI_ERROR] Session: {session.session_id} | Paraphrase failed: {str(e)}")
             logger.info(f"[FLOW_MAIN_FALLBACK_ATTEMPT] Session: {session.session_id} | Attempting main fallback OpenAI call")
             
-            # 메인 폴백: 4단계 구조로 간단한 OpenAI 호출
+            # 메인 폴백: 간단한 응답 및 표현 생성
             try:
+                # 간단한 paraphrase 응답 생성
                 main_fallback_prompt = f"""
                 사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다.
                 
                 다음 4단계를 자연스럽게 포함한 영어 응답을 만들어주세요:
                 - 사용자 input에 공감하고 반응
-                - 관련된 영어 표현 소개  
+                - 관련된 영어 표현 자연스럽게 소개
                 - 사용자 표현을 영어로 paraphrasing
                 - 대화를 이어갈 질문
                 
@@ -706,16 +711,39 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
                 )
                 paraphrase_text = main_fallback_response.choices[0].message.content.strip()
                 
+                # 표현 생성
+                learned_expressions = await _generate_fallback_expressions(session, user_input, selected_teaching_expression, openai_service)
+                session.learned_expressions = learned_expressions
+                
                 logger.info(f"[FLOW_MAIN_FALLBACK_SUCCESS] Session: {session.session_id} | Generated main fallback paraphrase")
                 
             except Exception as main_fallback_error:
                 logger.error(f"[FLOW_MAIN_FALLBACK_ERROR] Session: {session.session_id} | Main fallback also failed: {str(main_fallback_error)}")
                 # 최후 응급 처리 (4단계 구조)
                 paraphrase_text = f"Oh, I see you're feeling {session.emotion}! You can say '{selected_teaching_expression['word']}' to express that. That sounds like you're really experiencing {session.emotion}. Can you tell me more about it?"
-            
-            # OpenAI로 폴백 학습 표현 생성
-            learned_expressions = await _generate_fallback_expressions(session, user_input, selected_teaching_expression, openai_service)
-            session.learned_expressions = learned_expressions
+                
+                # 응급 표현 생성
+                learned_expressions = [
+                    LearnWord(
+                        word="feel good",
+                        meaning="기분이 좋다",
+                        pronunciation="필 굿",
+                        example="I feel good when I accomplish my goals."
+                    ),
+                    LearnWord(
+                        word="work hard",
+                        meaning="열심히 일하다",
+                        pronunciation="워크 하드",
+                        example="If you work hard, you'll succeed."
+                    ),
+                    LearnWord(
+                        word=selected_teaching_expression["word"],
+                        meaning=selected_teaching_expression["meaning"],
+                        pronunciation=selected_teaching_expression["pronunciation"],
+                        example=f"When you're feeling {session.emotion}, you can say: {selected_teaching_expression['word']}"
+                    )
+                ]
+                session.learned_expressions = learned_expressions
         
         # paraphrase_text에 대해 TTS 적용
         audio_url = None
