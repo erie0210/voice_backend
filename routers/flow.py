@@ -9,6 +9,7 @@ import logging
 from datetime import datetime
 
 from services.openai_service import OpenAIService
+from services.r2_service import R2Service
 from models.api_models import LanguageCode, LearnWord
 
 # 로깅 설정
@@ -265,14 +266,14 @@ async def flow_chat(
                 "to_lang": request.to_lang.value
             })
             
-            # OpenAI로 시작 응답 생성
-            combined_response = await _generate_openai_response(session, ConversationStage.STARTER, openai_service)
+            # OpenAI로 시작 응답 생성 (TTS 포함)
+            combined_response, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.STARTER, openai_service)
             
             response = FlowChatResponse(
                 session_id=session_id,
                 stage=ConversationStage.STARTER,
                 response_text=combined_response,
-                audio_url=f"https://voice.kreators.dev/flow_conversations/{request.emotion.lower()}/starter.mp3",
+                audio_url=audio_url,  # 생성된 TTS 오디오 URL 사용
                 completed=False,
                 next_action="Please tell me about what made you feel this way using voice input"
             )
@@ -319,14 +320,14 @@ async def flow_chat(
                 "emotion": session.emotion
             })
             
-            # OpenAI로 재시작 응답 생성
-            response_text = await _generate_openai_response(session, ConversationStage.RESTART, openai_service)
+            # OpenAI로 재시작 응답 생성 (TTS 포함)
+            response_text, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.RESTART, openai_service)
             
             response = FlowChatResponse(
                 session_id=session.session_id,
                 stage=ConversationStage.STARTER,
                 response_text=response_text,
-                audio_url=f"https://voice.kreators.dev/flow_conversations/{session.emotion}/starter.mp3",
+                audio_url=audio_url,  # 생성된 TTS 오디오 URL 사용
                 completed=False,
                 next_action="Please tell me about what made you feel this way using voice input"
             )
@@ -359,11 +360,20 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
     if session.stage == ConversationStage.STARTER:
         response_text = "Please share what made you feel this way using voice input."
         
+        # response_text에 대해 TTS 적용
+        audio_url = None
+        try:
+            language = "English"  # response_text는 영어로 생성됨
+            audio_url, duration = await openai_service.text_to_speech(response_text, language)
+            logger.info(f"[FLOW_STARTER_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
+        except Exception as tts_error:
+            logger.error(f"[FLOW_STARTER_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        
         return FlowChatResponse(
             session_id=session.session_id,
             stage=ConversationStage.STARTER,
             response_text=response_text,
-            audio_url=None,
+            audio_url=audio_url,  # 생성된 TTS 오디오 URL 사용
             completed=False,
             next_action="Please use voice input to tell me about your feelings"
         )
@@ -457,11 +467,20 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
             "total_expressions": len(session.learned_expressions)
         })
         
+        # response_text에 대해 TTS 적용
+        audio_url = None
+        try:
+            language = "English"  # response_text는 영어로 생성됨
+            audio_url, duration = await openai_service.text_to_speech(response_text, language)
+            logger.info(f"[FLOW_NEXT_STAGE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
+        except Exception as tts_error:
+            logger.error(f"[FLOW_NEXT_STAGE_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        
         return FlowChatResponse(
             session_id=session.session_id,
             stage=ConversationStage.PARAPHRASE,
             response_text=response_text,
-            audio_url=None,  # 실시간 TTS
+            audio_url=audio_url,  # 생성된 TTS 오디오 URL 사용
             target_words=session.learned_expressions,
             completed=False,
             next_action="Please answer the question using voice input"
@@ -486,8 +505,8 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
     if session.user_input_count >= 7:
         session.stage = ConversationStage.FINISHER
         
-        # OpenAI로 완료 응답 생성
-        response_text = await _generate_openai_response(session, ConversationStage.FINISHER, openai_service)
+        # OpenAI로 완료 응답 생성 (TTS 포함)
+        response_text, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.FINISHER, openai_service)
         
         _log_session_activity(session.session_id, "CONVERSATION_COMPLETED", {
             "emotion": session.emotion,
@@ -501,7 +520,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             session_id=session.session_id,
             stage=ConversationStage.FINISHER,
             response_text=response_text,
-            audio_url=f"https://voice.kreators.dev/flow_conversations/{session.emotion}/finisher.mp3",
+            audio_url=audio_url,  # 생성된 TTS 오디오 URL 사용
             completed=True,
             next_action="Conversation completed! Your learned expressions have been saved."
         )
@@ -524,12 +543,12 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         analysis_prompt = f"""
         사용자가 {session.emotion} 감정에 대해 "{user_input}"라고 말했습니다. (대화 {session.user_input_count}회차)
         
-        다음과 같은 4단계 구조로 응답을 생성해주세요:
+        다음과 같은 4단계 구조로 응답을 생성해주세요. 순서를 직접 언급하지 마세요.:
         
-        1. **반응하기**: 사용자의 input에 공감하고 반응
-        2. **표현 소개**: 유사한 의미의 영어 slang/idiom/phrase 소개
-        3. **Paraphrasing 유도**: 사용자의 표현을 영어로 paraphrasing 
-        4. **대화 이어가기**: 관련된 질문이나 더 이야기할 수 있도록 유도
+        - **반응하기**: 사용자의 input에 공감하고 반응
+        - **표현 소개**: 유사한 의미의 영어 slang/idiom/phrase 소개
+        - **Paraphrasing 유도**: 사용자의 표현을 영어로 paraphrasing 
+        - **대화 이어가기**: 관련된 질문이나 더 이야기할 수 있도록 유도
         
         JSON 형태로 응답해주세요:
         {{
@@ -688,11 +707,20 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             learned_expressions = await _generate_fallback_expressions(session, user_input, selected_teaching_expression, openai_service)
             session.learned_expressions = learned_expressions
         
+        # paraphrase_text에 대해 TTS 적용
+        audio_url = None
+        try:
+            language = "English"  # paraphrase_text는 영어로 생성됨
+            audio_url, duration = await openai_service.text_to_speech(paraphrase_text, language)
+            logger.info(f"[FLOW_PARAPHRASE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
+        except Exception as tts_error:
+            logger.error(f"[FLOW_PARAPHRASE_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        
         return FlowChatResponse(
             session_id=session.session_id,
             stage=ConversationStage.PARAPHRASE,
             response_text=paraphrase_text,
-            audio_url=None,  # 실시간 TTS
+            audio_url=audio_url,  # 생성된 TTS 오디오 URL 사용
             target_words=session.learned_expressions,
             completed=False,
             next_action="Use next_stage to learn new expressions and get next question"
@@ -840,7 +868,7 @@ async def get_available_emotions(request: Request):
     
     return response_data
 
-async def _generate_openai_response(session: ConversationSession, stage: ConversationStage, openai_service: OpenAIService, context: str = "") -> str:
+async def _generate_openai_response_with_tts(session: ConversationSession, stage: ConversationStage, openai_service: OpenAIService, context: str = "") -> tuple[str, Optional[str]]:
     """OpenAI로 단계별 응답 생성"""
     
     try:
@@ -932,20 +960,43 @@ async def _generate_openai_response(session: ConversationSession, stage: Convers
         
         logger.info(f"[FLOW_OPENAI_STAGE_RESPONSE] Session: {session.session_id} | Stage: {stage} | Generated: {generated_text}")
         
-        return generated_text
+        # TTS로 음성 변환 및 R2 업로드
+        audio_url = None
+        try:
+            # 영어 텍스트에 대해 TTS 실행
+            language = "English"  # flow API는 영어로 응답
+            audio_url, duration = await openai_service.text_to_speech(generated_text, language)
+            logger.info(f"[FLOW_TTS_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
+        except Exception as tts_error:
+            logger.error(f"[FLOW_TTS_ERROR] Session: {session.session_id} | Stage: {stage} | TTS failed: {str(tts_error)}")
+            # TTS 실패해도 텍스트 응답은 반환
+        
+        return generated_text, audio_url
         
     except Exception as e:
         logger.error(f"[FLOW_OPENAI_STAGE_ERROR] Session: {session.session_id} | Stage: {stage} | Error: {str(e)}")
         
         # Emergency fallback - 매우 기본적인 응답만 사용
+        fallback_text = ""
         if stage == ConversationStage.STARTER:
-            return f"Hello! I can see you're feeling {session.emotion}. What made you feel this way?"
+            fallback_text = f"Hello! I can see you're feeling {session.emotion}. What made you feel this way?"
         elif stage == ConversationStage.FINISHER:
-            return f"Thank you1212 for sharing your feelings about being {session.emotion}. You did great!"
+            fallback_text = f"Thank you for sharing your feelings about being {session.emotion}. You did great!"
         elif stage == ConversationStage.RESTART:
-            return f"Let's start fresh! Tell me about feeling {session.emotion}."
+            fallback_text = f"Let's start fresh! Tell me about feeling {session.emotion}."
         else:
-            return f"I understand you're feeling {session.emotion}. Can you tell me more?"
+            fallback_text = f"I understand you're feeling {session.emotion}. Can you tell me more?"
+        
+        # 폴백 응답에 대해서도 TTS 시도
+        audio_url = None
+        try:
+            language = "English"
+            audio_url, duration = await openai_service.text_to_speech(fallback_text, language)
+            logger.info(f"[FLOW_TTS_FALLBACK_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url}")
+        except Exception as tts_error:
+            logger.error(f"[FLOW_TTS_FALLBACK_ERROR] Session: {session.session_id} | Stage: {stage} | TTS failed: {str(tts_error)}")
+        
+        return fallback_text, audio_url
 
 async def _generate_fallback_expressions(session: ConversationSession, user_input: str, selected_teaching_expression: dict, openai_service: OpenAIService) -> List[LearnWord]:
     """OpenAI로 폴백 학습 표현 생성"""
