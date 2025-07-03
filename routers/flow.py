@@ -912,7 +912,7 @@ async def _generate_openai_response(session: ConversationSession, stage: Convers
         if stage == ConversationStage.STARTER:
             return f"Hello! I can see you're feeling {session.emotion}. What made you feel this way?"
         elif stage == ConversationStage.FINISHER:
-            return f"Thank you for sharing your feelings about being {session.emotion}. You did great!"
+            return f"Thank you1212 for sharing your feelings about being {session.emotion}. You did great!"
         elif stage == ConversationStage.RESTART:
             return f"Let's start fresh! Tell me about feeling {session.emotion}."
         else:

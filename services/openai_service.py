@@ -1911,12 +1911,38 @@ Return valid JSON:
         try:
             response = self.client.chat.completions.create(
                 model=self.default_model,
-                messages=[{"role": "user", "content": "Hi"}],
-                max_tokens=1  # 5에서 1로 감소 - 최소한의 토큰만 사용
+                messages=[{"role": "user", "content": "Hello"}],
+                max_tokens=5
             )
             return True
-        except Exception:
+        except Exception as e:
+            logger.error(f"API 키 테스트 실패: {str(e)}")
             return False
+    
+    async def get_chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 1000) -> Any:
+        """
+        OpenAI Chat Completion API를 호출합니다.
+        Flow-Chat API에서 사용하기 위한 간단한 래퍼 메서드입니다.
+        
+        Args:
+            messages: 메시지 목록 [{"role": "user", "content": "..."}]
+            temperature: 응답의 창의성 (0.0-1.0)
+            max_tokens: 최대 토큰 수
+            
+        Returns:
+            OpenAI API 응답 객체
+        """
+        try:
+            response = self.client.chat.completions.create(
+                model=self.default_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            return response
+        except Exception as e:
+            logger.error(f"OpenAI Chat Completion 호출 실패: {str(e)}")
+            raise e
 
 # 전역 OpenAI 서비스 인스턴스
 openai_service = OpenAIService() 
