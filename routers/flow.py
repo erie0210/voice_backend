@@ -42,6 +42,7 @@ class FlowChatRequest(BaseModel):
     emotion: Optional[str] = None
     from_lang: LanguageCode = LanguageCode.KOREAN
     to_lang: LanguageCode = LanguageCode.ENGLISH
+    is_tts_enabled: Optional[bool] = None
 
 class FlowChatResponse(BaseModel):
     session_id: str
@@ -300,14 +301,14 @@ async def flow_chat(
         })
         
         if request.action == FlowAction.NEXT_STAGE:
-            response = await _handle_next_stage(session, openai_service)
+            response = await _handle_next_stage(session, openai_service, request.is_tts_enabled)
             
         elif request.action == FlowAction.VOICE_INPUT:
             if not request.user_input:
                 logger.warning(f"[FLOW_API_VALIDATION] Missing user_input for voice_input action in session {request.session_id}")
                 raise HTTPException(status_code=400, detail="User input is required for voice_input action")
             
-            response = await _handle_voice_input(session, request.user_input, openai_service)
+            response = await _handle_voice_input(session, request.user_input, openai_service, request)
             
         elif request.action == FlowAction.RESTART:
             session.stage = ConversationStage.STARTER
@@ -321,7 +322,7 @@ async def flow_chat(
             })
             
             # OpenAI로 재시작 응답 생성 (TTS 포함)
-            response_text, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.RESTART, openai_service)
+            response_text, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.RESTART, openai_service, is_tts_enabled=request.is_tts_enabled)
             
             response = FlowChatResponse(
                 session_id=session.session_id,
@@ -351,7 +352,7 @@ async def flow_chat(
         _log_error(e, request, start_time)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-async def _handle_next_stage(session: ConversationSession, openai_service: OpenAIService) -> FlowChatResponse:
+async def _handle_next_stage(session: ConversationSession, openai_service: OpenAIService, is_tts_enabled: Optional[bool] = None) -> FlowChatResponse:
     """다음 단계로 진행"""
     
     logger.info(f"[FLOW_STAGE_TRANSITION] Session: {session.session_id} | From: {session.stage} | Emotion: {session.emotion} | Input Count: {session.user_input_count}/7")
@@ -362,14 +363,17 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
         response_text = f"{session.emotion} 감정과 관련된 expressions를 배워봐요! 음성으로 최근에 {session.emotion}을 느낀 경험을 이야기해주세요."
         next_action = "감정에 대해 음성으로 이야기해주세요"
         
-        # Apply TTS to response_text (Mixed language so English is default)
+        # Apply TTS to response_text (is_tts_enabled가 True일 때만)
         audio_url = None
-        try:
-            tts_language = "English"  # Mixed language는 주로 영어 기반
-            audio_url, duration = await openai_service.text_to_speech(response_text, tts_language)
-            logger.info(f"[FLOW_STARTER_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
-        except Exception as tts_error:
-            logger.error(f"[FLOW_STARTER_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        if is_tts_enabled:
+            try:
+                tts_language = "English"  # Mixed language는 주로 영어 기반
+                audio_url, duration = await openai_service.text_to_speech(response_text, tts_language)
+                logger.info(f"[FLOW_STARTER_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
+            except Exception as tts_error:
+                logger.error(f"[FLOW_STARTER_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        else:
+            logger.info(f"[FLOW_STARTER_TTS_SKIPPED] Session: {session.session_id} | TTS disabled")
         
         return FlowChatResponse(
             session_id=session.session_id,
@@ -408,12 +412,15 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
         })
         
         audio_url = None
-        try:
-            tts_language = "English"  # Mixed language 주로 영어 기반
-            audio_url, duration = await openai_service.text_to_speech(response_text, tts_language)
-            logger.info(f"[FLOW_NEXT_STAGE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
-        except Exception as tts_error:
-            logger.error(f"[FLOW_NEXT_STAGE_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        if is_tts_enabled:
+            try:
+                tts_language = "English"  # Mixed language 주로 영어 기반
+                audio_url, duration = await openai_service.text_to_speech(response_text, tts_language)
+                logger.info(f"[FLOW_NEXT_STAGE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
+            except Exception as tts_error:
+                logger.error(f"[FLOW_NEXT_STAGE_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        else:
+            logger.info(f"[FLOW_NEXT_STAGE_TTS_SKIPPED] Session: {session.session_id} | TTS disabled")
         
         return FlowChatResponse(
             session_id=session.session_id,
@@ -429,7 +436,7 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
         logger.warning(f"[FLOW_STAGE_ERROR] Cannot proceed to next stage from {session.stage} in session {session.session_id}")
         raise HTTPException(status_code=400, detail="Cannot proceed to next stage from current stage")
 
-async def _handle_voice_input(session: ConversationSession, user_input: str, openai_service: OpenAIService) -> FlowChatResponse:
+async def _handle_voice_input(session: ConversationSession, user_input: str, openai_service: OpenAIService, request: FlowChatRequest) -> FlowChatResponse:
     """음성 입력 처리"""
     
     logger.info(f"[FLOW_VOICE_INPUT] Session: {session.session_id} | Stage: {session.stage} | Input: {user_input[:50]}...")
@@ -445,7 +452,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         session.stage = ConversationStage.FINISHER
         
         # OpenAI로 완료 응답 생성 (TTS 포함)
-        response_text, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.FINISHER, openai_service)
+        response_text, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.FINISHER, openai_service, is_tts_enabled=request.is_tts_enabled)
         
         _log_session_activity(session.session_id, "CONVERSATION_COMPLETED", {
             "emotion": session.emotion,
@@ -573,14 +580,17 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             ]
             session.learned_expressions = learned_expressions
         
-        # TTS 처리
+        # TTS 처리 (is_tts_enabled가 True일 때만)
         audio_url = None
-        try:
-            tts_language = "English"  # Mixed language는 주로 영어 기반
-            audio_url, duration = await openai_service.text_to_speech(paraphrase_text, tts_language)
-            logger.info(f"[FLOW_PARAPHRASE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
-        except Exception as tts_error:
-            logger.error(f"[FLOW_PARAPHRASE_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        if request.is_tts_enabled:
+            try:
+                tts_language = "English"  # Mixed language는 주로 영어 기반
+                audio_url, duration = await openai_service.text_to_speech(paraphrase_text, tts_language)
+                logger.info(f"[FLOW_PARAPHRASE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
+            except Exception as tts_error:
+                logger.error(f"[FLOW_PARAPHRASE_TTS_ERROR] Session: {session.session_id} | TTS failed: {str(tts_error)}")
+        else:
+            logger.info(f"[FLOW_PARAPHRASE_TTS_SKIPPED] Session: {session.session_id} | TTS disabled")
         
         voice_input_action = "Use next_stage to learn new expressions and get next question"
         
@@ -736,7 +746,7 @@ async def get_available_emotions(request: Request):
     
     return response_data
 
-async def _generate_openai_response_with_tts(session: ConversationSession, stage: ConversationStage, openai_service: OpenAIService, context: str = "") -> tuple[str, Optional[str]]:
+async def _generate_openai_response_with_tts(session: ConversationSession, stage: ConversationStage, openai_service: OpenAIService, context: str = "", is_tts_enabled: Optional[bool] = None) -> tuple[str, Optional[str]]:
     """OpenAI로 단계별 응답 생성"""
     
     try:
@@ -798,16 +808,19 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         
         logger.info(f"[FLOW_OPENAI_STAGE_RESPONSE] Session: {session.session_id} | Stage: {stage} | Generated: {generated_text}")
         
-        # TTS로 음성 변환 및 R2 업로드 (Mixed language이므로 Korean 기본 사용)
+        # TTS로 음성 변환 및 R2 업로드 (is_tts_enabled가 True일 때만)
         audio_url = None
-        try:
-            # Mixed language이므로 Korean TTS 사용
-            tts_language = "Korean"
-            audio_url, duration = await openai_service.text_to_speech(generated_text, tts_language)
-            logger.info(f"[FLOW_TTS_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
-        except Exception as tts_error:
-            logger.error(f"[FLOW_TTS_ERROR] Session: {session.session_id} | Stage: {stage} | TTS failed: {str(tts_error)}")
-            # TTS 실패해도 텍스트 응답은 반환
+        if is_tts_enabled:
+            try:
+                # Mixed language이므로 Korean TTS 사용
+                tts_language = "Korean"
+                audio_url, duration = await openai_service.text_to_speech(generated_text, tts_language)
+                logger.info(f"[FLOW_TTS_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
+            except Exception as tts_error:
+                logger.error(f"[FLOW_TTS_ERROR] Session: {session.session_id} | Stage: {stage} | TTS failed: {str(tts_error)}")
+                # TTS 실패해도 텍스트 응답은 반환
+        else:
+            logger.info(f"[FLOW_TTS_SKIPPED] Session: {session.session_id} | Stage: {stage} | TTS disabled")
         
         return generated_text, audio_url
         
@@ -825,13 +838,16 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         else:
             fallback_text = f"{session.emotion} 감정을 이해해요. 더 이야기해주실 수 있어요?"
         
-        # 폴백 응답에 대해서도 TTS 시도 (Mixed language이므로 Korean 기본 사용)
+        # 폴백 응답에 대해서도 TTS 시도 (is_tts_enabled가 True일 때만)
         audio_url = None
-        try:
-            fallback_tts_language = "English"  # Mixed language는 주로 영어 기반
-            audio_url, duration = await openai_service.text_to_speech(fallback_text, fallback_tts_language)
-            logger.info(f"[FLOW_TTS_FALLBACK_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url}")
-        except Exception as tts_error:
-            logger.error(f"[FLOW_TTS_FALLBACK_ERROR] Session: {session.session_id} | Stage: {stage} | TTS failed: {str(tts_error)}")
+        if is_tts_enabled:
+            try:
+                fallback_tts_language = "English"  # Mixed language는 주로 영어 기반
+                audio_url, duration = await openai_service.text_to_speech(fallback_text, fallback_tts_language)
+                logger.info(f"[FLOW_TTS_FALLBACK_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url}")
+            except Exception as tts_error:
+                logger.error(f"[FLOW_TTS_FALLBACK_ERROR] Session: {session.session_id} | Stage: {stage} | TTS failed: {str(tts_error)}")
+        else:
+            logger.info(f"[FLOW_TTS_FALLBACK_SKIPPED] Session: {session.session_id} | Stage: {stage} | TTS disabled")
         
         return fallback_text, audio_url 
