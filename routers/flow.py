@@ -487,11 +487,13 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         unified_prompt = f"""
         User said: "{user_input}" (language study topic: {session.emotion})
         Response should be in {mixed_language}
-        Response should be 3-4 short sentences. 
+        Response should be 3 short sentences.
+        Encourage user to repeat the response in {user_language}.
+        Don't repeat the same response. history: {session.learned_expressions}
         
         Create a response in {mixed_language} with steps:
         - Empathetic reaction to user's feeling (if needed)
-        - Paraphrase user's input in {ai_language}
+        - Paraphrase user's input in {ai_language} using slang, idioms, and expressions.
         - Then provide 2 {ai_language} expressions used in your paraphrase response.
         
         Respond in JSON format:
