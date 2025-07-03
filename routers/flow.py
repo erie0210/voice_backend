@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 
 from services.openai_service import OpenAIService
-from models.api_models import LanguageCode
+from models.api_models import LanguageCode, LearnWord
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -47,7 +47,7 @@ class FlowChatResponse(BaseModel):
     stage: ConversationStage
     response_text: str
     audio_url: Optional[str] = None
-    target_words: Optional[List[str]] = None
+    target_words: Optional[List[LearnWord]] = None
     stt_feedback: Optional[Dict[str, Any]] = None
     completed: bool = False
     next_action: Optional[str] = None
@@ -59,7 +59,7 @@ class ConversationSession:
         self.from_lang = from_lang
         self.to_lang = to_lang
         self.stage = ConversationStage.STARTER
-        self.learned_words = []
+        self.learned_expressions = []  # LearnWord 객체들을 저장
         self.user_answers = []
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
@@ -67,20 +67,68 @@ class ConversationSession:
 # 메모리 기반 세션 저장소 (프로덕션에서는 Redis나 DB 사용)
 sessions: Dict[str, ConversationSession] = {}
 
-# 감정별 학습 단어 정의
-EMOTION_VOCABULARY = {
-    "happy": ["joyful", "delighted", "cheerful", "content", "pleased"],
-    "sad": ["sorrowful", "melancholy", "disappointed", "heartbroken", "gloomy"],
-    "angry": ["furious", "irritated", "annoyed", "outraged", "frustrated"],
-    "scared": ["terrified", "anxious", "worried", "nervous", "frightened"],
-    "shy": ["bashful", "timid", "reserved", "modest", "self-conscious"],
-    "sleepy": ["drowsy", "tired", "exhausted", "weary", "fatigued"],
-    "upset": ["distressed", "troubled", "bothered", "agitated", "disturbed"],
-    "confused": ["puzzled", "bewildered", "perplexed", "uncertain", "lost"],
-    "bored": ["uninterested", "restless", "weary", "disengaged", "listless"],
-    "love": ["affectionate", "devoted", "caring", "passionate", "tender"],
-    "proud": ["accomplished", "satisfied", "confident", "triumphant", "honored"],
-    "nervous": ["anxious", "tense", "uneasy", "jittery", "apprehensive"]
+# 감정별 교육 표현 정의 (가르쳐주려는 표현)
+EMOTION_TEACHING_EXPRESSIONS = {
+    "happy": [
+        {"word": "I'm over the moon", "meaning": "정말 기쁩니다", "pronunciation": "아임 오버 더 문"},
+        {"word": "I'm on cloud nine", "meaning": "구름 위에 있는 것 같이 기뻐요", "pronunciation": "아임 온 클라우드 나인"},
+        {"word": "I'm thrilled", "meaning": "너무 신나요", "pronunciation": "아임 쓰릴드"}
+    ],
+    "sad": [
+        {"word": "I'm feeling down", "meaning": "기분이 우울해요", "pronunciation": "아임 필링 다운"},
+        {"word": "I'm heartbroken", "meaning": "마음이 아픕니다", "pronunciation": "아임 하트브로큰"},
+        {"word": "I'm devastated", "meaning": "너무 상심했어요", "pronunciation": "아임 데바스테이티드"}
+    ],
+    "angry": [
+        {"word": "I'm furious", "meaning": "화가 많이 납니다", "pronunciation": "아임 퓨리어스"},
+        {"word": "I'm livid", "meaning": "너무 화가 나요", "pronunciation": "아임 리비드"},
+        {"word": "I'm outraged", "meaning": "분노하고 있어요", "pronunciation": "아임 아웃레이지드"}
+    ],
+    "scared": [
+        {"word": "I'm terrified", "meaning": "너무 무서워요", "pronunciation": "아임 테리파이드"},
+        {"word": "I'm petrified", "meaning": "무서워서 얼어붙었어요", "pronunciation": "아임 페트리파이드"},
+        {"word": "I'm shaking with fear", "meaning": "무서워서 떨고 있어요", "pronunciation": "아임 쉐이킹 위드 피어"}
+    ],
+    "shy": [
+        {"word": "I'm bashful", "meaning": "부끄러워요", "pronunciation": "아임 배쉬풀"},
+        {"word": "I'm timid", "meaning": "소심해요", "pronunciation": "아임 티미드"},
+        {"word": "I'm self-conscious", "meaning": "의식하고 있어요", "pronunciation": "아임 셀프 컨셔스"}
+    ],
+    "sleepy": [
+        {"word": "I'm drowsy", "meaning": "졸려요", "pronunciation": "아임 드라우지"},
+        {"word": "I'm exhausted", "meaning": "지쳐있어요", "pronunciation": "아임 이그조스티드"},
+        {"word": "I'm worn out", "meaning": "기진맥진해요", "pronunciation": "아임 원 아웃"}
+    ],
+    "upset": [
+        {"word": "I'm distressed", "meaning": "괴로워요", "pronunciation": "아임 디스트레스드"},
+        {"word": "I'm troubled", "meaning": "고민이 있어요", "pronunciation": "아임 트러블드"},
+        {"word": "I'm bothered", "meaning": "신경쓰여요", "pronunciation": "아임 바더드"}
+    ],
+    "confused": [
+        {"word": "I'm bewildered", "meaning": "당황스러워요", "pronunciation": "아임 비와일더드"},
+        {"word": "I'm perplexed", "meaning": "혼란스러워요", "pronunciation": "아임 퍼플렉스드"},
+        {"word": "I'm puzzled", "meaning": "의아해요", "pronunciation": "아임 퍼즐드"}
+    ],
+    "bored": [
+        {"word": "I'm uninterested", "meaning": "흥미가 없어요", "pronunciation": "아임 언인터레스티드"},
+        {"word": "I'm restless", "meaning": "안절부절못해요", "pronunciation": "아임 레스트리스"},
+        {"word": "I'm disengaged", "meaning": "관심이 없어요", "pronunciation": "아임 디스인게이지드"}
+    ],
+    "love": [
+        {"word": "I'm smitten", "meaning": "푹 빠졌어요", "pronunciation": "아임 스미튼"},
+        {"word": "I'm infatuated", "meaning": "반해버렸어요", "pronunciation": "아임 인패츄에이티드"},
+        {"word": "I'm head over heels", "meaning": "완전히 빠져있어요", "pronunciation": "아임 헤드 오버 힐스"}
+    ],
+    "proud": [
+        {"word": "I'm accomplished", "meaning": "성취감을 느껴요", "pronunciation": "아임 어컴플리쉬드"},
+        {"word": "I'm triumphant", "meaning": "승리감을 느껴요", "pronunciation": "아임 트라이엄펀트"},
+        {"word": "I'm elated", "meaning": "우쭐해요", "pronunciation": "아임 일레이티드"}
+    ],
+    "nervous": [
+        {"word": "I'm anxious", "meaning": "불안해요", "pronunciation": "아임 앵시어스"},
+        {"word": "I'm jittery", "meaning": "초조해요", "pronunciation": "아임 지터리"},
+        {"word": "I'm apprehensive", "meaning": "걱정돼요", "pronunciation": "아임 애프리헨시브"}
+    ]
 }
 
 # 단계별 응답 템플릿
@@ -130,7 +178,7 @@ STAGE_RESPONSES = {
 }
 
 def _log_request(request: Request, flow_request: FlowChatRequest, start_time: float):
-    """요청 로깅"""
+    """요청 로깅 (요약)"""
     client_ip = request.client.host if request.client else "unknown"
     user_agent = request.headers.get("user-agent", "unknown")
     
@@ -141,8 +189,25 @@ def _log_request(request: Request, flow_request: FlowChatRequest, start_time: fl
     
     logger.info(f"[FLOW_API_REQUEST] IP: {client_ip} | User-Agent: {user_agent[:100]} | Request: {masked_request}")
 
+def _log_request_full(request: Request, flow_request: FlowChatRequest, start_time: float):
+    """요청 전체 로깅 (상세)"""
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    # 전체 요청 데이터 로깅
+    full_request = flow_request.dict()
+    
+    logger.info(f"[FLOW_API_REQUEST_FULL] ===== REQUEST START =====")
+    logger.info(f"[FLOW_API_REQUEST_FULL] IP: {client_ip}")
+    logger.info(f"[FLOW_API_REQUEST_FULL] User-Agent: {user_agent}")
+    logger.info(f"[FLOW_API_REQUEST_FULL] Headers: {dict(request.headers)}")
+    logger.info(f"[FLOW_API_REQUEST_FULL] Method: {request.method}")
+    logger.info(f"[FLOW_API_REQUEST_FULL] URL: {request.url}")
+    logger.info(f"[FLOW_API_REQUEST_FULL] Request Body: {json.dumps(full_request, ensure_ascii=False, indent=2)}")
+    logger.info(f"[FLOW_API_REQUEST_FULL] ===== REQUEST END =====")
+
 def _log_response(flow_request: FlowChatRequest, response: FlowChatResponse, start_time: float, status_code: int = 200):
-    """응답 로깅"""
+    """응답 로깅 (요약)"""
     elapsed_time = time.time() - start_time
     
     # 응답 데이터 마스킹
@@ -151,6 +216,22 @@ def _log_response(flow_request: FlowChatRequest, response: FlowChatResponse, sta
         masked_response["response_text"] = f"{masked_response['response_text'][:50]}..." if len(masked_response["response_text"]) > 50 else masked_response["response_text"]
     
     logger.info(f"[FLOW_API_RESPONSE] Action: {flow_request.action} | Session: {response.session_id} | Stage: {response.stage} | Status: {status_code} | Time: {elapsed_time:.3f}s | Response: {masked_response}")
+
+def _log_response_full(flow_request: FlowChatRequest, response: FlowChatResponse, start_time: float, status_code: int = 200):
+    """응답 전체 로깅 (상세)"""
+    elapsed_time = time.time() - start_time
+    
+    # 전체 응답 데이터 로깅
+    full_response = response.dict()
+    
+    logger.info(f"[FLOW_API_RESPONSE_FULL] ===== RESPONSE START =====")
+    logger.info(f"[FLOW_API_RESPONSE_FULL] Action: {flow_request.action}")
+    logger.info(f"[FLOW_API_RESPONSE_FULL] Session: {response.session_id}")
+    logger.info(f"[FLOW_API_RESPONSE_FULL] Stage: {response.stage}")
+    logger.info(f"[FLOW_API_RESPONSE_FULL] Status Code: {status_code}")
+    logger.info(f"[FLOW_API_RESPONSE_FULL] Elapsed Time: {elapsed_time:.3f}s")
+    logger.info(f"[FLOW_API_RESPONSE_FULL] Response Body: {json.dumps(full_response, ensure_ascii=False, indent=2, default=str)}")
+    logger.info(f"[FLOW_API_RESPONSE_FULL] ===== RESPONSE END =====")
 
 def _log_session_activity(session_id: str, activity: str, details: Dict[str, Any] = None):
     """세션 활동 로깅"""
@@ -165,10 +246,21 @@ def _log_session_activity(session_id: str, activity: str, details: Dict[str, Any
     logger.info(f"[FLOW_SESSION_ACTIVITY] {log_data}")
 
 def _log_error(error: Exception, flow_request: FlowChatRequest, start_time: float):
-    """에러 로깅"""
+    """에러 로깅 (상세)"""
     elapsed_time = time.time() - start_time
     
-    logger.error(f"[FLOW_API_ERROR] Action: {flow_request.action} | Session: {flow_request.session_id} | Error: {str(error)} | Time: {elapsed_time:.3f}s", exc_info=True)
+    # 요약 에러 로깅
+    logger.error(f"[FLOW_API_ERROR] Action: {flow_request.action} | Session: {flow_request.session_id} | Error: {str(error)} | Time: {elapsed_time:.3f}s")
+    
+    # 상세 에러 로깅
+    logger.error(f"[FLOW_API_ERROR_FULL] ===== ERROR START =====")
+    logger.error(f"[FLOW_API_ERROR_FULL] Action: {flow_request.action}")
+    logger.error(f"[FLOW_API_ERROR_FULL] Session: {flow_request.session_id}")
+    logger.error(f"[FLOW_API_ERROR_FULL] Error Type: {type(error).__name__}")
+    logger.error(f"[FLOW_API_ERROR_FULL] Error Message: {str(error)}")
+    logger.error(f"[FLOW_API_ERROR_FULL] Elapsed Time: {elapsed_time:.3f}s")
+    logger.error(f"[FLOW_API_ERROR_FULL] Request Data: {json.dumps(flow_request.dict(), ensure_ascii=False, indent=2)}")
+    logger.error(f"[FLOW_API_ERROR_FULL] ===== ERROR END =====", exc_info=True)
 
 def get_openai_service():
     return OpenAIService()
@@ -193,8 +285,9 @@ async def flow_chat(
     
     start_time = time.time()
     
-    # 요청 로깅
+    # 요청 로깅 (요약 + 상세)
     _log_request(http_request, request, start_time)
+    _log_request_full(http_request, request, start_time)
     
     try:
         # 새 세션 생성 또는 기존 세션 로드
@@ -242,8 +335,9 @@ async def flow_chat(
                 next_action="Please tell me about what made you feel this way using voice input"
             )
             
-            # 응답 로깅
+            # 응답 로깅 (요약 + 상세)
             _log_response(request, response, start_time)
+            _log_response_full(request, response, start_time)
             
             return response
         
@@ -275,7 +369,7 @@ async def flow_chat(
         elif request.action == FlowAction.RESTART:
             session.stage = ConversationStage.STARTER
             session.user_answers = []
-            session.learned_words = []
+            session.learned_expressions = []
             
             # 세션 재시작 로깅
             _log_session_activity(request.session_id, "SESSION_RESTARTED", {
@@ -297,8 +391,9 @@ async def flow_chat(
             logger.warning(f"[FLOW_API_VALIDATION] Invalid action: {request.action} for session {request.session_id}")
             raise HTTPException(status_code=400, detail="Invalid action")
         
-        # 응답 로깅
+        # 응답 로깅 (요약 + 상세)
         _log_response(request, response, start_time)
+        _log_response_full(request, response, start_time)
         
         return response
             
@@ -472,15 +567,103 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         
         try:
             logger.info(f"[FLOW_OPENAI_REQUEST] Session: {session.session_id} | Paraphrasing user input")
+            logger.info(f"[FLOW_OPENAI_REQUEST_PROMPT] Session: {session.session_id} | Prompt: {analysis_prompt}")
+            
             paraphrase_response = await openai_service.get_chat_completion(
                 messages=[{"role": "user", "content": analysis_prompt}],
                 temperature=0.7
             )
-            paraphrase_text = paraphrase_response.choices[0].message.content
+            response_content = paraphrase_response.choices[0].message.content
+            
             logger.info(f"[FLOW_OPENAI_RESPONSE] Session: {session.session_id} | Paraphrase successful")
+            logger.info(f"[FLOW_OPENAI_RESPONSE_CONTENT] Session: {session.session_id} | Response: {response_content}")
+            
+            # JSON 응답 파싱
+            try:
+                parsed_response = json.loads(response_content)
+                learned_expressions_data = parsed_response.get("learned_expressions", [])
+                paraphrase_text = parsed_response.get("paraphrase", "")
+                
+                # LearnWord 객체들 생성
+                learned_expressions = []
+                for expr_data in learned_expressions_data:
+                    learn_word = LearnWord(
+                        word=expr_data.get("word", ""),
+                        meaning=expr_data.get("meaning", ""),
+                        pronunciation=expr_data.get("pronunciation", ""),
+                        example=expr_data.get("example", "")
+                    )
+                    learned_expressions.append(learn_word)
+                
+                # 교육 표현 추가
+                teaching_learn_word = LearnWord(
+                    word=selected_teaching_expression["word"],
+                    meaning=selected_teaching_expression["meaning"],
+                    pronunciation=selected_teaching_expression["pronunciation"],
+                    example=f"When you're feeling {session.emotion}, you can say: {selected_teaching_expression['word']}"
+                )
+                learned_expressions.append(teaching_learn_word)
+                
+                # 세션에 저장
+                session.learned_expressions = learned_expressions
+                
+                logger.info(f"[FLOW_EXPRESSION_GENERATION] Session: {session.session_id} | Generated {len(learned_expressions)} expressions")
+                
+            except json.JSONDecodeError:
+                logger.error(f"[FLOW_JSON_PARSE_ERROR] Session: {session.session_id} | Failed to parse JSON response")
+                # 폴백 처리
+                paraphrase_text = f"I hear that you're feeling {session.emotion} because {user_input}. That's completely understandable. {selected_teaching_expression['word']} - that's a great way to express how you feel!"
+                
+                # 기본 학습 표현 생성
+                learned_expressions = [
+                    LearnWord(
+                        word="I feel",
+                        meaning="나는 느낍니다",
+                        pronunciation="아이 필",
+                        example="I feel happy when I see my friends."
+                    ),
+                    LearnWord(
+                        word="because",
+                        meaning="왜냐하면",
+                        pronunciation="비코즈",
+                        example="I'm sad because it's raining."
+                    ),
+                    LearnWord(
+                        word=selected_teaching_expression["word"],
+                        meaning=selected_teaching_expression["meaning"],
+                        pronunciation=selected_teaching_expression["pronunciation"],
+                        example=f"When you're feeling {session.emotion}, you can say: {selected_teaching_expression['word']}"
+                    )
+                ]
+                session.learned_expressions = learned_expressions
+                
         except Exception as e:
             logger.error(f"[FLOW_OPENAI_ERROR] Session: {session.session_id} | Paraphrase failed: {str(e)}")
-            paraphrase_text = f"I hear that you're feeling {session.emotion} because {user_input}. That's completely understandable."
+            # 폴백 처리
+            paraphrase_text = f"I understand you're feeling {session.emotion}. Let me teach you how to express this better using: {selected_teaching_expression['word']}"
+            
+            # 기본 학습 표현 생성
+            learned_expressions = [
+                LearnWord(
+                    word="I feel",
+                    meaning="나는 느낍니다",
+                    pronunciation="아이 필",
+                    example="I feel happy when I see my friends."
+                ),
+                LearnWord(
+                    word="because",
+                    meaning="왜냐하면",
+                    pronunciation="비코즈",
+                    example="I'm sad because it's raining."
+                ),
+                LearnWord(
+                    word=selected_teaching_expression["word"],
+                    meaning=selected_teaching_expression["meaning"],
+                    pronunciation=selected_teaching_expression["pronunciation"],
+                    example=f"When you're feeling {session.emotion}, you can say: {selected_teaching_expression['word']}"
+                )
+            ]
+            session.learned_expressions = learned_expressions
         
         return FlowChatResponse(
             session_id=session.session_id,
@@ -492,13 +675,13 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             next_action="Learn the new expressions and proceed to vocabulary practice"
         )
     
-    # 기존 EMPATHY_VOCAB 단계 처리 코드는 그대로 유지
+    # EMPATHY_VOCAB 단계에서 발음 연습 처리
     elif session.stage == ConversationStage.EMPATHY_VOCAB:
         # Stage 5: User repeat & STT check
         session.stage = ConversationStage.USER_REPEAT
         
-        # 발음 체크 (간단한 키워드 매칭)
-        learned_words = session.learned_words
+        # 발음 체크 (학습 표현들과 비교)
+        learned_words = [expr.word for expr in session.learned_expressions]
         recognized_words = []
         
         for word in learned_words:
@@ -514,12 +697,12 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             "feedback": "Great job!" if accuracy > 70 else "Keep practicing!"
         }
         
-        response_text = f"Good effort! You pronounced {len(recognized_words)} out of {len(learned_words)} words correctly."
+        response_text = f"Good effort! You practiced {len(recognized_words)} out of {len(learned_words)} expressions correctly."
         
         _log_session_activity(session.session_id, "PRONUNCIATION_CHECK", {
             "emotion": session.emotion,
             "user_input": user_input,
-            "learned_words": learned_words,
+            "learned_expressions": [expr.word for expr in session.learned_expressions],
             "recognized_words": recognized_words,
             "accuracy": accuracy
         })
@@ -542,7 +725,19 @@ async def get_session_info(session_id: str, request: Request):
     """세션 정보 조회"""
     start_time = time.time()
     
-    logger.info(f"[FLOW_SESSION_INFO_REQUEST] Session: {session_id} | IP: {request.client.host if request.client else 'unknown'}")
+    # 요청 로깅
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST] Session: {session_id} | IP: {client_ip}")
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST_FULL] ===== GET SESSION REQUEST START =====")
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST_FULL] Session ID: {session_id}")
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST_FULL] IP: {client_ip}")
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST_FULL] User-Agent: {user_agent}")
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST_FULL] Headers: {dict(request.headers)}")
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST_FULL] Method: {request.method}")
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST_FULL] URL: {request.url}")
+    logger.info(f"[FLOW_SESSION_INFO_REQUEST_FULL] ===== GET SESSION REQUEST END =====")
     
     if session_id not in sessions:
         logger.warning(f"[FLOW_SESSION_NOT_FOUND] Session: {session_id}")
@@ -554,14 +749,22 @@ async def get_session_info(session_id: str, request: Request):
         "session_id": session.session_id,
         "emotion": session.emotion,
         "stage": session.stage,
-        "learned_words": session.learned_words,
+        "learned_expressions": [expr.dict() for expr in session.learned_expressions],
         "user_answers": session.user_answers,
         "created_at": session.created_at,
         "updated_at": session.updated_at
     }
     
     elapsed_time = time.time() - start_time
-    logger.info(f"[FLOW_SESSION_INFO_RESPONSE] Session: {session_id} | Time: {elapsed_time:.3f}s | Data: {response_data}")
+    
+    # 응답 로깅 (요약 + 상세)
+    logger.info(f"[FLOW_SESSION_INFO_RESPONSE] Session: {session_id} | Time: {elapsed_time:.3f}s")
+    logger.info(f"[FLOW_SESSION_INFO_RESPONSE_FULL] ===== GET SESSION RESPONSE START =====")
+    logger.info(f"[FLOW_SESSION_INFO_RESPONSE_FULL] Session: {session_id}")
+    logger.info(f"[FLOW_SESSION_INFO_RESPONSE_FULL] Status Code: 200")
+    logger.info(f"[FLOW_SESSION_INFO_RESPONSE_FULL] Elapsed Time: {elapsed_time:.3f}s")
+    logger.info(f"[FLOW_SESSION_INFO_RESPONSE_FULL] Response Body: {json.dumps(response_data, ensure_ascii=False, indent=2, default=str)}")
+    logger.info(f"[FLOW_SESSION_INFO_RESPONSE_FULL] ===== GET SESSION RESPONSE END =====")
     
     return response_data
 
@@ -570,7 +773,19 @@ async def delete_session(session_id: str, request: Request):
     """세션 삭제"""
     start_time = time.time()
     
-    logger.info(f"[FLOW_SESSION_DELETE_REQUEST] Session: {session_id} | IP: {request.client.host if request.client else 'unknown'}")
+    # 요청 로깅
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST] Session: {session_id} | IP: {client_ip}")
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST_FULL] ===== DELETE SESSION REQUEST START =====")
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST_FULL] Session ID: {session_id}")
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST_FULL] IP: {client_ip}")
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST_FULL] User-Agent: {user_agent}")
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST_FULL] Headers: {dict(request.headers)}")
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST_FULL] Method: {request.method}")
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST_FULL] URL: {request.url}")
+    logger.info(f"[FLOW_SESSION_DELETE_REQUEST_FULL] ===== DELETE SESSION REQUEST END =====")
     
     if session_id not in sessions:
         logger.warning(f"[FLOW_SESSION_DELETE_NOT_FOUND] Session: {session_id}")
@@ -581,33 +796,61 @@ async def delete_session(session_id: str, request: Request):
     _log_session_activity(session_id, "SESSION_DELETED", {
         "emotion": session.emotion,
         "stage": session.stage,
-        "learned_words": session.learned_words,
+        "learned_expressions": [expr.word for expr in session.learned_expressions],
         "user_answers": len(session.user_answers),
         "duration": (datetime.now() - session.created_at).total_seconds()
     })
     
     del sessions[session_id]
     
+    response_data = {"message": "Session deleted successfully"}
     elapsed_time = time.time() - start_time
-    logger.info(f"[FLOW_SESSION_DELETE_RESPONSE] Session: {session_id} | Time: {elapsed_time:.3f}s")
     
-    return {"message": "Session deleted successfully"}
+    # 응답 로깅 (요약 + 상세)
+    logger.info(f"[FLOW_SESSION_DELETE_RESPONSE] Session: {session_id} | Time: {elapsed_time:.3f}s")
+    logger.info(f"[FLOW_SESSION_DELETE_RESPONSE_FULL] ===== DELETE SESSION RESPONSE START =====")
+    logger.info(f"[FLOW_SESSION_DELETE_RESPONSE_FULL] Session: {session_id}")
+    logger.info(f"[FLOW_SESSION_DELETE_RESPONSE_FULL] Status Code: 200")
+    logger.info(f"[FLOW_SESSION_DELETE_RESPONSE_FULL] Elapsed Time: {elapsed_time:.3f}s")
+    logger.info(f"[FLOW_SESSION_DELETE_RESPONSE_FULL] Response Body: {json.dumps(response_data, ensure_ascii=False, indent=2)}")
+    logger.info(f"[FLOW_SESSION_DELETE_RESPONSE_FULL] ===== DELETE SESSION RESPONSE END =====")
+    
+    return response_data
 
 @router.get("/flow-chat/emotions")
 async def get_available_emotions(request: Request):
     """사용 가능한 감정 목록 조회"""
     start_time = time.time()
     
-    logger.info(f"[FLOW_EMOTIONS_REQUEST] IP: {request.client.host if request.client else 'unknown'}")
+    # 요청 로깅
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    logger.info(f"[FLOW_EMOTIONS_REQUEST] IP: {client_ip}")
+    logger.info(f"[FLOW_EMOTIONS_REQUEST_FULL] ===== GET EMOTIONS REQUEST START =====")
+    logger.info(f"[FLOW_EMOTIONS_REQUEST_FULL] IP: {client_ip}")
+    logger.info(f"[FLOW_EMOTIONS_REQUEST_FULL] User-Agent: {user_agent}")
+    logger.info(f"[FLOW_EMOTIONS_REQUEST_FULL] Headers: {dict(request.headers)}")
+    logger.info(f"[FLOW_EMOTIONS_REQUEST_FULL] Method: {request.method}")
+    logger.info(f"[FLOW_EMOTIONS_REQUEST_FULL] URL: {request.url}")
+    logger.info(f"[FLOW_EMOTIONS_REQUEST_FULL] ===== GET EMOTIONS REQUEST END =====")
     
     response_data = {
-        "emotions": list(EMOTION_VOCABULARY.keys()),
-        "vocabulary_preview": {
-            emotion: words[:2] for emotion, words in EMOTION_VOCABULARY.items()
+        "emotions": list(EMOTION_TEACHING_EXPRESSIONS.keys()),
+        "teaching_expressions_preview": {
+            emotion: [expr["word"] for expr in expressions[:2]] 
+            for emotion, expressions in EMOTION_TEACHING_EXPRESSIONS.items()
         }
     }
     
     elapsed_time = time.time() - start_time
+    
+    # 응답 로깅 (요약 + 상세)
     logger.info(f"[FLOW_EMOTIONS_RESPONSE] Time: {elapsed_time:.3f}s | Emotions: {len(response_data['emotions'])}")
+    logger.info(f"[FLOW_EMOTIONS_RESPONSE_FULL] ===== GET EMOTIONS RESPONSE START =====")
+    logger.info(f"[FLOW_EMOTIONS_RESPONSE_FULL] Status Code: 200")
+    logger.info(f"[FLOW_EMOTIONS_RESPONSE_FULL] Elapsed Time: {elapsed_time:.3f}s")
+    logger.info(f"[FLOW_EMOTIONS_RESPONSE_FULL] Response Body: {json.dumps(response_data, ensure_ascii=False, indent=2)}")
+    logger.info(f"[FLOW_EMOTIONS_RESPONSE_FULL] ===== GET EMOTIONS RESPONSE END =====")
     
     return response_data 
