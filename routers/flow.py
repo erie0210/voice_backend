@@ -484,6 +484,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         # 단순화된 단일 OpenAI 호출: 응답과 학습 표현을 한 번에 생성
         unified_prompt = f"""
         User said: "{user_input}" (language study topic: {session.emotion})
+        User is learning {ai_language}. 
         Response should be in {mixed_language}
         Response should be 3 short sentences.
         Encourage user to repeat the response in {user_language}.
