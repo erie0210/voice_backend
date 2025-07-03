@@ -713,7 +713,7 @@ JSON 형식으로만 응답하세요:
                                              ai_language: str, difficulty_level: str, last_user_message: str) -> tuple[str, List[LearnWord], Optional[str]]:
         """
         템플릿 기반으로 채팅 응답을 생성합니다.
-        1) 반응 및 수용 2) 설명 및 확장 3) 이야기 이어가기 구조로 구성됩니다.
+        1) 반응 및 수용 2) 설명 및 확장 3) 따라말하기 구조로 구성됩니다.
         
         Returns:
             tuple: (response, learn_words, audio_url)
