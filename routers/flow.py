@@ -11,7 +11,6 @@ import os
 
 from services.openai_service import OpenAIService
 from services.r2_service import R2Service
-from services.supabase_service import supabase_service
 from models.api_models import LanguageCode, LearnWord
 
 # 로깅 설정
@@ -331,31 +330,8 @@ async def flow_chat(
                 "keyword": request.keyword
             })
             
-            # Supabase에 새 세션 저장
-            try:
-                if hasattr(supabase_service, 'client') and supabase_service.client:
-                    session_data_for_db = {
-                        'session_id': session_id,
-                        'user_id': None,  # 향후 사용자 인증 시 추가
-                        'emotion': request.emotion.lower(),
-                        'topic': request.topic,
-                        'sub_topic': request.sub_topic,
-                        'keyword': request.keyword,
-                        'from_lang': request.from_lang.value,
-                        'to_lang': request.to_lang.value,
-                        'session_start': session.created_at.isoformat(),
-                        'session_end': None,
-                        'total_turns': 0,
-                        'completion_status': 'in_progress'
-                    }
-                    
-                    supabase_service.client.table('conversation_sessions').insert(session_data_for_db).execute()
-                    logger.info(f"[SUPABASE] New session created: {session_id}")
-            except Exception as db_error:
-                logger.error(f"[SUPABASE_SESSION_CREATE_ERROR] Failed to save new session: {str(db_error)}")
-            
             # OpenAI로 시작 응답 생성 (TTS 포함)
-            combined_response, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.STARTER, openai_service)
+            combined_response, audio_url = await _generate_openai_response_with_tts(session, ConversationStage.STARTER, openai_service, is_tts_enabled=request.is_tts_enabled)
             
             response = FlowChatResponse(
                 session_id=session_id,
@@ -460,7 +436,7 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
         audio_url = None
         if is_tts_enabled:
             try:
-                tts_language = "English"  # Mixed language는 주로 영어 기반
+                tts_language = "Korean"  # Mixed language는 한국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(response_text, tts_language)
                 logger.info(f"[FLOW_STARTER_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
             except Exception as tts_error:
@@ -505,7 +481,7 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
         audio_url = None
         if is_tts_enabled:
             try:
-                tts_language = "English"  # Mixed language 주로 영어 기반
+                tts_language = "Korean"  # Mixed language는 한국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(response_text, tts_language)
                 logger.info(f"[FLOW_NEXT_STAGE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
             except Exception as tts_error:
@@ -517,7 +493,7 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
             session_id=session.session_id,
             stage=ConversationStage.PARAPHRASE,
             response_text=response_text,
-            audio_url=audio_url,
+            audio_url=audio_url,  # 생성된 TTS 오디오 URL 사용
             target_words=session.learned_expressions,
             completed=False,
             next_action=next_action
@@ -551,7 +527,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         _log_conversation_turn(session, user_input, response_text, [], processing_time)
         
         # 세션 완료 로깅
-        await _save_conversation_session_summary(session, "completed")
+        _save_conversation_session_summary(session, "completed")
         
         # 분석 이벤트 로깅
         _log_conversation_analytics(session.session_id, "conversation_completed", {
@@ -707,7 +683,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         audio_url = None
         if request.is_tts_enabled:
             try:
-                tts_language = "English"  # Mixed language는 주로 영어 기반
+                tts_language = "Korean"  # Mixed language는 한국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(paraphrase_text, tts_language)
                 logger.info(f"[FLOW_PARAPHRASE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
             except Exception as tts_error:
@@ -812,7 +788,7 @@ async def delete_session(session_id: str, request: Request):
     
     # 완료되지 않은 세션인 경우 abandoned로 마킹
     if session.conversation_log.completion_status == "in_progress":
-        await _save_conversation_session_summary(session, "abandoned")
+        _save_conversation_session_summary(session, "abandoned")
         _log_conversation_analytics(session_id, "conversation_abandoned", {
             "total_turns": session.user_input_count,
             "learned_expressions_count": len(session.learned_expressions),
@@ -1143,7 +1119,7 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         audio_url = None
         if is_tts_enabled:
             try:
-                fallback_tts_language = "English"  # Mixed language는 주로 영어 기반
+                fallback_tts_language = "Korean"  # Mixed language는 한국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(fallback_text, fallback_tts_language)
                 logger.info(f"[FLOW_TTS_FALLBACK_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url}")
             except Exception as tts_error:
@@ -1155,7 +1131,7 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
 
 def _log_conversation_turn(session: ConversationSession, user_input: str, ai_response: str, 
                           learned_expressions: List[LearnWord], processing_time_ms: float):
-    """대화 턴 로깅 (사용자 입력 + AI 응답) - 파일 + 데이터베이스"""
+    """대화 턴 로깅 (사용자 입력 + AI 응답)"""
     turn_number = len(session.conversation_log.conversation_turns) + 1
     
     conversation_turn = ConversationTurn(
@@ -1177,62 +1153,6 @@ def _log_conversation_turn(session: ConversationSession, user_input: str, ai_res
     
     # 파일에 즉시 저장 (JSON Lines 형식)
     _save_conversation_turn_to_file(session.session_id, conversation_turn)
-    
-    # Supabase에 저장 (비동기)
-    try:
-        import asyncio
-        
-        # 대화 턴 데이터 준비
-        turn_data = {
-            'session_id': session.session_id,
-            'turn_number': turn_number,
-            'timestamp': conversation_turn.timestamp.isoformat(),
-            'user_input': user_input,
-            'ai_response': ai_response,
-            'learned_expressions': learned_expressions,
-            'stage': session.stage.value,
-            'processing_time_ms': processing_time_ms
-        }
-        
-        # 비동기로 Supabase에 저장
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # 이미 실행 중인 이벤트 루프가 있는 경우
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, supabase_service.save_conversation_turn(turn_data))
-                    result = future.result(timeout=5)
-            else:
-                # 새로운 이벤트 루프 생성
-                result = asyncio.run(supabase_service.save_conversation_turn(turn_data))
-                
-        except Exception as async_error:
-            logger.warning(f"[SUPABASE_ASYNC] Failed to save turn async: {str(async_error)}")
-            # 동기 방식으로 재시도
-            if hasattr(supabase_service, 'client') and supabase_service.client:
-                try:
-                    # 학습 표현을 JSON으로 변환
-                    learned_expressions_json = None
-                    if learned_expressions:
-                        learned_expressions_json = [expr.dict() for expr in learned_expressions]
-                    
-                    supabase_service.client.table('conversation_turns').insert({
-                        'session_id': session.session_id,
-                        'turn_number': turn_number,
-                        'timestamp': conversation_turn.timestamp.isoformat(),
-                        'user_input': user_input,
-                        'ai_response': ai_response,
-                        'learned_expressions': learned_expressions_json,
-                        'stage': session.stage.value,
-                        'processing_time_ms': processing_time_ms
-                    }).execute()
-                    logger.info(f"[SUPABASE_SYNC] Turn saved synchronously: {session.session_id}")
-                except Exception as sync_error:
-                    logger.error(f"[SUPABASE_SYNC] Failed to save turn: {str(sync_error)}")
-        
-    except Exception as db_error:
-        logger.error(f"[SUPABASE_TURN_ERROR] Failed to save to database: {str(db_error)}")
     
     # 턴별 로깅
     logger.info(f"[CONVERSATION_TURN] Session: {session.session_id} | Turn: {turn_number} | "
@@ -1264,13 +1184,13 @@ def _save_conversation_turn_to_file(session_id: str, turn: ConversationTurn):
     except Exception as e:
         logger.error(f"[CONVERSATION_TURN_FILE_ERROR] Failed to save turn to file: {str(e)}")
 
-async def _save_conversation_session_summary(session: ConversationSession, completion_status: str = "completed"):
-    """세션 완료 시 전체 대화 요약 저장 - 파일 + 데이터베이스"""
+def _save_conversation_session_summary(session: ConversationSession, completion_status: str = "completed"):
+    """세션 완료 시 전체 대화 요약 저장"""
     try:
         session.conversation_log.session_end = datetime.now()
         session.conversation_log.completion_status = completion_status
         
-        # 세션별 파일로 저장 (기존 방식 유지)
+        # 세션별 파일로 저장
         filename = f"session_{session.session_id}.json"
         filepath = os.path.join(CONVERSATION_LOGS_DIR, filename)
         
@@ -1279,50 +1199,8 @@ async def _save_conversation_session_summary(session: ConversationSession, compl
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(session_data, f, ensure_ascii=False, indent=2, default=str)
         
-        # 일일 통계 업데이트 (기존 파일 방식)
+        # 일일 통계 업데이트
         _update_daily_stats(session.conversation_log)
-        
-        # Supabase에 세션 데이터 저장
-        try:
-            session_data_for_db = {
-                'session_id': session.session_id,
-                'user_id': None,  # 향후 사용자 인증 시 추가
-                'emotion': session.emotion,
-                'topic': session.topic,
-                'sub_topic': session.sub_topic,
-                'keyword': session.keyword,
-                'from_lang': session.from_lang,
-                'to_lang': session.to_lang,
-                'session_start': session.created_at.isoformat(),
-                'session_end': session.conversation_log.session_end.isoformat(),
-                'total_turns': session.conversation_log.total_turns,
-                'completion_status': completion_status
-            }
-            
-            # 동기 방식으로 Supabase에 저장
-            if hasattr(supabase_service, 'client') and supabase_service.client:
-                # 기존 세션 확인
-                existing = supabase_service.client.table('conversation_sessions').select('session_id').eq('session_id', session.session_id).execute()
-                
-                if existing.data:
-                    # 기존 세션 업데이트
-                    supabase_service.client.table('conversation_sessions').update({
-                        'session_end': session_data_for_db['session_end'],
-                        'total_turns': session_data_for_db['total_turns'],
-                        'completion_status': completion_status,
-                        'updated_at': datetime.now().isoformat()
-                    }).eq('session_id', session.session_id).execute()
-                else:
-                    # 새 세션 생성
-                    supabase_service.client.table('conversation_sessions').insert(session_data_for_db).execute()
-                
-                logger.info(f"[SUPABASE] Session summary saved: {session.session_id}")
-                
-                # Supabase에 일일 통계도 업데이트
-                await _update_daily_stats_to_supabase(session.conversation_log)
-                
-        except Exception as db_error:
-            logger.error(f"[SUPABASE_SESSION_ERROR] Failed to save session to database: {str(db_error)}")
         
         logger.info(f"[CONVERSATION_SESSION_SAVED] Session: {session.session_id} | "
                    f"Turns: {session.conversation_log.total_turns} | "
@@ -1333,7 +1211,7 @@ async def _save_conversation_session_summary(session: ConversationSession, compl
         logger.error(f"[CONVERSATION_SESSION_SAVE_ERROR] Failed to save session summary: {str(e)}")
 
 def _update_daily_stats(conversation_log: ConversationLog):
-    """일일 통계 업데이트 (파일 방식)"""
+    """일일 통계 업데이트"""
     try:
         today = datetime.now().strftime("%Y-%m-%d")
         stats_file = os.path.join(DAILY_STATS_DIR, f"stats_{today}.json")
@@ -1390,85 +1268,9 @@ def _update_daily_stats(conversation_log: ConversationLog):
     except Exception as e:
         logger.error(f"[DAILY_STATS_ERROR] Failed to update daily stats: {str(e)}")
 
-async def _update_daily_stats_to_supabase(conversation_log: ConversationLog):
-    """Supabase에 일일 통계 업데이트"""
-    try:
-        today = datetime.now().strftime("%Y-%m-%d")
-        
-        # 기존 통계 가져오기
-        existing_stats = None
-        if hasattr(supabase_service, 'client') and supabase_service.client:
-            result = supabase_service.client.table('daily_stats').select('*').eq('date', today).execute()
-            if result.data:
-                existing_stats = result.data[0]
-        
-        # 새로운 통계 계산
-        if existing_stats:
-            # 기존 통계 업데이트
-            new_stats = {
-                'total_sessions': existing_stats.get('total_sessions', 0) + 1,
-                'completed_sessions': existing_stats.get('completed_sessions', 0) + (1 if conversation_log.completion_status == 'completed' else 0),
-                'abandoned_sessions': existing_stats.get('abandoned_sessions', 0) + (1 if conversation_log.completion_status == 'abandoned' else 0),
-                'total_conversation_turns': existing_stats.get('total_conversation_turns', 0) + conversation_log.total_turns,
-                'emotions': existing_stats.get('emotions', {}),
-                'topics': existing_stats.get('topics', {}),
-                'language_pairs': existing_stats.get('language_pairs', {}),
-                'total_learned_expressions': existing_stats.get('total_learned_expressions', 0)
-            }
-            
-            # 감정별 통계 업데이트
-            emotions = new_stats['emotions']
-            emotions[conversation_log.emotion] = emotions.get(conversation_log.emotion, 0) + 1
-            
-            # 주제별 통계 업데이트
-            if conversation_log.topic:
-                topics = new_stats['topics']
-                topics[conversation_log.topic] = topics.get(conversation_log.topic, 0) + 1
-            
-            # 언어 쌍별 통계 업데이트
-            lang_pair = f"{conversation_log.from_lang}-{conversation_log.to_lang}"
-            language_pairs = new_stats['language_pairs']
-            language_pairs[lang_pair] = language_pairs.get(lang_pair, 0) + 1
-            
-            # 학습된 표현 개수 추가
-            total_expressions = sum(len(turn.learned_expressions) for turn in conversation_log.conversation_turns)
-            new_stats['total_learned_expressions'] += total_expressions
-            
-            # 업데이트
-            supabase_service.client.table('daily_stats').update(new_stats).eq('date', today).execute()
-        else:
-            # 새로운 통계 생성
-            emotions = {conversation_log.emotion: 1}
-            topics = {conversation_log.topic: 1} if conversation_log.topic else {}
-            lang_pair = f"{conversation_log.from_lang}-{conversation_log.to_lang}"
-            language_pairs = {lang_pair: 1}
-            total_expressions = sum(len(turn.learned_expressions) for turn in conversation_log.conversation_turns)
-            
-            new_stats = {
-                'date': today,
-                'total_sessions': 1,
-                'completed_sessions': 1 if conversation_log.completion_status == 'completed' else 0,
-                'abandoned_sessions': 1 if conversation_log.completion_status == 'abandoned' else 0,
-                'total_conversation_turns': conversation_log.total_turns,
-                'emotions': emotions,
-                'topics': topics,
-                'language_pairs': language_pairs,
-                'total_learned_expressions': total_expressions,
-                'avg_session_duration': 0
-            }
-            
-            # 삽입
-            supabase_service.client.table('daily_stats').insert(new_stats).execute()
-            
-        logger.info(f"[SUPABASE] Daily stats updated for {today}")
-        
-    except Exception as e:
-        logger.error(f"[SUPABASE_DAILY_STATS_ERROR] Failed to update daily stats: {str(e)}")
-
 def _log_conversation_analytics(session_id: str, event_type: str, details: Dict[str, Any] = None):
-    """대화 분석을 위한 이벤트 로깅 - 파일 + 데이터베이스"""
+    """대화 분석을 위한 이벤트 로깅"""
     try:
-        # 파일 로깅 (기존 방식 유지)
         today = datetime.now().strftime("%Y-%m-%d")
         analytics_file = os.path.join(CONVERSATION_LOGS_DIR, f"analytics_{today}.jsonl")
         
@@ -1481,19 +1283,6 @@ def _log_conversation_analytics(session_id: str, event_type: str, details: Dict[
         
         with open(analytics_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(analytics_data, ensure_ascii=False) + "\n")
-        
-        # Supabase에 저장
-        try:
-            if hasattr(supabase_service, 'client') and supabase_service.client:
-                supabase_service.client.table('conversation_analytics').insert({
-                    'session_id': session_id,
-                    'event_type': event_type,
-                    'timestamp': analytics_data['timestamp'],
-                    'details': analytics_data['details']
-                }).execute()
-                logger.info(f"[SUPABASE] Analytics saved: {session_id} - {event_type}")
-        except Exception as db_error:
-            logger.error(f"[SUPABASE_ANALYTICS_ERROR] Failed to save analytics to database: {str(db_error)}")
             
     except Exception as e:
-        logger.error(f"[CONVERSATION_ANALYTICS_ERROR] Failed to log analytics: {str(e)}")
+        logger.error(f"[CONVERSATION_ANALYTICS_ERROR] Failed to log analytics: {str(e)}") 
