@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 from typing import Optional, List, Dict, Any
 from enum import Enum
 import uuid
@@ -41,12 +41,25 @@ class FlowChatRequest(BaseModel):
     action: FlowAction
     user_input: Optional[str] = None
     emotion: Optional[str] = None
-    from_lang: LanguageCode = LanguageCode.KOREAN
-    to_lang: LanguageCode = LanguageCode.ENGLISH
+    from_lang: str = "KOREAN"  # 기본값
+    to_lang: str = "ENGLISH"   # 기본값
     is_tts_enabled: Optional[bool] = None
     topic: Optional[str] = None
     sub_topic: Optional[str] = None
     keyword: Optional[str] = None
+    
+    # 별칭 지원 (user_language, ai_language)
+    user_language: Optional[str] = None  # alias for from_lang
+    ai_language: Optional[str] = None    # alias for to_lang
+
+    @root_validator(pre=True)
+    def _alias_languages(cls, values):
+        # user_language / ai_language 값이 있으면 from_lang / to_lang에 매핑
+        if "user_language" in values and "from_lang" not in values:
+            values["from_lang"] = values["user_language"]
+        if "ai_language" in values and "to_lang" not in values:
+            values["to_lang"] = values["ai_language"]
+        return values
 
 class FlowChatResponse(BaseModel):
     session_id: str
@@ -312,8 +325,8 @@ async def flow_chat(
             session = ConversationSession(
                 session_id=session_id,
                 emotion=request.emotion.lower(),
-                from_lang=request.from_lang.value,
-                to_lang=request.to_lang.value,
+                from_lang=request.from_lang,
+                to_lang=request.to_lang,
                 topic=request.topic,
                 sub_topic=request.sub_topic,
                 keyword=request.keyword
@@ -323,8 +336,8 @@ async def flow_chat(
             # 세션 생성 로깅
             _log_session_activity(session_id, "SESSION_CREATED", {
                 "emotion": request.emotion.lower(),
-                "from_lang": request.from_lang.value,
-                "to_lang": request.to_lang.value,
+                "from_lang": request.from_lang,
+                "to_lang": request.to_lang,
                 "topic": request.topic,
                 "sub_topic": request.sub_topic,
                 "keyword": request.keyword
@@ -436,7 +449,7 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
         audio_url = None
         if is_tts_enabled:
             try:
-                tts_language = "Korean"  # Mixed language는 한국어로 TTS 처리
+                tts_language = session.from_lang.capitalize()  # 사용자의 모국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(response_text, tts_language)
                 logger.info(f"[FLOW_STARTER_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
             except Exception as tts_error:
@@ -481,7 +494,7 @@ async def _handle_next_stage(session: ConversationSession, openai_service: OpenA
         audio_url = None
         if is_tts_enabled:
             try:
-                tts_language = "Korean"  # Mixed language는 한국어로 TTS 처리
+                tts_language = session.from_lang.capitalize()  # 사용자의 모국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(response_text, tts_language)
                 logger.info(f"[FLOW_NEXT_STAGE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
             except Exception as tts_error:
@@ -564,8 +577,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         
         # 언어 설정 - Mixed language 사용
         mixed_language = f"Mixed {session.from_lang}-{session.to_lang}"
-        user_language = session.from_lang if session.from_lang else "English"
-        ai_language = session.to_lang if session.to_lang else "English"
+        emotion_in_ai_lang = session.emotion  # 그대로 사용 (언어 무관)
         
         # 단순화된 단일 OpenAI 호출: 응답과 학습 표현을 한 번에 생성
         context_info = f"emotion: {session.emotion}"
@@ -576,16 +588,27 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         if session.keyword:
             context_info += f", keyword: {session.keyword}"
             
+        topic_context = ""
+        if session.topic or session.sub_topic or session.keyword:
+            topic_parts = []
+            if session.topic:
+                topic_parts.append(f"topic: {session.topic}")
+            if session.sub_topic:
+                topic_parts.append(f"sub-topic: {session.sub_topic}")
+            if session.keyword:
+                topic_parts.append(f"keyword: {session.keyword}")
+            topic_context = f" Context: {', '.join(topic_parts)}."
+        
         unified_prompt = f"""
         User said: "{user_input}" (language study context: {context_info})
-        User is learning {ai_language}. 
+        User is learning {mixed_language}. 
         Response should be in **3 short sentences** in {mixed_language}.
         Don't repeat the same response. history: {session.learned_expressions}
         
         Create a response in {mixed_language} with steps:
         - Empathetic reaction to user's feeling (if needed)
-        - Paraphrase user's input in {ai_language} using words, slang, idioms, and expressions.
-        - Then provide 2 {ai_language} expressions used in your paraphrase response.
+        - Paraphrase user's input in {mixed_language} using words, slang, idioms, and expressions.
+        - Then provide 2 {mixed_language} expressions used in your paraphrase response.
         
         Context: Focus on {session.keyword if session.keyword != 'ANYTHING' else 'general conversation'} topic{f', specifically {session.sub_topic}' if session.sub_topic else ''}{f', incorporating the keyword "{session.keyword}"' if session.keyword else ''}.
         
@@ -593,7 +616,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         {{
             "response": "your mixed language response here",
             "learned_expressions": [
-                {{"word": "expression", "meaning": "{user_language} meaning", "pronunciation": "pronunciation", "example": "example sentence"}}
+                {{"word": "expression", "meaning": "{mixed_language} meaning", "pronunciation": "pronunciation", "example": "example sentence"}}
             ]
         }}
         """
@@ -683,7 +706,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         audio_url = None
         if request.is_tts_enabled:
             try:
-                tts_language = "Korean"  # Mixed language는 한국어로 TTS 처리
+                tts_language = session.from_lang.capitalize()  # 사용자의 모국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(paraphrase_text, tts_language)
                 logger.info(f"[FLOW_PARAPHRASE_TTS_SUCCESS] Session: {session.session_id} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
             except Exception as tts_error:
@@ -1009,7 +1032,7 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
     try:
         # 언어 설정 - Mixed language 사용
         mixed_language = f"Mixed {session.from_lang}-{session.to_lang}"
-        emotion_in_ai_lang = session.emotion if session.to_lang == "english" else session.emotion  # 영어 감정명 그대로 사용
+        emotion_in_ai_lang = session.emotion  # 그대로 사용 (언어 무관)
         
         # Context 정보 구성
         context_info = f"emotion: {session.emotion}"
@@ -1089,8 +1112,7 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         audio_url = None
         if is_tts_enabled:
             try:
-                # Mixed language이므로 Korean TTS 사용
-                tts_language = "Korean"
+                tts_language = session.from_lang.capitalize()  # 사용자의 모국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(generated_text, tts_language)
                 logger.info(f"[FLOW_TTS_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url} | Duration: {duration:.2f}s")
             except Exception as tts_error:
@@ -1119,7 +1141,7 @@ async def _generate_openai_response_with_tts(session: ConversationSession, stage
         audio_url = None
         if is_tts_enabled:
             try:
-                fallback_tts_language = "Korean"  # Mixed language는 한국어로 TTS 처리
+                fallback_tts_language = session.from_lang.capitalize()  # 사용자의 모국어로 TTS 처리
                 audio_url, duration = await openai_service.text_to_speech(fallback_text, fallback_tts_language)
                 logger.info(f"[FLOW_TTS_FALLBACK_SUCCESS] Session: {session.session_id} | Stage: {stage} | Audio URL: {audio_url}")
             except Exception as tts_error:
