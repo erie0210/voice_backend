@@ -601,14 +601,14 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         
         unified_prompt = f"""
         User said: "{user_input}" (language study context: {context_info})
-        User is learning {mixed_language}. 
+        User is learning {session.to_lang}. 
         Response should be in **3 short sentences** in {mixed_language}.
         Don't repeat the same response. history: {session.learned_expressions}
         
         Create a response in {mixed_language} with steps:
         - Empathetic reaction to user's feeling (if needed)
-        - Paraphrase user's input in {mixed_language} using words, slang, idioms, and expressions.
-        - Then provide 2 {mixed_language} expressions used in your paraphrase response.
+        - Paraphrase user's input in {session.to_lang} using words, slang, idioms, and expressions.
+        - Then provide 2 {session.to_lang} expressions used in your paraphrase response.
         
         Context: Focus on {session.keyword if session.keyword != 'ANYTHING' else 'general conversation'} topic{f', specifically {session.sub_topic}' if session.sub_topic else ''}{f', incorporating the keyword "{session.keyword}"' if session.keyword else ''}.
         
@@ -616,7 +616,7 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         {{
             "response": "your mixed language response here",
             "learned_expressions": [
-                {{"word": "expression", "meaning": "{mixed_language} meaning", "pronunciation": "pronunciation", "example": "example sentence"}}
+                {{"word": "{session.to_lang} expression", "meaning": "{session.from_lang} meaning", "pronunciation": "pronunciation", "example": "example sentence in {session.to_lang}"}}
             ]
         }}
         """
@@ -672,30 +672,70 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
         except (json.JSONDecodeError, Exception) as e:
             logger.error(f"[FLOW_UNIFIED_ERROR] Session: {session.session_id} | Unified call failed: {str(e)}")
             
-            # 간단한 fallback 처리
-            paraphrase_text = f"아, {session.emotion} 감정이시군요! 정말 {user_input}하셨을 때 그런 기분이 들었을 것 같아요. 'I feel {session.emotion}'라고 말할 수 있어요. 다른 경험도 더 얘기해주세요!"
+            # 간단한 fallback 처리 - 동적 언어 지원
+            if session.from_lang.lower() == "korean":
+                fallback_feeling = f"아, {session.emotion} 감정이시군요!"
+                fallback_suggestion = f"'I feel {session.emotion}'라고 말할 수 있어요."
+                fallback_prompt = "다른 경험도 더 얘기해주세요!"
+            else:
+                fallback_feeling = f"Oh, you're feeling {session.emotion}!"
+                fallback_suggestion = f"You can say 'I feel {session.emotion}' in {session.to_lang}."
+                fallback_prompt = "Please tell me more about your experience!"
+                
+            paraphrase_text = f"{fallback_feeling} {fallback_suggestion} {fallback_prompt}"
             
-            # 기본 학습 표현 생성
-            learned_expressions = [
-                LearnWord(
-                    word=f"I feel {session.emotion}",
-                    meaning=f"나는 {session.emotion}을 느껴요",
-                    pronunciation=f"아이 필 {session.emotion}",
-                    example=f"I feel {session.emotion} when good things happen."
-                ),
-                LearnWord(
-                    word="when",
-                    meaning="~할 때",
-                    pronunciation="웬",
-                    example="I feel happy when I see my friends."
-                ),
-                LearnWord(
-                    word="experience",
-                    meaning="경험",
-                    pronunciation="익스피리언스",
-                    example="Tell me about your experience."
+            # 기본 학습 표현 생성 - 동적 언어 지원
+            if session.to_lang.lower() == "english":
+                basic_expressions = [
+                    {
+                        "word": f"I feel {session.emotion}",
+                        "meaning": f"나는 {session.emotion}을 느껴요" if session.from_lang.lower() == "korean" else f"I am feeling {session.emotion}",
+                        "pronunciation": f"아이 필 {session.emotion}" if session.from_lang.lower() == "korean" else f"I feel {session.emotion}",
+                        "example": f"I feel {session.emotion} when good things happen."
+                    },
+                    {
+                        "word": "when",
+                        "meaning": "~할 때" if session.from_lang.lower() == "korean" else "at the time that",
+                        "pronunciation": "웬" if session.from_lang.lower() == "korean" else "when",
+                        "example": "I feel happy when I see my friends."
+                    }
+                ]
+            elif session.to_lang.lower() == "spanish":
+                basic_expressions = [
+                    {
+                        "word": f"Me siento {session.emotion}",
+                        "meaning": f"나는 {session.emotion}을 느껴요" if session.from_lang.lower() == "korean" else f"I feel {session.emotion}",
+                        "pronunciation": f"메 시엔토 {session.emotion}" if session.from_lang.lower() == "korean" else f"Me siento {session.emotion}",
+                        "example": f"Me siento {session.emotion} cuando pasan cosas buenas."
+                    },
+                    {
+                        "word": "cuando",
+                        "meaning": "~할 때" if session.from_lang.lower() == "korean" else "when",
+                        "pronunciation": "쿠안도" if session.from_lang.lower() == "korean" else "cuando",
+                        "example": "Me siento feliz cuando veo a mis amigos."
+                    }
+                ]
+            else:
+                # 기타 언어들을 위한 기본 템플릿
+                basic_expressions = [
+                    {
+                        "word": f"I feel {session.emotion} (in {session.to_lang})",
+                        "meaning": f"나는 {session.emotion}을 느껴요" if session.from_lang.lower() == "korean" else f"I feel {session.emotion}",
+                        "pronunciation": f"Pronunciation in {session.to_lang}",
+                        "example": f"Example sentence in {session.to_lang}."
+                    }
+                ]
+            
+            learned_expressions = []
+            for expr_data in basic_expressions:
+                learn_word = LearnWord(
+                    word=expr_data["word"],
+                    meaning=expr_data["meaning"],
+                    pronunciation=expr_data["pronunciation"],
+                    example=expr_data["example"]
                 )
-            ]
+                learned_expressions.append(learn_word)
+            
             session.learned_expressions = learned_expressions
         
         # 대화 턴 로깅 (사용자 입력 + AI 응답 쌍)
