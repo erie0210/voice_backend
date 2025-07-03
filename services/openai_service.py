@@ -16,6 +16,7 @@ from pydub import AudioSegment
 from config.settings import settings
 from models.api_models import ChatMessage, LearnWord, TopicEnum, ReactionCategory, EmotionCategory, ContinuationCategory
 from services.r2_service import upload_file_to_r2, R2Service
+from services.template_history_manager import TemplateHistoryManager
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -104,6 +105,9 @@ class OpenAIService:
         
         # R2 서비스 인스턴스
         self.r2_service = R2Service()
+        
+        # 템플릿 다양성 매니저
+        self.template_history = TemplateHistoryManager(max_history_size=8)
     
     def _load_greetings_from_assets_by_language(self, user_language: str, ai_language: str) -> List[str]:
         """
@@ -725,19 +729,19 @@ JSON 형식으로만 응답하세요:
             
             # 1) 반응 및 수용 - 선택된 카테고리로 템플릿 로드
             reactions = self._load_reaction_from_assets(reaction_category, user_language, ai_language)
-            selected_reaction = random.choice(reactions)
+            selected_reaction = self.template_history.select_diverse_template(reactions, 'reaction')
             
             logger.info(f"선택된 반응: {selected_reaction} (카테고리: {reaction_category.value})")
             
             # 2) 설명 및 확장 - 선택된 카테고리로 템플릿 로드
             emotions = self._load_emotion_from_assets(emotion_category, user_language, ai_language)
-            selected_expansion = random.choice(emotions)
+            selected_expansion = self.template_history.select_diverse_template(emotions, 'emotion')
             
             logger.info(f"선택된 감정 설명: {selected_expansion} (카테고리: {emotion_category.value})")
             
             # 3) 이야기 이어가기 - 선택된 카테고리로 템플릿 로드
             continuations = self._load_continuation_from_assets(continuation_category, user_language, ai_language)
-            selected_continuation = random.choice(continuations)
+            selected_continuation = self.template_history.select_diverse_template(continuations, 'continuation')
             
             logger.info(f"선택된 이어가기: {selected_continuation} (카테고리: {continuation_category.value})")
             
@@ -1290,12 +1294,12 @@ JSON FORMAT:
                 topic_display = self._get_topic_display_name(topic)
                 starters = [f"Let's talk about {topic_display}! 😊"]
             
-            # 랜덤하게 하나 선택
-            selected_starter = random.choice(starters)
+            # 다양성을 고려하여 하나 선택
+            selected_starter = self.template_history.select_diverse_template(starters, 'starter')
             logger.info(f"선택된 대화 시작 문장: {selected_starter}")
             
             # 인사말 선택 및 조합
-            selected_greeting = random.choice(greetings)
+            selected_greeting = self.template_history.select_diverse_template(greetings, 'greeting')
             full_conversation = f"{selected_greeting} {selected_starter}"
             
             # 학습 단어 추출
@@ -1917,6 +1921,19 @@ Return valid JSON:
             return True
         except Exception:
             return False
+
+    def get_template_usage_stats(self) -> Dict:
+        """
+        템플릿 사용 통계를 반환합니다.
+        """
+        return self.template_history.get_usage_stats()
+    
+    def reset_template_history(self):
+        """
+        템플릿 사용 기록을 초기화합니다.
+        """
+        self.template_history.reset_history()
+        logger.info("템플릿 사용 기록이 초기화되었습니다.")
 
 # 전역 OpenAI 서비스 인스턴스
 openai_service = OpenAIService() 
