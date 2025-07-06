@@ -374,13 +374,13 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
 
         Write exactly 2 short sentences.
         Each sentence MUST mix {session.from_lang} and {session.to_lang} in a single sentence. Never separate languages.
-        Construct 2 sentences in {session.from_lang} and replace words, expressions, slang, idioms with {session.to_lang}.
+        Construct 2 sentences in {session.from_lang} and replace words, idioms with {session.to_lang}.
         The first sentence must paraphrase the user's key idea.
         1 is the paraphrased user expression in mixed language.
         At least 3 are related to {session.keyword}
         Always keep the conversation going.
         Tone must be casual, humorous, and stylish — like talking to your bestie.
-        learned_expressions: all expressions in {session.to_lang} should be in learned_expressions.
+        learned_expressions: all word, expression, slang, idioms in {session.to_lang} should be in learned_expressions.
 
         example: 요즘 내 outfit 완전 on point지. 친구들이 runway model 같대 😎
 
