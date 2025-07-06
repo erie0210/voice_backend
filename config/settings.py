@@ -8,7 +8,7 @@ load_dotenv()
 class Settings:
     # OpenAI 설정
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    OPENAI_DEFAULT_MODEL: str = os.getenv("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")
+    OPENAI_DEFAULT_MODEL: str = os.getenv("OPENAI_DEFAULT_MODEL", "gpt-4.1-mini")
     
     # API 인증 설정
     API_SECRET_KEY: str = os.getenv("API_SECRET_KEY", "easyslang-api-secret-key-2024")

@@ -374,13 +374,14 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
 
         Response Rules:
 
-        - Use **mixed language**: Each sentence MUST include both {session.from_lang} and {session.to_lang}. Natural code-switching is important.
-        - Use **fashion-related** expressions, slang, idioms, and vocabulary in {session.to_lang} (like "fashion statement", "on point", "bold choice" etc.).
-        - Start with an **empathetic or funny reaction** to the user's input if relevant. User input: {user_input}.
-        - Paraphrase the user's intent/input in a fun, lively tone with **1~2 {session.to_lang} expressions per sentence**.
+        - Use **mixed language**: Each sentence MUST mix {session.from_lang} and {session.to_lang} in a single sentence (do not separate them).
+        - Exactly **3 short sentences** total, **every sentence MUST mix** {session.from_lang} and {session.to_lang}.
+        - The **first sentence** MUST paraphrase the user's key idea/input in {session.to_lang} (e.g. "smell's good", "I'm exhausted") while keeping the rest of that sentence in {session.from_lang}.
+        - Include **at least 4 distinct {session.to_lang} expressions** overall: one is the paraphrased user phrase, plus at least **3 additional** fashion-related expressions such as "vibe", "perfect backdrop", "outfit", "bold choice", etc.
+        - Distribute these expressions so that **each of the 3 sentences contains 1-2 {session.to_lang} expressions**.
         - Include **emojis** to keep the conversation casual and playful.
-        - Response should feel like a real, humorous chat with a stylish friend.
         - Keep the flow of conversation going by ending with a fun question or reaction.
+        - Tone: friendly, humorous, stylish.
 
         Example mixed language sentence:
         "요즘 내 outfit 완전 on point지, 친구들이 runway model 같대 😎"
