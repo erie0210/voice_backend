@@ -600,17 +600,18 @@ async def _handle_voice_input(session: ConversationSession, user_input: str, ope
             topic_context = f" Context: {', '.join(topic_parts)}."
         
         unified_prompt = f"""
-        User said: "{user_input}" (language study context: {context_info})
+        User said: "{user_input}"
         User is learning {session.to_lang}. 
-        Response should be in **3 short sentences** in {mixed_language}.
+        Response should be in **3 short sentences** in mixed language.
+        Create a response in mixed language of {session.from_lang} but replace words, expressions, idioms, slang, etc. with {session.to_lang}.
         Don't repeat the same response. history: {session.learned_expressions}
         
-        Create a response in {mixed_language} with steps:
+        response structure:
         - Empathetic reaction to user's feeling (if needed)
         - Paraphrase user's input in {session.to_lang} using words, slang, idioms, and expressions.
-        - Then provide 2 {session.to_lang} expressions used in your paraphrase response.
+        - Then provide 3 {session.to_lang} expressions used in your paraphrase response.
         
-        Context: Focus on {session.keyword if session.keyword != 'ANYTHING' else 'general conversation'} topic{f', specifically {session.sub_topic}' if session.sub_topic else ''}{f', incorporating the keyword "{session.keyword}"' if session.keyword else ''}.
+        Context: Focus on {session.keyword if session.keyword != 'ANYTHING' else 'general conversation'} topic{f', specifically {session.sub_topic}'}{f', incorporating the keyword "{session.keyword}"' if session.keyword else ''}.
         
         Respond in JSON format:
         {{
