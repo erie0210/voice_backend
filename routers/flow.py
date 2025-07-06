@@ -226,11 +226,10 @@ async def _generate_starter_response(session: ConversationSession, openai_servic
     - User is learning {session.to_lang}
     
     Requirements for Question:
-    - Combine the topic and keyword to create an interesting, slightly funny, and personal question
+    - Combine the topic and keyword to create an interesting, slightly funny, and personal question (one question only)
     - The question should be relatable and make people think about their own experiences
     - Use casual, friendly tone
     - Ask about a specific situation or experience related to both topic and keyword
-    - End with asking about their feelings or emotions
     
     Requirements for Expressions:
     - Provide 2 {session.to_lang} expressions, word, idiom, slang, etc. mentioned in the question
