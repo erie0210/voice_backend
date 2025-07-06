@@ -380,7 +380,7 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
         Response Rules:
 
         - Use **mixed language**: Each sentence MUST mix {session.from_lang} and {session.to_lang} in a single sentence (do not separate them).
-        - Exactly **3 short sentences** total, **every sentence MUST mix** {session.from_lang} and {session.to_lang}.
+        - Exactly **2 SHORT sentences** total, **every sentence MUST mix** {session.from_lang} and {session.to_lang}.
         - The **first sentence** MUST paraphrase the user's key idea/input in {session.to_lang} (e.g. "smell's good", "I'm exhausted") while keeping the rest of that sentence in {session.from_lang}.
         - Include **at least 6 distinct {session.to_lang} expressions** overall: one is the paraphrased user phrase, plus at least **3 additional** {session.keyword}-related expressions.
         - Distribute these expressions so that **each of the 3 sentences contains 1-2 {session.to_lang} expressions**.
@@ -389,7 +389,7 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
         - Tone: friendly, humorous, stylish.
 
         Example mixed language sentence:
-        "요즘 내 outfit 완전 on point지, 친구들이 runway model 같대 😎"
+        "요즘 내 outfit 완전 on point지. 친구들이 runway model 같대 😎"
 
         Context: {context_text}.
         Respond in **JSON format** with the following structure:
