@@ -380,6 +380,7 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
         At least 3 are related to {session.keyword}
         Always keep the conversation going.
         Tone must be casual, humorous, and stylish — like talking to your bestie.
+        learned_expressions: all expressions in {session.to_lang} should be in learned_expressions.
 
         example: 요즘 내 outfit 완전 on point지. 친구들이 runway model 같대 😎
 
