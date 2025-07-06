@@ -363,13 +363,18 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
     User is learning {session.to_lang}. 
     Response should be in **3 short sentences** in mixed language.
     Mixed language: main language is {session.from_lang} but replace some important words, expressions, idioms, slang, etc. with {session.to_lang}.
-    For example, from_lang: Korean, to_lang: English, response should be "고양이가 노는 모습 so adorable 하지, 고양이가 골골거리는 건 purring 이라고 해. Most favorite 고양이 color는 뭐야?"
     
     response structure:
     - Empathetic reaction to user's feeling (if needed)
     - Paraphrase user's input in {session.to_lang} using words, slang, idioms, and expressions.
     - Then provide 3 {session.to_lang} expressions used in your paraphrase response.
-    
+    - Include emojis in your response.
+    - Keep conversation flow.
+    - A little bit funny.
+
+    One sentecne should include 1-2 {session.to_lang} expressions.
+    For example, from_lang: Korean, to_lang: English, response should be "고양이가 노는 모습 so adorable 하지, 고양이가 골골거리는 건 purring 이라고 해. Most favorite 고양이 color는 뭐야?"
+
     Context: {context_text}.
     
     Respond in JSON format:
