@@ -375,7 +375,7 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
         Response Rules:
 
         - Use **mixed language**: Each sentence MUST include both {session.from_lang} and {session.to_lang}. Natural code-switching is important.
-        - Use **fashion-related** expressions, slang, idioms, and vocabulary in {session.to_lang} (like “fashion statement”, “on point”, “bold choice” etc.).
+        - Use **fashion-related** expressions, slang, idioms, and vocabulary in {session.to_lang} (like "fashion statement", "on point", "bold choice" etc.).
         - Start with an **empathetic or funny reaction** to the user's input if relevant. User input: {user_input}.
         - Paraphrase the user's intent/input in a fun, lively tone with **1~2 {session.to_lang} expressions per sentence**.
         - Include **emojis** to keep the conversation casual and playful.
@@ -390,13 +390,12 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
         {{
             "response": "your mixed language response here",
             "learned_expressions": [
-                {
-                "word": "expression used in the response",
-                "meaning": "Korean meaning of the expression",
-                "pronunciation": "IPA or phonetic",
-                "example": "An example sentence in English"
-                },
-                ...
+                {{
+                    "word": "expression used in the response",
+                    "meaning": "Korean meaning of the expression",
+                    "pronunciation": "IPA or phonetic",
+                    "example": "An example sentence in English"
+                }}
             ]
         }}
     """
