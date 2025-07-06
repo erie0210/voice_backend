@@ -85,6 +85,9 @@ async def flow_chat(
 ):
     """Flow-Chat API: 단순화된 언어학습 시스템"""
     
+    # 요청 JSON 로깅
+    request_json = request.dict()
+    logger.info(f"[FLOW_REQUEST_JSON] {json.dumps(request_json, ensure_ascii=False)}")
     logger.info(f"[FLOW_API] Action: {request.action} | Session: {request.session_id}")
     
     try:
@@ -186,6 +189,27 @@ async def _generate_starter_response(session: ConversationSession, openai_servic
 async def _generate_paraphrase_response(session: ConversationSession, user_input: str, openai_service: OpenAIService, is_tts_enabled: Optional[bool]) -> tuple[str, List[LearnWord], Optional[str]]:
     """Paraphrase 응답 및 학습 표현 생성"""
     
+    # 프롬프트 구성 요소 디버깅 로깅
+    logger.info(f"[FLOW_PROMPT_DEBUG] === OpenAI Prompt Construction ===")
+    logger.info(f"[FLOW_PROMPT_DEBUG] User Input: '{user_input}'")
+    logger.info(f"[FLOW_PROMPT_DEBUG] Session - from_lang: {session.from_lang}, to_lang: {session.to_lang}")
+    logger.info(f"[FLOW_PROMPT_DEBUG] Session - emotion: {session.emotion}, topic: {session.topic}, sub_topic: {session.sub_topic}, keyword: {session.keyword}")
+    
+    # Context 구성
+    context_parts = []
+    if session.keyword and session.keyword != 'ANYTHING':
+        context_parts.append(f"keyword: {session.keyword}")
+    if session.sub_topic:
+        context_parts.append(f"sub_topic: {session.sub_topic}")
+    
+    context_text = f"Focus on {session.keyword if session.keyword != 'ANYTHING' else 'general conversation'} topic"
+    if session.sub_topic:
+        context_text += f", specifically {session.sub_topic}"
+    if session.keyword and session.keyword != 'ANYTHING':
+        context_text += f", incorporating the keyword \"{session.keyword}\""
+    
+    logger.info(f"[FLOW_PROMPT_DEBUG] Context Text: {context_text}")
+    
     # OpenAI 프롬프트 생성
     prompt = f"""
     User said: "{user_input}"
@@ -198,7 +222,7 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
     - Paraphrase user's input in {session.to_lang} using words, slang, idioms, and expressions.
     - Then provide 3 {session.to_lang} expressions used in your paraphrase response.
     
-    Context: Focus on {session.keyword if session.keyword != 'ANYTHING' else 'general conversation'} topic{f', specifically {session.sub_topic}' if session.sub_topic else ''}{f', incorporating the keyword "{session.keyword}"' if session.keyword else ''}.
+    Context: {context_text}.
     
     Respond in JSON format:
     {{
@@ -209,11 +233,13 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
     }}
     """
     
-    logger.info(f"[FLOW_PROMPT] Generated prompt for paraphrase")
+    logger.info(f"[FLOW_PROMPT_DEBUG] === Final Prompt to OpenAI ===")
     logger.info(f"[FLOW_PROMPT_CONTENT] {prompt}")
+    logger.info(f"[FLOW_PROMPT_DEBUG] === End of Prompt ===")
     
     try:
         # OpenAI 호출
+        logger.info(f"[FLOW_OPENAI_CALL] Calling OpenAI with temperature=0.7, JSON format")
         response = await openai_service.get_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
@@ -221,20 +247,25 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
         )
         content = response.choices[0].message.content.strip()
         
-        logger.info(f"[FLOW_OPENAI_RESPONSE] {content}")
+        logger.info(f"[FLOW_OPENAI_RESPONSE] Raw Response: {content}")
         
         # JSON 파싱
         parsed = json.loads(content)
         response_text = parsed.get("response", "")
         learned_expressions_data = parsed.get("learned_expressions", [])
         
+        logger.info(f"[FLOW_OPENAI_PARSED] Response Text: {response_text}")
+        logger.info(f"[FLOW_OPENAI_PARSED] Learned Expressions Count: {len(learned_expressions_data)}")
+        
         # LearnWord 객체 생성
         learned_expressions = []
-        for expr_data in learned_expressions_data:
+        for i, expr_data in enumerate(learned_expressions_data):
             word = expr_data.get("word", "").strip()
             meaning = expr_data.get("meaning", "").strip()
             pronunciation = expr_data.get("pronunciation", "").strip()
             example = expr_data.get("example", "").strip()
+            
+            logger.info(f"[FLOW_EXPRESSION_{i+1}] Word: {word}, Meaning: {meaning}")
             
             if word:
                 learned_expressions.append(LearnWord(
@@ -244,8 +275,10 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
                     example=example
                 ))
         
+        logger.info(f"[FLOW_FINAL_EXPRESSIONS] Generated {len(learned_expressions)} valid expressions")
+        
     except Exception as e:
-        logger.error(f"[FLOW_OPENAI_ERROR] {str(e)}")
+        logger.error(f"[FLOW_OPENAI_ERROR] OpenAI call failed: {str(e)}")
         # Fallback
         response_text = f"That's interesting! Please tell me more about your {session.emotion} experience."
         learned_expressions = [
@@ -256,16 +289,20 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
                 example=""
             )
         ]
+        logger.info(f"[FLOW_FALLBACK] Using fallback response and expressions")
     
     # TTS 생성
     audio_url = None
     if is_tts_enabled:
         try:
             tts_language = session.from_lang.capitalize()
+            logger.info(f"[FLOW_TTS_DEBUG] Generating TTS in {tts_language} for: {response_text[:50]}...")
             audio_url, _ = await openai_service.text_to_speech(response_text, tts_language)
-            logger.info(f"[FLOW_TTS] Generated audio for paraphrase")
+            logger.info(f"[FLOW_TTS] Generated audio URL: {audio_url}")
         except Exception as e:
-            logger.error(f"[FLOW_TTS_ERROR] {str(e)}")
+            logger.error(f"[FLOW_TTS_ERROR] TTS generation failed: {str(e)}")
+    else:
+        logger.info(f"[FLOW_TTS] TTS disabled, skipping audio generation")
     
     return response_text, learned_expressions, audio_url
 
