@@ -384,7 +384,7 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
         - Exactly **2 SHORT sentences** total, **every sentence MUST mix** {session.from_lang} and {session.to_lang}.
         - The **first sentence** MUST paraphrase the user's key idea/input in {session.to_lang} (e.g. "smell's good", "I'm exhausted") while keeping the rest of that sentence in {session.from_lang}.
         - Include **at least 6 distinct {session.to_lang} expressions** overall: one is the paraphrased user phrase, plus at least **3 additional** {session.keyword}-related expressions.
-        - Distribute these expressions so that **each of the 3 sentences contains 1-2 {session.to_lang} expressions**.
+        - Distribute these expressions so that **each of the 2 sentences contains 1-2 {session.to_lang} expressions**.
         - Include **emojis** to keep the conversation casual and playful.
         - Keep the flow of conversation going by ending with a fun question or reaction.
         - Tone: friendly, humorous, stylish.
