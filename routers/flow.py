@@ -361,7 +361,7 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
     User said: "{user_input}"
     User is learning {session.to_lang}. 
     Response should be in **3 short sentences** in mixed language.
-    Mixed language: generate sentences in {session.from_lang} and replace 5 important words, expressions, idioms, slang, etc. with {session.to_lang}. Select 3 for learned expressions.
+    Mixed language example: from_lang: Korean, to_lang: English, response should be "고양이가 노는 모습 so adorable 하지, 고양이가 골골거리는 건 purring 이라고 해. Most favorite 고양이 color는 뭐야?"
     
     response structure:
     - Empathetic reaction to user's feeling (if needed)
@@ -372,7 +372,6 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
     - A little bit funny.
 
     One sentecne should include 1-2 {session.to_lang} expressions.
-    For example, from_lang: Korean, to_lang: English, response should be "고양이가 노는 모습 so adorable 하지, 고양이가 골골거리는 건 purring 이라고 해. Most favorite 고양이 color는 뭐야?"
 
     Context: {context_text}.
     
