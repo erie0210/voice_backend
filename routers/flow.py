@@ -97,6 +97,9 @@ async def flow_chat(
             if not request.emotion:
                 raise HTTPException(status_code=400, detail="Emotion is required")
             
+            # TTS 활성화 상태 명확하게 로깅
+            logger.info(f"[FLOW_PICK_EMOTION] TTS Enabled: {request.is_tts_enabled}")
+            
             session_id = str(uuid.uuid4())
             session = ConversationSession(
                 session_id=session_id,
@@ -109,17 +112,25 @@ async def flow_chat(
             )
             sessions[session_id] = session
             
-            # OpenAI 시작 응답 생성
+            # OpenAI 시작 응답 생성 (TTS 상태에 따라 처리)
+            if request.is_tts_enabled:
+                logger.info(f"[FLOW_PICK_EMOTION] Generating starter response WITH audio")
+            else:
+                logger.info(f"[FLOW_PICK_EMOTION] Generating starter response WITHOUT audio")
+                
             response_text, learned_expressions, audio_url = await _generate_starter_response(session, openai_service, request.is_tts_enabled)
             
             # 세션에 학습 표현 저장
             session.learned_expressions = learned_expressions
             
+            # 최종 응답 로깅
+            logger.info(f"[FLOW_PICK_EMOTION] Response - Text: {response_text[:50]}..., Audio URL: {audio_url is not None}")
+            
             return FlowChatResponse(
                 session_id=session_id,
                 stage=ConversationStage.STARTER,
                 response_text=response_text,
-                audio_url=audio_url,
+                audio_url=audio_url,  # is_tts_enabled=False이면 None
                 target_words=learned_expressions,  # 시작 단계에서도 학습 표현 제공
                 completed=False
             )
