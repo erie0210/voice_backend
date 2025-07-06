@@ -110,13 +110,17 @@ async def flow_chat(
             sessions[session_id] = session
             
             # OpenAI 시작 응답 생성
-            response_text, audio_url = await _generate_starter_response(session, openai_service, request.is_tts_enabled)
+            response_text, learned_expressions, audio_url = await _generate_starter_response(session, openai_service, request.is_tts_enabled)
+            
+            # 세션에 학습 표현 저장
+            session.learned_expressions = learned_expressions
             
             return FlowChatResponse(
                 session_id=session_id,
                 stage=ConversationStage.STARTER,
                 response_text=response_text,
                 audio_url=audio_url,
+                target_words=learned_expressions,  # 시작 단계에서도 학습 표현 제공
                 completed=False
             )
         
@@ -205,60 +209,116 @@ async def flow_chat(
         logger.error(f"[FLOW_ERROR] {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-async def _generate_starter_response(session: ConversationSession, openai_service: OpenAIService, is_tts_enabled: Optional[bool]) -> tuple[str, Optional[str]]:
-    """시작 응답 생성 - topic과 keyword를 조합한 재미있는 질문"""
+async def _generate_starter_response(session: ConversationSession, openai_service: OpenAIService, is_tts_enabled: Optional[bool]) -> tuple[str, List[LearnWord], Optional[str]]:
+    """시작 응답 생성 - topic과 keyword를 조합한 재미있는 질문 + 학습 표현"""
     
-    # topic과 keyword 조합하여 재미있는 질문 생성
-    logger.info(f"[FLOW_STARTER_DEBUG] === Starter Question Generation ===")
+    # topic과 keyword 조합하여 재미있는 질문 + 학습 표현 생성
+    logger.info(f"[FLOW_STARTER_DEBUG] === Starter Question + Expressions Generation ===")
     logger.info(f"[FLOW_STARTER_DEBUG] Session - emotion: {session.emotion}, topic: {session.topic}, keyword: {session.keyword}")
     
-    # OpenAI 프롬프트로 재미있는 질문 생성
+    # OpenAI 프롬프트로 재미있는 질문과 학습 표현 생성
     question_prompt = f"""
-    Create a fun and personal question in {session.from_lang} language.
+    Create a fun and personal question in {session.from_lang} language and provide 2 {session.to_lang} expressions.
     
     Context:
     - Topic: {session.topic if session.topic else 'general conversation'}
     - Keyword: {session.keyword if session.keyword else 'anything'}
     - Emotion: {session.emotion}
+    - User is learning {session.to_lang}
     
-    Requirements:
+    Requirements for Question:
     - Combine the topic and keyword to create an interesting, slightly funny, and personal question
     - The question should be relatable and make people think about their own experiences
     - Use casual, friendly tone
     - Ask about a specific situation or experience related to both topic and keyword
     - End with asking about their feelings or emotions
     
-    Examples:
-    - Topic: feelings, Keyword: cat → "혹시 고양이와 길에서 마주친 적 있어요? 그때 어떤 기분이 들었나요?"
-    - Topic: food, Keyword: rain → "비 오는 날에 특별히 먹고 싶어지는 음식이 있나요? 왜 그런 기분이 드는 것 같아요?"
+    Requirements for Expressions:
+    - Provide 2 useful {session.to_lang} expressions related to the topic and keyword
+    - Each expression should have meaning in {session.from_lang}, pronunciation, and example
     
-    Generate only the question, no additional text.
+    Examples:
+    - Topic: feelings, Keyword: cat → Question: "혹시 고양이와 길에서 마주친 적 있어요? 그때 어떤 기분이 들었나요?"
+    - Topic: food, Keyword: rain → Question: "비 오는 날에 특별히 먹고 싶어지는 음식이 있나요? 왜 그런 기분이 드는 것 같아요?"
+    
+    Respond in JSON format:
+    {{
+        "question": "your question here",
+        "learned_expressions": [
+            {{"word": "{session.to_lang} expression", "meaning": "{session.from_lang} meaning", "pronunciation": "pronunciation", "example": "example sentence in {session.to_lang}"}}
+        ]
+    }}
     """
     
-    logger.info(f"[FLOW_STARTER_DEBUG] === Question Generation Prompt ===")
+    logger.info(f"[FLOW_STARTER_DEBUG] === Question + Expressions Generation Prompt ===")
     logger.info(f"[FLOW_STARTER_PROMPT] {question_prompt}")
-    logger.info(f"[FLOW_STARTER_DEBUG] === End of Question Prompt ===")
+    logger.info(f"[FLOW_STARTER_DEBUG] === End of Starter Prompt ===")
     
     try:
-        # OpenAI 호출로 질문 생성
-        logger.info(f"[FLOW_STARTER_OPENAI] Calling OpenAI to generate starter question")
+        # OpenAI 호출로 질문과 학습 표현 생성
+        logger.info(f"[FLOW_STARTER_OPENAI] Calling OpenAI to generate starter question and expressions")
         response = await openai_service.get_chat_completion(
             messages=[{"role": "user", "content": question_prompt}],
-            temperature=0.8  # 더 창의적인 질문을 위해 temperature 높임
+            temperature=0.8,  # 더 창의적인 질문을 위해 temperature 높임
+            response_format={"type": "json_object"}
         )
-        response_text = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content.strip()
         
-        logger.info(f"[FLOW_STARTER_RESPONSE] Generated question: {response_text}")
+        logger.info(f"[FLOW_STARTER_RESPONSE] Generated response: {content}")
+        
+        # JSON 파싱
+        parsed = json.loads(content)
+        response_text = parsed.get("question", "")
+        learned_expressions_data = parsed.get("learned_expressions", [])
+        
+        logger.info(f"[FLOW_STARTER_PARSED] Question: {response_text}")
+        logger.info(f"[FLOW_STARTER_PARSED] Expressions Count: {len(learned_expressions_data)}")
+        
+        # LearnWord 객체 생성
+        learned_expressions = []
+        for i, expr_data in enumerate(learned_expressions_data):
+            word = expr_data.get("word", "").strip()
+            meaning = expr_data.get("meaning", "").strip()
+            pronunciation = expr_data.get("pronunciation", "").strip()
+            example = expr_data.get("example", "").strip()
+            
+            logger.info(f"[FLOW_STARTER_EXPRESSION_{i+1}] Word: {word}, Meaning: {meaning}")
+            
+            if word:
+                learned_expressions.append(LearnWord(
+                    word=word,
+                    meaning=meaning,
+                    pronunciation=pronunciation,
+                    example=example
+                ))
+        
+        logger.info(f"[FLOW_STARTER_FINAL] Generated {len(learned_expressions)} expressions")
         
     except Exception as e:
-        logger.error(f"[FLOW_STARTER_ERROR] Question generation failed: {str(e)}")
-        # Fallback 질문들 - 언어 무관 처리
+        logger.error(f"[FLOW_STARTER_ERROR] Question and expressions generation failed: {str(e)}")
+        # Fallback 질문들과 기본 표현 - 언어 무관 처리
         if session.topic and session.keyword:
             response_text = f"Hello! Let's talk about {session.topic} and {session.keyword}. Have you had any special experience with {session.keyword}? How did you feel?"
         else:
             response_text = f"Hello! Let's talk about {session.emotion} feelings. Tell me about your recent experience with that emotion."
         
-        logger.info(f"[FLOW_STARTER_FALLBACK] Using fallback question: {response_text}")
+        # 기본 학습 표현 생성
+        learned_expressions = [
+            LearnWord(
+                word=f"I like {session.keyword}" if session.keyword else f"I feel {session.emotion}",
+                meaning=f"I like {session.keyword}" if session.keyword else f"I am feeling {session.emotion}",
+                pronunciation="",
+                example=""
+            ),
+            LearnWord(
+                word="experience",
+                meaning="경험/체험",
+                pronunciation="",
+                example="Tell me about your experience."
+            )
+        ]
+        
+        logger.info(f"[FLOW_STARTER_FALLBACK] Using fallback question and expressions")
     
     # TTS 생성
     audio_url = None
@@ -273,7 +333,7 @@ async def _generate_starter_response(session: ConversationSession, openai_servic
     else:
         logger.info(f"[FLOW_STARTER_TTS] TTS disabled for starter question")
     
-    return response_text, audio_url
+    return response_text, learned_expressions, audio_url
 
 async def _generate_paraphrase_response(session: ConversationSession, user_input: str, openai_service: OpenAIService, is_tts_enabled: Optional[bool]) -> tuple[str, List[LearnWord], Optional[str]]:
     """Paraphrase 응답 및 학습 표현 생성"""
