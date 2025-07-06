@@ -25,6 +25,7 @@ class ConversationStage(str, Enum):
 class FlowAction(str, Enum):
     PICK_EMOTION = "pick_emotion"
     VOICE_INPUT = "voice_input"
+    TEXT_INPUT = "text_input"
 
 class FlowChatRequest(BaseModel):
     session_id: Optional[str] = None
@@ -156,6 +157,45 @@ async def flow_chat(
                 completed=False
             )
         
+        # 텍스트 입력 처리 (음성 생성 없음)
+        elif request.action == FlowAction.TEXT_INPUT:
+            if not request.session_id or request.session_id not in sessions:
+                raise HTTPException(status_code=404, detail="Session not found")
+            if not request.user_input:
+                raise HTTPException(status_code=400, detail="User input is required")
+            
+            session = sessions[request.session_id]
+            session.user_input_count += 1
+            
+            logger.info(f"[FLOW_TEXT_INPUT] Processing text input without TTS generation")
+            
+            # 7회째 입력이면 완료 (텍스트만)
+            if session.user_input_count >= 7:
+                response_text, _ = await _generate_finisher_response(session, openai_service, False)  # TTS 비활성화
+                return FlowChatResponse(
+                    session_id=session.session_id,
+                    stage=ConversationStage.FINISHER,
+                    response_text=response_text,
+                    audio_url=None,  # 음성 없음
+                    completed=True
+                )
+            
+            # Paraphrase 응답 생성 (텍스트만)
+            response_text, learned_expressions, _ = await _generate_paraphrase_response(
+                session, request.user_input, openai_service, False  # TTS 비활성화
+            )
+            
+            session.learned_expressions = learned_expressions
+            
+            return FlowChatResponse(
+                session_id=session.session_id,
+                stage=ConversationStage.PARAPHRASE,
+                response_text=response_text,
+                audio_url=None,  # 음성 없음
+                target_words=learned_expressions,
+                completed=False
+            )
+        
         else:
             raise HTTPException(status_code=400, detail="Invalid action")
             
@@ -166,23 +206,72 @@ async def flow_chat(
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 async def _generate_starter_response(session: ConversationSession, openai_service: OpenAIService, is_tts_enabled: Optional[bool]) -> tuple[str, Optional[str]]:
-    """시작 응답 생성"""
+    """시작 응답 생성 - topic과 keyword를 조합한 재미있는 질문"""
     
-    # 간단한 시작 메시지
-    if session.from_lang.lower() == "korean":
-        response_text = f"안녕하세요! {session.emotion} 감정에 대해 이야기해봐요. 최근 경험을 말해주세요."
-    else:
-        response_text = f"Hello! Let's talk about {session.emotion} feelings. Tell me about your recent experience."
+    # topic과 keyword 조합하여 재미있는 질문 생성
+    logger.info(f"[FLOW_STARTER_DEBUG] === Starter Question Generation ===")
+    logger.info(f"[FLOW_STARTER_DEBUG] Session - emotion: {session.emotion}, topic: {session.topic}, keyword: {session.keyword}")
+    
+    # OpenAI 프롬프트로 재미있는 질문 생성
+    question_prompt = f"""
+    Create a fun and personal question in {session.from_lang} language.
+    
+    Context:
+    - Topic: {session.topic if session.topic else 'general conversation'}
+    - Keyword: {session.keyword if session.keyword else 'anything'}
+    - Emotion: {session.emotion}
+    
+    Requirements:
+    - Combine the topic and keyword to create an interesting, slightly funny, and personal question
+    - The question should be relatable and make people think about their own experiences
+    - Use casual, friendly tone
+    - Ask about a specific situation or experience related to both topic and keyword
+    - End with asking about their feelings or emotions
+    
+    Examples:
+    - Topic: feelings, Keyword: cat → "혹시 고양이와 길에서 마주친 적 있어요? 그때 어떤 기분이 들었나요?"
+    - Topic: food, Keyword: rain → "비 오는 날에 특별히 먹고 싶어지는 음식이 있나요? 왜 그런 기분이 드는 것 같아요?"
+    
+    Generate only the question, no additional text.
+    """
+    
+    logger.info(f"[FLOW_STARTER_DEBUG] === Question Generation Prompt ===")
+    logger.info(f"[FLOW_STARTER_PROMPT] {question_prompt}")
+    logger.info(f"[FLOW_STARTER_DEBUG] === End of Question Prompt ===")
+    
+    try:
+        # OpenAI 호출로 질문 생성
+        logger.info(f"[FLOW_STARTER_OPENAI] Calling OpenAI to generate starter question")
+        response = await openai_service.get_chat_completion(
+            messages=[{"role": "user", "content": question_prompt}],
+            temperature=0.8  # 더 창의적인 질문을 위해 temperature 높임
+        )
+        response_text = response.choices[0].message.content.strip()
+        
+        logger.info(f"[FLOW_STARTER_RESPONSE] Generated question: {response_text}")
+        
+    except Exception as e:
+        logger.error(f"[FLOW_STARTER_ERROR] Question generation failed: {str(e)}")
+        # Fallback 질문들 - 언어 무관 처리
+        if session.topic and session.keyword:
+            response_text = f"Hello! Let's talk about {session.topic} and {session.keyword}. Have you had any special experience with {session.keyword}? How did you feel?"
+        else:
+            response_text = f"Hello! Let's talk about {session.emotion} feelings. Tell me about your recent experience with that emotion."
+        
+        logger.info(f"[FLOW_STARTER_FALLBACK] Using fallback question: {response_text}")
     
     # TTS 생성
     audio_url = None
     if is_tts_enabled:
         try:
             tts_language = session.from_lang.capitalize()
+            logger.info(f"[FLOW_STARTER_TTS] Generating TTS in {tts_language} for question")
             audio_url, _ = await openai_service.text_to_speech(response_text, tts_language)
-            logger.info(f"[FLOW_TTS] Generated audio for starter")
+            logger.info(f"[FLOW_STARTER_TTS] Generated audio URL: {audio_url}")
         except Exception as e:
-            logger.error(f"[FLOW_TTS_ERROR] {str(e)}")
+            logger.error(f"[FLOW_STARTER_TTS_ERROR] TTS generation failed: {str(e)}")
+    else:
+        logger.info(f"[FLOW_STARTER_TTS] TTS disabled for starter question")
     
     return response_text, audio_url
 
@@ -279,12 +368,12 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
         
     except Exception as e:
         logger.error(f"[FLOW_OPENAI_ERROR] OpenAI call failed: {str(e)}")
-        # Fallback
+        # Fallback - 언어 무관 처리
         response_text = f"That's interesting! Please tell me more about your {session.emotion} experience."
         learned_expressions = [
             LearnWord(
-                word=f"I feel {session.emotion}",
-                meaning=f"나는 {session.emotion}을 느껴요" if session.from_lang.lower() == "korean" else f"I am feeling {session.emotion}",
+                word=f"I like {session.keyword}" if session.keyword else f"I feel {session.emotion}",
+                meaning=f"I like {session.keyword}" if session.keyword else f"I am feeling {session.emotion}",
                 pronunciation="",
                 example=""
             )
@@ -309,19 +398,20 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
 async def _generate_finisher_response(session: ConversationSession, openai_service: OpenAIService, is_tts_enabled: Optional[bool]) -> tuple[str, Optional[str]]:
     """완료 응답 생성"""
     
-    if session.from_lang.lower() == "korean":
-        response_text = f"대화가 끝났습니다! {session.emotion} 감정에 대해 좋은 이야기를 나눴어요. 새로운 표현들을 잘 배우셨습니다!"
-    else:
-        response_text = f"Great conversation! We had a nice talk about {session.emotion} feelings. You learned some new expressions!"
+    # 언어 무관 완료 메시지
+    response_text = f"Great conversation! We had a nice talk about {session.emotion} feelings. You learned some new expressions!"
     
     # TTS 생성
     audio_url = None
     if is_tts_enabled:
         try:
             tts_language = session.from_lang.capitalize()
+            logger.info(f"[FLOW_FINISHER_TTS] Generating TTS in {tts_language} for finisher")
             audio_url, _ = await openai_service.text_to_speech(response_text, tts_language)
-            logger.info(f"[FLOW_TTS] Generated audio for finisher")
+            logger.info(f"[FLOW_FINISHER_TTS] Generated audio URL: {audio_url}")
         except Exception as e:
-            logger.error(f"[FLOW_TTS_ERROR] {str(e)}")
+            logger.error(f"[FLOW_FINISHER_TTS_ERROR] TTS generation failed: {str(e)}")
+    else:
+        logger.info(f"[FLOW_FINISHER_TTS] TTS disabled for finisher")
     
     return response_text, audio_url 
