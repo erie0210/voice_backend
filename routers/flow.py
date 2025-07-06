@@ -369,30 +369,36 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
     
     # OpenAI 프롬프트 생성
     prompt = f"""
-    User said: "{user_input}"
-    User is learning {session.to_lang}. 
-    Response should be in **3 short sentences** in mixed language.
-    Mixed language example: from_lang: Korean, to_lang: English, response should be "고양이가 노는 모습 so adorable 하지, 고양이가 골골거리는 건 purring 이라고 해. Most favorite 고양이 color는 뭐야?"
-    
-    response structure:
-    - Empathetic reaction to user's feeling (if needed)
-    - Paraphrase user's input in {session.to_lang} using words, slang, idioms, and expressions.
-    - Then provide 3 {session.to_lang} expressions used in your paraphrase response.
-    - Include emojis in your response.
-    - Keep conversation flow.
-    - A little bit funny.
 
-    One sentecne should include 1-2 {session.to_lang} expressions.
+    You're a friendly and funny conversation partner helping language learners improve their English by mixing it with their native language (Korean). The topic of conversation is FASHION.
 
-    Context: {context_text}.
-    
-    Respond in JSON format:
-    {{
-        "response": "your mixed language response here",
-        "learned_expressions": [
-            {{"word": "{session.to_lang} expression", "meaning": "{session.from_lang} meaning", "pronunciation": "pronunciation", "example": "example sentence in {session.to_lang}"}}
-        ]
-    }}
+        Response Rules:
+
+        - Use **mixed language**: Each sentence MUST include both {session.from_lang} and {session.to_lang}. Natural code-switching is important.
+        - Use **fashion-related** expressions, slang, idioms, and vocabulary in {session.to_lang} (like “fashion statement”, “on point”, “bold choice” etc.).
+        - Start with an **empathetic or funny reaction** to the user's input if relevant. User input: {user_input}.
+        - Paraphrase the user's intent/input in a fun, lively tone with **1~2 {session.to_lang} expressions per sentence**.
+        - Include **emojis** to keep the conversation casual and playful.
+        - Response should feel like a real, humorous chat with a stylish friend.
+        - Keep the flow of conversation going by ending with a fun question or reaction.
+
+        Example mixed language sentence:
+        "요즘 내 outfit 완전 on point지, 친구들이 runway model 같대 😎"
+
+            Context: {context_text}.
+        Respond in **JSON format** with the following structure:
+        {{
+            "response": "your mixed language response here",
+            "learned_expressions": [
+                {
+                "word": "expression used in the response",
+                "meaning": "Korean meaning of the expression",
+                "pronunciation": "IPA or phonetic",
+                "example": "An example sentence in English"
+                },
+                ...
+            ]
+        }}
     """
     
     logger.info(f"[FLOW_PROMPT_DEBUG] === Final Prompt to OpenAI ===")
