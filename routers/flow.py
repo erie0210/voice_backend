@@ -223,7 +223,6 @@ async def _generate_starter_response(session: ConversationSession, openai_servic
     Context:
     - Topic: {session.topic if session.topic else 'general conversation'}
     - Keyword: {session.keyword if session.keyword else 'anything'}
-    - Emotion: {session.emotion}
     - User is learning {session.to_lang}
     
     Requirements for Question:
@@ -234,11 +233,10 @@ async def _generate_starter_response(session: ConversationSession, openai_servic
     - End with asking about their feelings or emotions
     
     Requirements for Expressions:
-    - Provide 2 useful {session.to_lang} expressions related to the topic and keyword
+    - Provide 2 {session.to_lang} expressions, word, idiom, slang, etc. mentioned in the question
     - Each expression should have meaning in {session.from_lang}, pronunciation, and example
     
     Examples:
-    - Topic: feelings, Keyword: cat → Question: "혹시 고양이와 길에서 마주친 적 있어요? 그때 어떤 기분이 들었나요?"
     - Topic: food, Keyword: rain → Question: "비 오는 날에 특별히 먹고 싶어지는 음식이 있나요? 왜 그런 기분이 드는 것 같아요?"
     
     Respond in JSON format:
