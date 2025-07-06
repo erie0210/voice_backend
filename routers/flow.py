@@ -370,7 +370,8 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
     # OpenAI 프롬프트 생성
     prompt = f"""
         You're a friendly and funny conversation partner helping language learners improve their {session.to_lang} by mixing it with their native language ({session.from_lang}). The topic of conversation is {session.keyword}.
-
+        Response should be - Exactly **2 SHORT sentences** total, **every sentence MUST mix** {session.from_lang} and {session.to_lang}.
+        
         user input: {user_input}
         - ALWAYS react to the user's message naturally — never monologue.
         - Your tone should be playful, friendly, and engaging — like you're chatting with a best friend.
@@ -398,9 +399,9 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
             "learned_expressions": [
                 {{
                     "word": "expression used in the response",
-                    "meaning": "Korean meaning of the expression",
-                    "pronunciation": "IPA or phonetic",
-                    "example": "An example sentence in English"
+                    "meaning": "{session.from_lang} meaning of the expression",
+                    "pronunciation": "pronunciation in {session.from_lang}",
+                    "example": "An short example sentence in {session.to_lang}"
                 }}
             ]
         }}
