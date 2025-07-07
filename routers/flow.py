@@ -365,19 +365,12 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
     # OpenAI 프롬프트 생성
     prompt = f"""
         user input: {user_input}
-        Your tone should be playful, friendly, and engaging — like you're chatting with a best friend. Use emojis to keep it casual and fun.
-
-        Write exactly 2 short sentences.
-        Each sentence MUST mix {session.from_lang} and {session.to_lang} in a single sentence. Never separate languages.
-        Construct 2 sentences in {session.from_lang} and replace **3** separate words with {session.to_lang} for each sentence (total 6 words).
+        Tone must be casual, humorous, and stylish — like talking to your bestie.. Use emojis to keep it casual and fun.
+        Construct 2 sentences in {session.from_lang} and replace 3 separate words with {session.to_lang} for each sentence (total 6 words).
         The first sentence must paraphrase the user's key idea.
-        1 is the paraphrased user expression in mixed language.
-        At least 3 are related to {session.keyword}
-        Always keep the conversation going.
-        Tone must be casual, humorous, and stylish — like talking to your bestie.
+        Always keep the conversation going.        
         Learned_expressions: all words in {session.to_lang} should be in learned_expressions. (total 6 words)
-
-        example: 요즘 내 outfit 완전 on point지. 친구들이 runway model 같대 😎
+        example: Recently, 내 outfit이 완전 on point지. Friends들이 나 완전 runway models 같대 😎
 
         Context: {context_text}.
         Respond in **JSON format** with the following structure:
