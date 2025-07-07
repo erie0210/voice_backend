@@ -32,7 +32,7 @@ class FlowChatRequest(BaseModel):
     action: FlowAction
     user_input: Optional[str] = None
     emotion: Optional[str] = None
-    from_lang: str = "KOREAN"
+    from_lang: str = "ENGLISH"
     to_lang: str = "ENGLISH"
     is_tts_enabled: Optional[bool] = None
     topic: Optional[str] = None
@@ -229,25 +229,20 @@ async def _generate_starter_response(session: ConversationSession, openai_servic
     
     # OpenAI 프롬프트로 재미있는 질문과 학습 표현 생성
     question_prompt = f"""
-    Create a fun and personal question in {session.from_lang} language and provide 2 {session.to_lang} expressions.
+    Create one fun and short personal question in {session.from_lang} language and provide 2 {session.to_lang} expressions.
     
     Context:
     - Topic: {session.topic if session.topic else 'general conversation'}
     - Keyword: {session.keyword if session.keyword else 'anything'}
-    - User is learning {session.to_lang}
     
     Requirements for Question:
-    - Combine the topic and keyword to create an interesting, slightly funny, and personal question (one question only)
-    - The question should be relatable and make people think about their own experiences
-    - Use casual, friendly tone
-    - Ask about a specific situation or experience related to both topic and keyword
-    
-    Requirements for Expressions:
-    - Provide 2 {session.to_lang} expressions, word, idiom, slang, etc. mentioned in the question
-    - Each expression should have meaning in {session.from_lang}, pronunciation, and example
+    Write exactly 1 short sentences.
+    Each sentence MUST mix {session.from_lang} and {session.to_lang} in a single sentence. Never separate languages.
+    Construct 1 sentences in {session.from_lang} and replace 2 separate words with {session.to_lang} each sentence.
+    Learned_expressions: all words in {session.to_lang} should be in learned_expressions.
     
     Examples:
-    - Topic: food, Keyword: rain → Question: "비 오는 날에 특별히 먹고 싶어지는 음식이 있나요? 왜 그런 기분이 드는 것 같아요?"
+    - Topic: food, Keyword: rain → Question: "비 오는 날에 특별히 먹고 싶어지는 음식이 있나요?"
     
     Respond in JSON format:
     {{
@@ -374,13 +369,13 @@ async def _generate_paraphrase_response(session: ConversationSession, user_input
 
         Write exactly 2 short sentences.
         Each sentence MUST mix {session.from_lang} and {session.to_lang} in a single sentence. Never separate languages.
-        Construct 2 sentences in {session.from_lang} and replace 3 separate words with {session.to_lang} each sentence.
+        Construct 2 sentences in {session.from_lang} and replace **3** separate words with {session.to_lang} for each sentence (total 6 words).
         The first sentence must paraphrase the user's key idea.
         1 is the paraphrased user expression in mixed language.
         At least 3 are related to {session.keyword}
         Always keep the conversation going.
         Tone must be casual, humorous, and stylish — like talking to your bestie.
-        learned_expressions: all word, expression, slang, idioms in {session.to_lang} should be in learned_expressions.
+        Learned_expressions: all words in {session.to_lang} should be in learned_expressions. (total 6 words)
 
         example: 요즘 내 outfit 완전 on point지. 친구들이 runway model 같대 😎
 
